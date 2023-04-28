@@ -89,6 +89,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)/Libraries/</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -107,6 +108,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)/Libraries/</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -125,6 +127,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)/Libraries/</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -143,6 +146,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)/Libraries/</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -159,8 +163,15 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="D3D11Engine.cpp" />
     <ClCompile Include="ConstantBuffer.cpp" />
+    <ClCompile Include="ImGuiHelper.cpp" />
     <ClCompile Include="IndexBuffer.cpp" />
     <ClCompile Include="Keyboard.cpp" />
+    <ClCompile Include="Libraries\ImGui\imgui.cpp" />
+    <ClCompile Include="Libraries\ImGui\imgui_draw.cpp" />
+    <ClCompile Include="Libraries\ImGui\imgui_impl_dx11.cpp" />
+    <ClCompile Include="Libraries\ImGui\imgui_impl_win32.cpp" />
+    <ClCompile Include="Libraries\ImGui\imgui_tables.cpp" />
+    <ClCompile Include="Libraries\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Drawable.cpp" />
     <ClCompile Include="Mouse.cpp" />
@@ -174,9 +185,18 @@
     <ClInclude Include="D3D11Engine.h" />
     <ClInclude Include="ConstantBuffer.h" />
     <ClInclude Include="D3D11MathHelper.h" />
+    <ClInclude Include="ImGuiHelper.h" />
     <ClInclude Include="IndexBuffer.h" />
     <ClInclude Include="Keyboard.h" />
     <ClInclude Include="Drawable.h" />
+    <ClInclude Include="Libraries\ImGui\imconfig.h" />
+    <ClInclude Include="Libraries\ImGui\imgui.h" />
+    <ClInclude Include="Libraries\ImGui\imgui_impl_dx11.h" />
+    <ClInclude Include="Libraries\ImGui\imgui_impl_win32.h" />
+    <ClInclude Include="Libraries\ImGui\imgui_internal.h" />
+    <ClInclude Include="Libraries\ImGui\imstb_rectpack.h" />
+    <ClInclude Include="Libraries\ImGui\imstb_textedit.h" />
+    <ClInclude Include="Libraries\ImGui\imstb_truetype.h" />
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="ShaderResource.h" />
     <ClInclude Include="stb_image.h" />

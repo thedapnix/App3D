@@ -46,6 +46,7 @@ private:
 	void InitCamera();
 	//void InitSampler();
 	void InitQuad(DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate); // temp
+	void InitCube(DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
 	void UpdateConstantBuffer(ID3D11Buffer* cb, void* data, size_t size); //temp
 
 	/*Variables*/

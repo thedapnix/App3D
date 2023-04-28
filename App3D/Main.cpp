@@ -21,9 +21,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance,
 	_In_ PWSTR pCmdLine,
 	_In_ int nCmdShow)
 {
-	//Thinking of taking a page out of the book's book (yeah that's a sentence)
-	//Ditch the Window-class and have it be a part of the App-class
-
 	App app(hInstance);
 	app.Run();
 

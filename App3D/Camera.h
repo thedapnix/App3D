@@ -18,7 +18,8 @@ public:
 
 	/*GETTERS*/
 	//Camera position
-	DirectX::XMVECTOR GetPosition() const;
+	//DirectX::XMVECTOR GetPosition() const;
+	DirectX::XMFLOAT3 GetPosition() const;
 
 	//X-, Y- and Z-vectors
 	DirectX::XMVECTOR GetRight() const;
@@ -66,23 +67,23 @@ public:
 	void UpdateViewMatrix();
 private:
 	//Coordinate system of the camera relative to world space
-	DirectX::XMFLOAT3 m_Position = { 0.0f, 0.0f, -3.0f };
-	DirectX::XMFLOAT3 m_Right = { 1.0f, 0.0f, 0.0f };
-	DirectX::XMFLOAT3 m_Up = { 0.0f, 1.0f, 0.0f };
-	DirectX::XMFLOAT3 m_Look = { 0.0f, 0.0f, 1.0f };
+	DirectX::XMFLOAT3 m_position = { 0.0f, 0.0f, -3.0f };
+	DirectX::XMFLOAT3 m_right = { 1.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 m_up = { 0.0f, 1.0f, 0.0f };
+	DirectX::XMFLOAT3 m_look = { 0.0f, 0.0f, 1.0f };
 
 	//Frustum properties
-	float m_NearZ = 0.0f;
-	float m_FarZ = 0.0f;
-	float m_Aspect = 0.0f;
-	float m_FovY = 0.0f;
-	float m_NearWindowHeight = 0.0f;
-	float m_FarWindowHeight = 0.0f;
+	float m_nearZ = 0.0f;
+	float m_farZ = 0.0f;
+	float m_aspect = 0.0f;
+	float m_fovY = 0.0f;
+	float m_nearWindowHeight = 0.0f;
+	float m_farWindowHeight = 0.0f;
 
 	//boolean to check if we've made changes to the camera
-	bool m_ViewDirty = true;
+	bool m_viewDirty = true;
 
 	//View/Proj matrices
-	DirectX::XMFLOAT4X4 m_View = Identity4x4();
-	DirectX::XMFLOAT4X4 m_Proj = Identity4x4();
+	DirectX::XMFLOAT4X4 m_view = Identity4x4();
+	DirectX::XMFLOAT4X4 m_proj = Identity4x4();
 };

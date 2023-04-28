@@ -1,4 +1,4 @@
-#include "D3D11Engine.h"
+#include "ImGuiHelper.h" //Which in turn includes D3D11Engine.h
 
 #include <dxgi.h>			//directx driver interface
 #include <d3dcompiler.h>	//compiling shaders
@@ -25,23 +25,26 @@ D3D11Engine::D3D11Engine(HWND hWnd, UINT width, UINT height)
 	for (int i = 0; i < 20; i++)
 	{
 		//Generate random numbers between -+10
-		int r1 = -10 + (rand() % 20);
+		/*int r1 = -10 + (rand() % 20);
 		int r2 = -10 + (rand() % 20);
 		int r4 = -10 + (rand() % 20);
 		int r5 = -10 + (rand() % 20);
-		int r6 = -10 + (rand() % 20);
-		InitQuad({(float)r1, (float)r2, 1.0f}, {0.0f, 0.0f, 0.0f}, {(float)r4, (float)r5, (float)r6});
+		int r6 = -10 + (rand() % 20);*/
+		//InitQuad({ 5.0f, 0.5f, 1.0f }, { 0.0f, 0.0f, 0.0f }, {0.0f, -5.0f, 0.0f});
 	}
+	InitCube({ 5.0f, 0.5f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -3.0f, 0.0f });
 
 	//Viewport only ever needs to be reset if we resize the window and uh.. *I've disabled that option*
 	//RTV only needs to be reset if we change render targets, and we don't do that either (We will in the future though)
 	context->RSSetViewports(1, &viewport);
 	context->OMSetRenderTargets(1, rtv.GetAddressOf(), NULL);
+
+	SetupImGui(hWnd, device.Get(), context.Get());
 }
 
 D3D11Engine::~D3D11Engine()
 {
-	//ClearImGui();
+	ClearImGui();
 }
 
 void D3D11Engine::Update(float dt)
@@ -56,6 +59,12 @@ void D3D11Engine::Update(float dt)
 		//apply whatever changes should happen per tick
 		drawable.UpdateConstantBuffer(context.Get());
 	}
+
+	StartImGuiFrame();
+	
+	ImGuiEngineWindow(&m_camera);
+
+	EndImGuiFrame();
 
 	Render(dt);
 
@@ -294,6 +303,69 @@ void D3D11Engine::InitQuad(DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, Di
 	subMeshInfo.nrOfIndicesInSubMesh = 6;
 
 	meshData.subMeshInfo.push_back(subMeshInfo);*/
+}
+
+void D3D11Engine::InitCube(DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate)
+{
+	//Ain't no way I'm doing this by hand
+	std::vector<Vertex> vertices({
+		//Front
+		{ {-1.0f, -1.0f,  -1.0f, }, {0.0f, 0.0f,}, { 0.0f, 0.0f, -1.0f,} },
+		{ { 1.0f, -1.0f,  -1.0f, }, {1.0f, 0.0f,}, { 0.0f, 0.0f, -1.0f,} },
+		{ {-1.0f,  1.0f,  -1.0f, }, {0.0f, 1.0f,}, { 0.0f, 0.0f, -1.0f,} },
+		{ { 1.0f,  1.0f,  -1.0f, }, {1.0f, 1.0f,}, { 0.0f, 0.0f, -1.0f,} },
+
+		//Back
+		{ {-1.0f, -1.0f,   1.0f, }, {1.0f, 0.0f,}, { 0.0f, 0.0f,  1.0f,} },
+		{ { 1.0f, -1.0f,   1.0f, }, {0.0f, 0.0f,}, { 0.0f, 0.0f,  1.0f,} },
+		{ {-1.0f,  1.0f,   1.0f, }, {1.0f, 1.0f,}, { 0.0f, 0.0f,  1.0f,} },
+		{ { 1.0f,  1.0f,   1.0f, }, {0.0f, 1.0f,}, { 0.0f, 0.0f,  1.0f,} },
+
+		//Right
+		{ { 1.0f, -1.0f,  -1.0f, }, {0.0f, 0.0f,}, { 1.0f, 0.0f,  0.0f,} },
+		{ { 1.0f, -1.0f,   1.0f, }, {1.0f, 0.0f,}, { 1.0f, 0.0f,  0.0f,} },
+		{ { 1.0f,  1.0f,  -1.0f, }, {0.0f, 1.0f,}, { 1.0f, 0.0f,  0.0f,} },
+		{ { 1.0f,  1.0f,   1.0f, }, {1.0f, 1.0f,}, { 1.0f, 0.0f,  0.0f,} },
+
+		//Left
+		{ {-1.0f, -1.0f,  -1.0f, }, {1.0f, 0.0f,}, {-1.0f, 0.0f,  0.0f,} },
+		{ {-1.0f, -1.0f,   1.0f, }, {0.0f, 0.0f,}, {-1.0f, 0.0f,  0.0f,} },
+		{ {-1.0f,  1.0f,  -1.0f, }, {1.0f, 1.0f,}, {-1.0f, 0.0f,  0.0f,} },
+		{ {-1.0f,  1.0f,   1.0f, }, {0.0f, 1.0f,}, {-1.0f, 0.0f,  0.0f,} },
+
+		//Top
+		{ {-1.0f,  1.0f,  -1.0f, }, {0.0f, 0.0f,}, {0.0f, -1.0f,  0.0f,} },
+		{ {-1.0f,  1.0f,   1.0f, }, {0.0f, 1.0f,}, {0.0f, -1.0f,  0.0f,} },
+		{ { 1.0f,  1.0f,  -1.0f, }, {1.0f, 0.0f,}, {0.0f, -1.0f,  0.0f,} },
+		{ { 1.0f,  1.0f,   1.0f, }, {1.0f, 1.0f,}, {0.0f, -1.0f,  0.0f,} },
+
+		//Bot
+		{ {-1.0f, -1.0f,  -1.0f, }, {0.0f, 1.0f,}, {0.0f,  1.0f,  0.0f,} },
+		{ { 1.0f, -1.0f,  -1.0f, }, {1.0f, 1.0f,}, {0.0f,  1.0f,  0.0f,} },
+		{ {-1.0f, -1.0f,   1.0f, }, {0.0f, 0.0f,}, {0.0f,  1.0f,  0.0f,} },
+		{ { 1.0f, -1.0f,   1.0f, }, {1.0f, 0.0f,}, {0.0f,  1.0f,  0.0f,} },
+		});
+
+	BufferData bufferData;
+	bufferData.vData.size = sizeof(Vertex);
+	bufferData.vData.count = 24;
+	bufferData.vData.vector = vertices;
+
+	std::vector<uint32_t> indices({
+		 0, 2, 1,  2, 3, 1, //Front
+		 8,10, 9, 10,11, 9, //Right
+	    16,17,18, 18,17,19,//Top
+		 4, 5, 7,  4, 7, 6, //Back
+		12,13,14, 14,13,15, //Left
+		20,21,22, 22,21,23  //Bot
+		});
+
+	bufferData.iData.size = sizeof(uint32_t);
+	bufferData.iData.count = 36;
+	bufferData.iData.vector = indices;
+
+	Drawable cube(device.Get(), bufferData, scale, rotate, translate);
+	m_drawables.push_back(cube);
 }
 
 void D3D11Engine::UpdateConstantBuffer(ID3D11Buffer* cb, void* data, size_t size)

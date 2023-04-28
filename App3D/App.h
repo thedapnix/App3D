@@ -28,6 +28,8 @@ public:
 private:
 	/*Functions*/
 	void DoFrame(float dt);
+	void InterpretKeyboardInput();
+	void OnMouseMove(WPARAM btnState, int x, int y); //Don't want to have it like this but I gotta, for now
 
 	/*Window Stuff*/
 	bool InitWindow();
@@ -39,6 +41,7 @@ private:
 
 	/*Variables*/
 	Mouse m_mouse;
+	std::pair<float, float> m_radians;
 	Keyboard m_keyboard;
 	std::unique_ptr<Timer> m_timer;
 	std::unique_ptr<D3D11Engine> m_engine;

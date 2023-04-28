@@ -1,7 +1,7 @@
 #include "App.h"
 
-//#include "ImGui/imgui_impl_win32.h"  //This imgui section is for allowing imgui access in the window proc function
-//extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+#include "ImGui/imgui_impl_win32.h"  //This imgui section is for allowing imgui access in the window proc function
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 //Macro that allows window to refer to itself via the "this" keyword
 namespace
@@ -12,8 +12,8 @@ namespace
 LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     //checks if the window is a imgui unit or not. If it is then we don't handle the msg.
-    //if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
-    //    return true;
+    if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+        return true;
 
     return d3dApp->HandleUserInput(hWnd, msg, wParam, lParam);
 }
@@ -45,16 +45,19 @@ int App::Run()
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
+        else //Since moving the camera using the mouse is currently reliant on windows messages, I have to separate these so as to not fuck up the camera when I try using keyboard and mouse at the same time
+        {
+            //TODO: Make camera movement and rotation use deltatime
+            //Game loop
+            float deltaTime = (float)m_timer->GetMilisecondsElapsed();
+            m_timer->Restart();
 
-        //Game loop
-        float deltaTime = (float)m_timer->GetMilisecondsElapsed();
-        m_timer->Restart();
-        
-        //Perform game logic things
-        DoFrame(deltaTime);
+            //Perform game logic things
+            DoFrame(deltaTime);
 
-        //Update and render scene afterwards
-        m_engine->Update(deltaTime);
+            //Render the new scene
+            m_engine->Update(deltaTime);
+        }
     }
 
     return (int)msg.wParam;
@@ -62,20 +65,45 @@ int App::Run()
 
 void App::DoFrame(float dt)
 {
-    //TODO: change this to use the actual keyboard- and mouse-classes instead of this dogshit. Mouse will also allow for rotating the camera through click-and-drag
-    if (GetAsyncKeyState('W') & 0x8000)
-        m_engine->GetCamera().Walk(0.25f);
-
-    if (GetAsyncKeyState('S') & 0x8000)
-        m_engine->GetCamera().Walk(-0.25f);
-
-    if (GetAsyncKeyState('A') & 0x8000)
-        m_engine->GetCamera().Strafe(-0.25f);
-
-    if (GetAsyncKeyState('D') & 0x8000)
-        m_engine->GetCamera().Strafe(0.25f);
+    InterpretKeyboardInput();
 
     m_engine->GetCamera().UpdateViewMatrix();
+}
+
+void App::InterpretKeyboardInput()
+{
+    if (this->m_keyboard.IsKeyPressed(0x57)) //W
+    {
+        m_engine->GetCamera().Walk(0.25f);
+    }
+    if (this->m_keyboard.IsKeyPressed(0x53)) //S
+    {
+        m_engine->GetCamera().Walk(-0.25f);
+    }
+    if (this->m_keyboard.IsKeyPressed(0x44)) //D
+    {
+        m_engine->GetCamera().Strafe(0.25f);
+    }
+    if (this->m_keyboard.IsKeyPressed(0x41)) //A
+    {
+        m_engine->GetCamera().Strafe(-0.25f);
+    }
+}
+
+void App::OnMouseMove(WPARAM btnState, int x, int y)
+{
+    if ((btnState & MK_LBUTTON) != 0)
+    {
+        // Make each pixel correspond to a quarter of a degree.
+        float dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(x - m_mouse.GetLastPosX()));
+        float dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(y - m_mouse.GetLastPosY()));
+
+        m_engine->GetCamera().Pitch(dy);
+        m_engine->GetCamera().RotateY(dx);
+    }
+
+    m_mouse.SetLastPosX(x);
+    m_mouse.SetLastPosY(y);
 }
 
 LRESULT App::HandleUserInput(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -98,27 +126,25 @@ LRESULT App::HandleUserInput(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         m_mouse.OnRelease();
         break;
 
+    case WM_MOUSEMOVE:
+        OnMouseMove(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+        break;
+
         /*
         KEYBOARD INPUT
         */
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
-        if (!(lParam & 0x40000000)) //|| m_keyboard.AutoRepeatIsEnabled())
-        {
+        if (!(lParam & 0x40000000))
             m_keyboard.OnKeyPressed(static_cast<unsigned char>(wParam));
-        }
         break;
 
     case WM_KEYUP:
     case WM_SYSKEYUP:
         m_keyboard.OnKeyReleased(static_cast<unsigned char>(wParam));
         break;
-
-    case WM_CHAR:
-        //m_keyboard.OnChar(static_cast<unsigned char>(wParam));
-        break;
     }
-    return DefWindowProc(hWnd, msg, wParam, lParam); //the default window proc.
+    return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
 bool App::InitWindow()
