@@ -34,11 +34,6 @@ D3D11Engine::D3D11Engine(HWND hWnd, UINT width, UINT height)
 	}
 	InitCube({ 5.0f, 0.5f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -3.0f, 0.0f });
 
-	//Viewport only ever needs to be reset if we resize the window and uh.. *I've disabled that option*
-	//RTV only needs to be reset if we change render targets, and we don't do that either (We will in the future though)
-	context->RSSetViewports(1, &viewport);
-	context->OMSetRenderTargets(1, rtv.GetAddressOf(), NULL);
-
 	SetupImGui(hWnd, device.Get(), context.Get());
 }
 
@@ -78,8 +73,13 @@ Camera& D3D11Engine::GetCamera()
 
 void D3D11Engine::Render(float dt)
 {
+	//Viewport only ever needs to be reset if we resize the window and uh.. *I've disabled that option*
+	//RTV only needs to be reset if we change render targets, and we don't do that either (We will in the future though)
+	context->RSSetViewports(1, &viewport);
+	
 	// Clear the back buffer (and depth stencil later)
 	context->ClearRenderTargetView(rtv.Get(), CLEAR_COLOR);
+	context->OMSetRenderTargets(1, rtv.GetAddressOf(), NULL);
 
 	/*Input Assembler Stage*/
 	//Set primitive topology and input layout

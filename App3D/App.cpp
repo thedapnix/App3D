@@ -66,7 +66,6 @@ int App::Run()
 void App::DoFrame(float dt)
 {
     InterpretKeyboardInput();
-
     m_engine->GetCamera().UpdateViewMatrix();
 }
 

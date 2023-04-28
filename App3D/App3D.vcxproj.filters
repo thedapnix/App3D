@@ -31,6 +31,9 @@
     <Filter Include="ImGui">
       <UniqueIdentifier>{41e445db-8e55-4b99-8bd1-eded956f499c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ImGui\Library Files">
+      <UniqueIdentifier>{c834d52f-0f4e-4939-81ef-9a689226c74c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -73,22 +76,22 @@
       <Filter>ImGui</Filter>
     </ClCompile>
     <ClCompile Include="Libraries\ImGui\imgui.cpp">
-      <Filter>ImGui</Filter>
+      <Filter>ImGui\Library Files</Filter>
     </ClCompile>
     <ClCompile Include="Libraries\ImGui\imgui_draw.cpp">
-      <Filter>ImGui</Filter>
+      <Filter>ImGui\Library Files</Filter>
     </ClCompile>
     <ClCompile Include="Libraries\ImGui\imgui_impl_dx11.cpp">
-      <Filter>ImGui</Filter>
+      <Filter>ImGui\Library Files</Filter>
     </ClCompile>
     <ClCompile Include="Libraries\ImGui\imgui_impl_win32.cpp">
-      <Filter>ImGui</Filter>
+      <Filter>ImGui\Library Files</Filter>
     </ClCompile>
     <ClCompile Include="Libraries\ImGui\imgui_tables.cpp">
-      <Filter>ImGui</Filter>
+      <Filter>ImGui\Library Files</Filter>
     </ClCompile>
     <ClCompile Include="Libraries\ImGui\imgui_widgets.cpp">
-      <Filter>ImGui</Filter>
+      <Filter>ImGui\Library Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -135,28 +138,28 @@
       <Filter>ImGui</Filter>
     </ClInclude>
     <ClInclude Include="Libraries\ImGui\imconfig.h">
-      <Filter>ImGui</Filter>
+      <Filter>ImGui\Library Files</Filter>
     </ClInclude>
     <ClInclude Include="Libraries\ImGui\imgui.h">
-      <Filter>ImGui</Filter>
+      <Filter>ImGui\Library Files</Filter>
     </ClInclude>
     <ClInclude Include="Libraries\ImGui\imgui_impl_dx11.h">
-      <Filter>ImGui</Filter>
+      <Filter>ImGui\Library Files</Filter>
     </ClInclude>
     <ClInclude Include="Libraries\ImGui\imgui_impl_win32.h">
-      <Filter>ImGui</Filter>
+      <Filter>ImGui\Library Files</Filter>
     </ClInclude>
     <ClInclude Include="Libraries\ImGui\imgui_internal.h">
-      <Filter>ImGui</Filter>
+      <Filter>ImGui\Library Files</Filter>
     </ClInclude>
     <ClInclude Include="Libraries\ImGui\imstb_rectpack.h">
-      <Filter>ImGui</Filter>
+      <Filter>ImGui\Library Files</Filter>
     </ClInclude>
     <ClInclude Include="Libraries\ImGui\imstb_textedit.h">
-      <Filter>ImGui</Filter>
+      <Filter>ImGui\Library Files</Filter>
     </ClInclude>
     <ClInclude Include="Libraries\ImGui\imstb_truetype.h">
-      <Filter>ImGui</Filter>
+      <Filter>ImGui\Library Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

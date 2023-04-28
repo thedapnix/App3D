@@ -10,15 +10,15 @@ Timer::Timer()
 	m_isRunning = true;
 }
 
-bool Timer::Start()
-{
-	return true;
-}
-
-bool Timer::Stop()
-{
-	return false;
-}
+//bool Timer::Start()
+//{
+//	return true;
+//}
+//
+//bool Timer::Stop()
+//{
+//	return false;
+//}
 
 void Timer::Restart()
 {

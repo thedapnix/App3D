@@ -14,8 +14,8 @@ public:
 	Timer();
 	~Timer() = default;
 
-	bool Start();
-	bool Stop();
+	/*bool Start();
+	bool Stop();*/
 	void Restart();
 
 	double GetMilisecondsElapsed();
