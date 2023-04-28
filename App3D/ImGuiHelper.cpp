@@ -63,8 +63,8 @@ void ImGuiEngineWindow(Camera* camera)
 	//Print whatever information we want from this window
 	if (window_active)
 	{
-		ImGui::Text("Hello?");
-		//ImGui::Text("Camera Position: (%f, %f, %f)", camera->GetPosition().x, camera->GetPosition().y, camera->GetPosition().z);
+		ImGui::Text("Camera Position: (%f, %f, %f)", camera->GetPosition().x, camera->GetPosition().y, camera->GetPosition().z);
+		ImGui::Text("Camera is looking towards: (%f, %f, %f)", camera->GetLook().x, camera->GetLook().y, camera->GetLook().z);
 	}
 
 	ImGui::End();

@@ -27,14 +27,24 @@ DirectX::XMVECTOR Camera::GetRight() const
     return XMLoadFloat3(&m_right);
 }
 
-DirectX::XMVECTOR Camera::GetUp() const
+DirectX::XMFLOAT3 Camera::GetUp() const
 {
-    return XMLoadFloat3(&m_up);
+    return m_up;
 }
 
-DirectX::XMVECTOR Camera::GetLook() const
+//DirectX::XMVECTOR Camera::GetUp() const
+//{
+//    return XMLoadFloat3(&m_up);
+//}
+
+//DirectX::XMVECTOR Camera::GetLook() const
+//{
+//    return XMLoadFloat3(&m_look);
+//}
+
+DirectX::XMFLOAT3 Camera::GetLook() const
 {
-    return XMLoadFloat3(&m_look);
+    return m_look;
 }
 
 float Camera::GetNearZ() const

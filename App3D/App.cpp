@@ -87,6 +87,9 @@ void App::InterpretKeyboardInput()
     {
         m_engine->GetCamera().Strafe(-0.25f);
     }
+
+    if (this->m_keyboard.IsKeyPressed(0x50)) //P
+        m_engine->GetCamera().LookAt(m_engine->GetCamera().GetPosition(), { 0.0f, 0.0f, 1.0f }, m_engine->GetCamera().GetUp());
 }
 
 void App::OnMouseMove(WPARAM btnState, int x, int y)

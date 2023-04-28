@@ -23,8 +23,10 @@ public:
 
 	//X-, Y- and Z-vectors
 	DirectX::XMVECTOR GetRight() const;
-	DirectX::XMVECTOR GetUp() const;
-	DirectX::XMVECTOR GetLook() const;
+	//DirectX::XMVECTOR GetUp() const;
+	DirectX::XMFLOAT3 GetUp() const;
+	//DirectX::XMVECTOR GetLook() const;
+	DirectX::XMFLOAT3 GetLook() const;
 
 	//Frustum (projection matrix requires near- and far-z, aspect ratio and fov)
 	float GetNearZ() const;
