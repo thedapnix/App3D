@@ -70,6 +70,14 @@ void ImGuiEngineWindow(Camera* camera, std::string fps, int state)
 		ImGui::Text("Camera Position: (%f, %f, %f)", camera->GetPosition().x, camera->GetPosition().y, camera->GetPosition().z);
 		ImGui::Text("Camera is looking towards: (%f, %f, %f)", camera->GetLook().x, camera->GetLook().y, camera->GetLook().z);
 		ImGui::Text("----------------------------------");
+		ImGui::Text("Deferred Rendering: %s", true ? "Enabled" : "Disabled");
+		ImGui::Text("OBJ Parsing: %s", true ? "Enabled" : "Disabled");
+		ImGui::Text("Frustum Culling: %s", true ? "Enabled-ish" : "Disabled");
+		ImGui::Text("LOD Tesselation: %s", false ? "Enabled" : "Disabled");	
+		ImGui::Text("Cube Mapping: %s", false ? "Enabled" : "Disabled");
+		ImGui::Text("Billboarding: %s", false ? "Enabled" : "Disabled");
+		ImGui::Text("Shadow Mapping: %s", false ? "Enabled" : "Disabled");
+		ImGui::Text("----------------------------------");
 	}
 
 	ImGui::End();
