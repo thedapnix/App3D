@@ -433,3 +433,152 @@ void D3D11Engine::UpdateConstantBuffer(ID3D11Buffer* cb, void* data, size_t size
 	memcpy(mapped.pData, data, size);							//Write the new data to memory
 	context->Unmap(cb, 0);										//Re-enable GPU access to the data
 }
+
+bool D3D11Engine::InitDrawableFromFile(std::string fileName, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate)
+{
+	std::ifstream ifs(fileName);
+	if (!ifs)
+	{
+		MessageBox(NULL, L"Couldn't read file name!", L"Error", MB_OK);
+		return false;
+	}
+
+	//Member variables to store positions, texture coordinates and normals
+	std::vector<XMFLOAT3> vPos;
+	std::vector<XMFLOAT2> vTex;
+	std::vector<XMFLOAT3> vNor;
+
+	//Error handling for faces (preferably every .obj file has v, vt and vn, but not all .obj files were made equal)
+	int texCount = 0;
+	int norCount = 0;
+
+	//Wrap the mesh in a bounding box by getting the highest and lowest x-, y-, and z-values (use a library for actual infinities xd)
+	XMFLOAT3 vMinf3(1000000.0f, 1000000.0f, 1000000.0f);
+	XMFLOAT3 vMaxf3(-1000000.0f, -1000000.0f, -1000000.0f);
+
+	XMVECTOR vMin = DirectX::XMLoadFloat3(&vMinf3);
+	XMVECTOR vMax = DirectX::XMLoadFloat3(&vMaxf3);
+
+	//Read the text file
+	std::string lineStr;
+	while (std::getline(ifs, lineStr))
+	{
+		std::istringstream lineSS(lineStr);
+		std::string lineType;
+		lineSS >> lineType;
+
+		if (lineType == "v")
+		{
+			float x, y, z;
+			lineSS >> x >> y >> z;
+			vPos.push_back({ x,y,z });
+
+			//Check vMin and vMax against the x-, y-, and z-values of the vertex, once we've looped through everything we should have the edges of our box
+			XMFLOAT3 vf3(x, y, z);
+			XMVECTOR V = DirectX::XMLoadFloat3(&vf3);
+			vMin = DirectX::XMVectorMin(vMin, V);
+			vMax = DirectX::XMVectorMax(vMax, V);
+		}
+
+		if (lineType == "vt")
+		{
+			float u, v;
+			lineSS >> u >> v;
+			vTex.push_back({ u,v });
+			texCount++;
+		}
+
+		if (lineType == "vn")
+		{
+			float nx, ny, nz;
+			lineSS >> nx >> ny >> nz;
+			vNor.push_back({ nx, ny, nz });
+			norCount++;
+		}
+
+		if (lineType == "f")
+		{
+			//Each face references three vertices, with their respective positions, texture coordinates and normals (think triangles)
+			//Some obj-files simply have something like "f 2 5 3", while others are built more like "f 2/1/0 5/3/1 3/2/2"
+			//We write the following code in a way that works with both of these formats
+			std::vector<VertexReference> refs;
+			std::string refStr;
+			while (lineSS >> refStr)
+			{
+				std::istringstream ref(refStr);
+				std::string vStr, vtStr, vnStr;
+
+				//Split the line at every / (this is the point where we know what kind of obj-file we're reading, as mentioned above)
+				std::getline(ref, vStr, '/');
+				std::getline(ref, vtStr, '/');
+				std::getline(ref, vnStr, '/');
+
+				//Convert to integer
+				int v = atoi(vStr.c_str());
+				int vt = atoi(vtStr.c_str());
+				int vn = atoi(vnStr.c_str());
+
+				//Error checking in case of negative references (shouldn't be necessary as long as the .obj-file isn't trash but I did have to deal with it one time)
+				if (v < 0) v = (int)vPos.size() + v;
+				if (vt < 0) vt = (int)vTex.size() + vt;
+				if (vn < 0) vn = (int)vNor.size() + vn;
+
+				//Subtract by one because the "faces" part of an obj-file starts counting from 1, but we want to count from 0
+				indices.push_back(v - 1);
+				refs.push_back({ v - 1 , vt - 1 , vn - 1 });
+				vCount++;
+				vCountMesh++;
+			}
+
+			//We now have all the information we need to construct our vertices
+			for (size_t i = 1; i + 1 < refs.size(); ++i)
+			{
+				//Get the actual values of the vertices referenced by the face
+				const VertexReference* p[3] = { &refs[0], &refs[i], &refs[i + 1] };
+
+				//Variables for manually calculating normals
+				XMVECTOR U;
+				XMVECTOR V;
+				XMVECTOR faceNormal;
+
+				//If we haven't gotten normals from the .obj-file we calculate them manually
+				//If we already have them, skip this step so as to not waste processing power on unnecessary calculations
+				if (norCount == 0)
+				{
+					U = XMVectorSubtract(XMLoadFloat3(&vPos[p[1]->v]), XMLoadFloat3(&vPos[p[0]->v]));
+					V = XMVectorSubtract(XMLoadFloat3(&vPos[p[2]->v]), XMLoadFloat3(&vPos[p[0]->v]));
+					faceNormal = XMVector3Cross(U, V);
+					faceNormal = XMVector3Normalize(faceNormal);
+				}
+
+				for (size_t j = 0; j < 3; ++j)
+				{
+					Vertex vert;
+					vert.position = vPos[p[j]->v];
+					vert.texcoord = (texCount != 0 ? vTex[p[j]->vn] : XMFLOAT2({0.0f, 0.0f}));
+					vert.normal = (norCount != 0 ? vNor[p[j]->vn] : faceNormal); //hmm, faceNormal was just remade into an xmvector but now that's an issue again. rewrite this to do an "XMStoreFloat3" i guess
+
+					vertices.push_back(vert);
+				}
+			}
+		}
+	}
+
+	//Before we return out of this function, we store the values that we've now received to make a bounding box
+	//Either pass into the function, or perhaps more fittingly, create a new function in the Drawable-class that calls CreateFromPoints() to make its own aabb
+	DirectX::BoundingBox::CreateFromPoints(aabb, vMin, vMax);
+
+	return true;
+
+	/*BufferData bufferData;
+	bufferData.vData.size = sizeof(Vertex);
+	bufferData.vData.count = 24;
+	bufferData.vData.vector = vertices;
+
+	bufferData.iData.size = sizeof(uint32_t);
+	bufferData.iData.count = 36;
+	bufferData.iData.vector = indices;*/
+
+	/*Drawable cube(device.Get(), bufferData, scale, rotate, translate);
+	m_drawables.push_back(cube);*/
+}

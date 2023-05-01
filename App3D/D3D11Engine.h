@@ -39,6 +39,11 @@ private:
 	ViewProj m_viewProj;
 	ConstantBuffer m_cameraCB;
 
+	struct VertexReference
+	{
+		int v, vt, vn;
+	};
+
 	/*Functions*/
 	void Render(float dt);
 	void InitInterfaces(const HWND& window);
@@ -55,6 +60,8 @@ private:
 	void InitQuad(DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
 	void InitCube(DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
 	void UpdateConstantBuffer(ID3D11Buffer* cb, void* data, size_t size);
+
+	bool InitDrawableFromFile(std::string fileName, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
 
 	/*Variables*/
 	static constexpr float CLEAR_COLOR[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
