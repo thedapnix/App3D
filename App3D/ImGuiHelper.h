@@ -16,7 +16,7 @@ void SetupImGui(HWND hwnd, ID3D11Device* device, ID3D11DeviceContext* context);
 
 void StartImGuiFrame();
 
-void ImGuiEngineWindow(Camera* camera);
+void ImGuiEngineWindow(Camera* camera, std::string fps, int state);
 
 void EndImGuiFrame();
 

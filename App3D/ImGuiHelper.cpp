@@ -51,7 +51,7 @@ void ImGuiWindowMenu(bool& isActive)
 	}
 }
 
-void ImGuiEngineWindow(Camera* camera)
+void ImGuiEngineWindow(Camera* camera, std::string fps, int state)
 {
 	//Setup
 	static bool window_active = true;
@@ -63,8 +63,13 @@ void ImGuiEngineWindow(Camera* camera)
 	//Print whatever information we want from this window
 	if (window_active)
 	{
+		ImGui::Text("Current FPS: %s", fps.c_str());
+		ImGui::Text("----------------------------------");
+		ImGui::Text("Current State: %s", state == 0 ? "Player" : "Camera");
+		ImGui::Text("----------------------------------");
 		ImGui::Text("Camera Position: (%f, %f, %f)", camera->GetPosition().x, camera->GetPosition().y, camera->GetPosition().z);
 		ImGui::Text("Camera is looking towards: (%f, %f, %f)", camera->GetLook().x, camera->GetLook().y, camera->GetLook().z);
+		ImGui::Text("----------------------------------");
 	}
 
 	ImGui::End();

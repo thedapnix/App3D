@@ -31,6 +31,7 @@ App::App(HINSTANCE hInstance)
     m_mouse = std::make_unique<Mouse>();
     m_keyboard = std::make_unique<Keyboard>();
     m_timer = std::make_unique<Timer>(); //Constructor should also Start()
+    m_fpsTimer = std::make_unique<Timer>();
     m_engine = std::make_unique<D3D11Engine>(m_hwnd, m_width, m_height);
 }
 
@@ -67,47 +68,81 @@ int App::Run()
 
 void App::DoFrame(float dt)
 {
+    /*Camera stuff*/
     InterpretKeyboardInput();
     m_engine->GetCamera().UpdateViewMatrix();
+
+    /*Imgui stuff*/
+    if (m_fpsTimer->GetMilisecondsElapsed() > 1000.0f)
+    {
+        m_fpsShouldUpdate = true;
+        m_fpsTimer->Restart();
+    }
+    m_engine->ImGuiSceneData(m_engine.get(), m_fpsShouldUpdate, (int)m_currentState);
+    m_fpsShouldUpdate = false;
 }
 
 void App::InterpretKeyboardInput()
 {
-    if (this->m_keyboard->IsKeyPressed(0x57)) //W
+    if (m_currentState == States::CAMERA_CONTROL)
     {
-        m_engine->GetCamera().Walk(0.25f);
-    }
-    if (this->m_keyboard->IsKeyPressed(0x53)) //S
-    {
-        m_engine->GetCamera().Walk(-0.25f);
-    }
-    if (this->m_keyboard->IsKeyPressed(0x44)) //D
-    {
-        m_engine->GetCamera().Strafe(0.25f);
-    }
-    if (this->m_keyboard->IsKeyPressed(0x41)) //A
-    {
-        m_engine->GetCamera().Strafe(-0.25f);
+        if (m_keyboard->IsKeyPressed(VK_SPACE))
+        {
+            m_currentState = States::PLAYER_CONTROL;
+        }
+        if (m_keyboard->IsKeyPressed(0x57)) //W
+        {
+            m_engine->GetCamera().Walk(0.25f);
+        }
+        if (m_keyboard->IsKeyPressed(0x53)) //S
+        {
+            m_engine->GetCamera().Walk(-0.25f);
+        }
+        if (m_keyboard->IsKeyPressed(0x44)) //D
+        {
+            m_engine->GetCamera().Strafe(0.25f);
+        }
+        if (m_keyboard->IsKeyPressed(0x41)) //A
+        {
+            m_engine->GetCamera().Strafe(-0.25f);
+        }
+
+        if (m_keyboard->IsKeyPressed(0x50)) //P
+        {
+            m_engine->GetCamera().LookAt(m_engine->GetCamera().GetPosition(), { 0.0f, 0.0f, 1.0f }, m_engine->GetCamera().GetUp());
+        }
     }
 
-    if (this->m_keyboard->IsKeyPressed(0x50)) //P
-        m_engine->GetCamera().LookAt(m_engine->GetCamera().GetPosition(), { 0.0f, 0.0f, 1.0f }, m_engine->GetCamera().GetUp());
+    /*Player*/
+    if (m_currentState == States::PLAYER_CONTROL)
+    {
+        if (m_keyboard->IsKeyPressed(VK_ESCAPE))
+        {
+            m_currentState = States::CAMERA_CONTROL;
+        }
+    }
 }
 
 void App::OnMouseMove(WPARAM btnState, int x, int y)
 {
-    if ((btnState & MK_LBUTTON) != 0)
+    /*Camera*/
+    if (m_currentState == States::CAMERA_CONTROL)
     {
-        // Make each pixel correspond to a quarter of a degree.
-        float dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(x - m_mouse->GetLastPosX()));
-        float dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(y - m_mouse->GetLastPosY()));
+        if ((btnState & MK_LBUTTON) != 0)
+        {
+            // Make each pixel correspond to a quarter of a degree.
+            float dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(x - m_mouse->GetLastPosX()));
+            float dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(y - m_mouse->GetLastPosY()));
 
-        m_engine->GetCamera().Pitch(dy);
-        m_engine->GetCamera().RotateY(dx);
+            m_engine->GetCamera().Pitch(dy);
+            m_engine->GetCamera().RotateY(dx);
+        }
+
+        m_mouse->SetLastPosX(x);
+        m_mouse->SetLastPosY(y);
     }
 
-    m_mouse->SetLastPosX(x);
-    m_mouse->SetLastPosY(y);
+    /*Player (probably won't do anything here)*/
 }
 
 LRESULT App::HandleUserInput(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)

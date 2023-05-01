@@ -24,7 +24,7 @@ public:
 	D3D11Engine(const D3D11Engine&) = delete;
 
 	void Update(float dt);
-	//void ImGuiSceneToRender(Scene& sceneToRender, D3D11Engine* d3d11engine, bool shouldUpdate);
+	void ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps, int state);
 
 	Camera& GetCamera() const noexcept;
 	//ID3D11Device* GetDevice();
@@ -60,8 +60,8 @@ private:
 	static constexpr float CLEAR_COLOR[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
 	std::vector<Drawable> m_drawables;
 	std::unique_ptr<Camera> m_camera;
-	int fpsCounter = 0;
-	std::string fpsString = "";
+	int m_fpsCounter = 0;
+	std::string m_fpsString = "";
 
 private:
 	/*D3D11 Interfaces*/

@@ -56,15 +56,22 @@ void D3D11Engine::Update(float dt)
 		drawable.UpdateConstantBuffer(context.Get());
 	}
 
-	StartImGuiFrame();
-	
-	ImGuiEngineWindow(m_camera.get());
-
-	EndImGuiFrame();
-
 	Render(dt);
 
 	swapChain->Present(1, 0); //vSync enabled
+}
+
+void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps, int state)
+{
+	StartImGuiFrame();
+	m_fpsCounter++;
+	if (shouldUpdateFps)
+	{
+		m_fpsString = std::to_string(m_fpsCounter);
+		m_fpsCounter = 0;
+	}
+	ImGuiEngineWindow(m_camera.get(), m_fpsString, state);
+	EndImGuiFrame();
 }
 
 Camera& D3D11Engine::GetCamera() const noexcept
@@ -205,8 +212,8 @@ void D3D11Engine::InitDepthStencil(const UINT& width, const UINT& height)
 	context->OMSetDepthStencilState(dss.Get(), 1u);
 
 	D3D11_TEXTURE2D_DESC dstd = {};
-	dstd.Width = width - 16u;	//offsets? because of window borders?
-	dstd.Height = height - 39u;	//
+	dstd.Width = width - 16u;	//offsets
+	dstd.Height = height - 39u;	//because of window borders
 	dstd.MipLevels = 1;
 	dstd.ArraySize = 1;
 	dstd.Format = DXGI_FORMAT_D32_FLOAT; //DXGI_FORMAT_D24_UNORM_S8_UINT;
