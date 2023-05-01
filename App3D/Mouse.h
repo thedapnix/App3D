@@ -18,6 +18,8 @@ class Mouse
 public:
 	Mouse();
 	~Mouse() = default;
+	Mouse& operator=(const Mouse&) = delete;
+	Mouse(const Mouse&) = delete;
 
 	void OnPress(HWND& window, int x, int y);
 	void OnRelease();

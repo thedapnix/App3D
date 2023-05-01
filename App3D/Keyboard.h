@@ -42,8 +42,8 @@ public:
 
 	Keyboard() = default;
 	~Keyboard() = default;
-	Keyboard(const Keyboard&) = delete;
 	Keyboard& operator=(const Keyboard&) = delete;
+	Keyboard(const Keyboard&) = delete;
 
 	//Key Events
 	bool IsKeyPressed(unsigned char keyCode);

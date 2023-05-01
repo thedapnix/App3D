@@ -13,6 +13,8 @@ class Timer
 public:
 	Timer();
 	~Timer() = default;
+	Timer& operator=(const Timer&) = delete;
+	Timer(const Timer&) = delete;
 
 	/*bool Start();
 	bool Stop();*/

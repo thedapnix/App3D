@@ -13,8 +13,9 @@
 class VertexBuffer {
 public:
 	VertexBuffer() = default;
-	//VertexBuffer(ID3D11Device* device, UINT vertexSize, UINT vertexCount, void* vertexData);
 	~VertexBuffer() = default;
+	//VertexBuffer& operator=(const VertexBuffer&) = delete;
+	//VertexBuffer(const VertexBuffer&) = delete;
 
 	void Init(ID3D11Device* device, UINT vertexSize, UINT vertexCount, void* vertexData);
 

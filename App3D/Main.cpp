@@ -26,7 +26,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance,
 	App app(hInstance);
 	app.Run();
 
-	_CrtDumpMemoryLeaks();
+	//_CrtDumpMemoryLeaks();
 
 	return 0;
 }

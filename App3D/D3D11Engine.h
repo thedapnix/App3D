@@ -20,43 +20,48 @@ class D3D11Engine
 public:
 	D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height);
 	~D3D11Engine();
+	D3D11Engine& operator=(const D3D11Engine&) = delete;
+	D3D11Engine(const D3D11Engine&) = delete;
 
 	void Update(float dt);
 	//void ImGuiSceneToRender(Scene& sceneToRender, D3D11Engine* d3d11engine, bool shouldUpdate);
 
-	Camera& GetCamera();
+	Camera& GetCamera() const noexcept;
 	//ID3D11Device* GetDevice();
 
 private:
-	/*Structs*/
+	/*TODO: Move to camera*/
 	struct ViewProj
 	{
 		DirectX::XMFLOAT4X4 view;
 		DirectX::XMFLOAT4X4 proj;
 	};
+	ViewProj m_viewProj;
+	ConstantBuffer m_cameraCB;
 
 	/*Functions*/
 	void Render(float dt);
 	void InitInterfaces(const HWND& window);
 	void InitRTV();
 	void InitViewport(const UINT& width, const UINT& height);
+	void InitDepthStencil(const UINT& width, const UINT& height);
 	void InitVertexShader();
 	void InitInputLayout();
 	void InitPixelShader();
 	void InitCamera();
 	//void InitSampler();
-	void InitQuad(DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate); // temp
+
+	/*Temp*/
+	void InitQuad(DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
 	void InitCube(DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
-	void UpdateConstantBuffer(ID3D11Buffer* cb, void* data, size_t size); //temp
+	void UpdateConstantBuffer(ID3D11Buffer* cb, void* data, size_t size);
 
 	/*Variables*/
 	static constexpr float CLEAR_COLOR[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
 	std::vector<Drawable> m_drawables;
 	std::unique_ptr<Camera> m_camera;
-	ViewProj m_viewProj;
-	ConstantBuffer m_cameraCB;
-	//int fpsCounter = 0;
-	//std::string fpsString = "";
+	int fpsCounter = 0;
+	std::string fpsString = "";
 
 private:
 	/*D3D11 Interfaces*/
@@ -65,16 +70,15 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> context;
 	Microsoft::WRL::ComPtr<IDXGISwapChain> swapChain;
 
-	//Render Targets
+	//Render Target(s)
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> rtv;
-	//Microsoft::WRL::ComPtr<ID3D11Texture2D> backBuffer;
 
 	//Depth Stencil
-	/*Microsoft::WRL::ComPtr<ID3D11DepthStencilState> dss;
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> dss;
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> dst;
-	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> dsv;*/
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> dsv;
 
-	//Viewports
+	//Viewport(s)
 	D3D11_VIEWPORT viewport;
 
 	//AudioManager audioManager;

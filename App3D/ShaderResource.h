@@ -13,8 +13,9 @@
 class ShaderResource {
 public:
 	ShaderResource() = default;
-	//ShaderResource(ID3D11Device* device, const char* textureFile); //This is the one we actually call
 	~ShaderResource() = default;
+	ShaderResource& operator=(const ShaderResource&) = delete;
+	ShaderResource(const ShaderResource&) = delete;
 
 	void Init(ID3D11Device* device, const char* textureFile);
 	void SetTexture(ID3D11Device* device, UINT width, UINT height, void* textureData);

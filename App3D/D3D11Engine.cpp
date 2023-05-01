@@ -11,6 +11,7 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	InitInterfaces(hWnd);
 	InitRTV();
 	InitViewport(width, height);
+	InitDepthStencil(width, height);
 
 	//Render setup (Vertex shader first, then input layout, then pixel shader (for the sake of reusing the shader blob))
 	InitVertexShader();
@@ -31,7 +32,8 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	//	int r5 = -10 + (rand() % 20);
 	//	int r6 = -10 + (rand() % 20);*/
 	//}
-	InitCube({ 5.0f, 0.5f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -3.0f, 0.0f });
+	InitCube({ 5.0f, 0.5f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -3.0f, 10.0f }); //Ground
+	InitCube({ 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { -4.0f, -1.5f, 10.0f });//Player
 
 	SetupImGui(hWnd, device.Get(), context.Get());
 }
@@ -65,7 +67,7 @@ void D3D11Engine::Update(float dt)
 	swapChain->Present(1, 0); //vSync enabled
 }
 
-Camera& D3D11Engine::GetCamera()
+Camera& D3D11Engine::GetCamera() const noexcept
 {
 	return *m_camera;
 }
@@ -78,7 +80,8 @@ void D3D11Engine::Render(float dt)
 	
 	// Clear the back buffer (and depth stencil later)
 	context->ClearRenderTargetView(rtv.Get(), CLEAR_COLOR);
-	context->OMSetRenderTargets(1, rtv.GetAddressOf(), NULL);
+	context->ClearDepthStencilView(dsv.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	context->OMSetRenderTargets(1, rtv.GetAddressOf(), dsv.Get());
 
 	/*Input Assembler Stage*/
 	//Set primitive topology and input layout
@@ -143,13 +146,11 @@ void D3D11Engine::InitInterfaces(const HWND& window)
 		0,
 		D3D11_SDK_VERSION,
 		&desc,
-		swapChain.GetAddressOf(),
-		device.GetAddressOf(),
+		&swapChain,
+		&device,
 		NULL,
-		context.GetAddressOf()
+		&context
 	);
-
-	_CrtDumpMemoryLeaks();
 
 	if (FAILED(hr))
 	{
@@ -184,6 +185,52 @@ void D3D11Engine::InitViewport(const UINT& width, const UINT& height)
 	viewport.MaxDepth = 1;
 	viewport.TopLeftX = 0;
 	viewport.TopLeftY = 0;
+}
+
+void D3D11Engine::InitDepthStencil(const UINT& width, const UINT& height)
+{
+	HRESULT hr;
+
+	//Create depth stencil view + texture
+	D3D11_DEPTH_STENCIL_DESC dsd = {};
+	dsd.DepthEnable = TRUE;
+	dsd.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	dsd.DepthFunc = D3D11_COMPARISON_LESS;
+	hr = device->CreateDepthStencilState(&dsd, &dss);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create depth stencil state!", L"Error", MB_OK);
+		return;
+	}
+	context->OMSetDepthStencilState(dss.Get(), 1u);
+
+	D3D11_TEXTURE2D_DESC dstd = {};
+	dstd.Width = width - 16u;	//offsets? because of window borders?
+	dstd.Height = height - 39u;	//
+	dstd.MipLevels = 1;
+	dstd.ArraySize = 1;
+	dstd.Format = DXGI_FORMAT_D32_FLOAT; //DXGI_FORMAT_D24_UNORM_S8_UINT;
+	dstd.SampleDesc.Count = 1;
+	dstd.SampleDesc.Quality = 0;
+	dstd.Usage = D3D11_USAGE_DEFAULT;
+	dstd.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	hr = device->CreateTexture2D(&dstd, NULL, &dst);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create depth stencil texture!", L"Error", MB_OK);
+		return;
+	}
+
+	D3D11_DEPTH_STENCIL_VIEW_DESC dsvd = {};
+	dsvd.Format = DXGI_FORMAT_D32_FLOAT;
+	dsvd.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	dsvd.Texture2D.MipSlice = 0;
+	hr = device->CreateDepthStencilView(dst.Get(), &dsvd, &dsv);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create depth stencil view!", L"Error", MB_OK);
+		return;
+	}
 }
 
 void D3D11Engine::InitVertexShader()
