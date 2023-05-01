@@ -78,6 +78,10 @@ void ImGuiEngineWindow(Camera* camera, std::string fps, int state)
 		ImGui::Text("Billboarding: %s", false ? "Enabled" : "Disabled");
 		ImGui::Text("Shadow Mapping: %s", false ? "Enabled" : "Disabled");
 		ImGui::Text("----------------------------------");
+		if (ImGui::Button("Enable Deferred"))
+		{
+			//Set a boolean to true
+		}
 	}
 
 	ImGui::End();
