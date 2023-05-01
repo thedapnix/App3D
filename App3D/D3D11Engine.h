@@ -18,7 +18,7 @@
 class D3D11Engine
 {
 public:
-	D3D11Engine(HWND hWnd, UINT width, UINT height);
+	D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height);
 	~D3D11Engine();
 
 	void Update(float dt);
@@ -37,9 +37,9 @@ private:
 
 	/*Functions*/
 	void Render(float dt);
-	void InitInterfaces(HWND window);
+	void InitInterfaces(const HWND& window);
 	void InitRTV();
-	void InitViewport(UINT width, UINT height);
+	void InitViewport(const UINT& width, const UINT& height);
 	void InitVertexShader();
 	void InitInputLayout();
 	void InitPixelShader();
@@ -52,7 +52,7 @@ private:
 	/*Variables*/
 	static constexpr float CLEAR_COLOR[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
 	std::vector<Drawable> m_drawables;
-	Camera m_camera;
+	std::unique_ptr<Camera> m_camera;
 	ViewProj m_viewProj;
 	ConstantBuffer m_cameraCB;
 	//int fpsCounter = 0;
@@ -67,7 +67,7 @@ private:
 
 	//Render Targets
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> rtv;
-	Microsoft::WRL::ComPtr<ID3D11Texture2D> backBuffer;
+	//Microsoft::WRL::ComPtr<ID3D11Texture2D> backBuffer;
 
 	//Depth Stencil
 	/*Microsoft::WRL::ComPtr<ID3D11DepthStencilState> dss;

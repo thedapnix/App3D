@@ -5,7 +5,7 @@
 
 using namespace DirectX;
 
-D3D11Engine::D3D11Engine(HWND hWnd, UINT width, UINT height)
+D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height)
 {
 	//Base setup for interface (swapchain, device and immediate context), render target (and backbuffer), and viewport
 	InitInterfaces(hWnd);
@@ -21,17 +21,16 @@ D3D11Engine::D3D11Engine(HWND hWnd, UINT width, UINT height)
 	InitCamera();
 
 	//Init all our drawables
-	srand((unsigned)time(NULL));
-	for (int i = 0; i < 20; i++)
-	{
-		//Generate random numbers between -+10
-		/*int r1 = -10 + (rand() % 20);
-		int r2 = -10 + (rand() % 20);
-		int r4 = -10 + (rand() % 20);
-		int r5 = -10 + (rand() % 20);
-		int r6 = -10 + (rand() % 20);*/
-		//InitQuad({ 5.0f, 0.5f, 1.0f }, { 0.0f, 0.0f, 0.0f }, {0.0f, -5.0f, 0.0f});
-	}
+	//srand((unsigned)time(NULL));
+	//for (int i = 0; i < 20; i++)
+	//{
+	//	//Generate random numbers between -+10
+	//	/*int r1 = -10 + (rand() % 20);
+	//	int r2 = -10 + (rand() % 20);
+	//	int r4 = -10 + (rand() % 20);
+	//	int r5 = -10 + (rand() % 20);
+	//	int r6 = -10 + (rand() % 20);*/
+	//}
 	InitCube({ 5.0f, 0.5f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -3.0f, 0.0f });
 
 	SetupImGui(hWnd, device.Get(), context.Get());
@@ -45,8 +44,8 @@ D3D11Engine::~D3D11Engine()
 void D3D11Engine::Update(float dt)
 {
 	/*Update constant buffers*/
-	DirectX::XMStoreFloat4x4(&m_viewProj.view, XMMatrixTranspose(m_camera.View()));
-	DirectX::XMStoreFloat4x4(&m_viewProj.proj, XMMatrixTranspose(m_camera.Proj()));
+	DirectX::XMStoreFloat4x4(&m_viewProj.view, XMMatrixTranspose(m_camera->View()));
+	DirectX::XMStoreFloat4x4(&m_viewProj.proj, XMMatrixTranspose(m_camera->Proj()));
 	UpdateConstantBuffer(m_cameraCB.GetBuffer(), &m_viewProj, sizeof(m_viewProj));
 
 	for (auto& drawable : m_drawables)
@@ -57,7 +56,7 @@ void D3D11Engine::Update(float dt)
 
 	StartImGuiFrame();
 	
-	ImGuiEngineWindow(&m_camera);
+	ImGuiEngineWindow(m_camera.get());
 
 	EndImGuiFrame();
 
@@ -68,7 +67,7 @@ void D3D11Engine::Update(float dt)
 
 Camera& D3D11Engine::GetCamera()
 {
-	return m_camera;
+	return *m_camera;
 }
 
 void D3D11Engine::Render(float dt)
@@ -107,12 +106,13 @@ void D3D11Engine::Render(float dt)
 	}
 }
 
-void D3D11Engine::InitInterfaces(HWND window)
+void D3D11Engine::InitInterfaces(const HWND& window)
 {
 	/*
 	CREATE SWAPCHAIN, DEVICE AND IMMEDIATE CONTEXT
 	*/
-	DXGI_SWAP_CHAIN_DESC desc = {};
+	DXGI_SWAP_CHAIN_DESC desc;
+	ZeroMemory(&desc, sizeof(desc));
 	desc.BufferDesc.Width = 0;
 	desc.BufferDesc.Height = 0;
 	desc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -135,19 +135,21 @@ void D3D11Engine::InitInterfaces(HWND window)
 #endif
 
 	HRESULT hr = D3D11CreateDeviceAndSwapChain(
-		nullptr,
+		NULL,
 		D3D_DRIVER_TYPE_HARDWARE,
-		nullptr,
+		NULL,
 		swapCreateFlags,
-		nullptr,
+		NULL,
 		0,
 		D3D11_SDK_VERSION,
 		&desc,
-		this->swapChain.GetAddressOf(),
-		this->device.GetAddressOf(),
-		nullptr,
-		this->context.GetAddressOf()
+		swapChain.GetAddressOf(),
+		device.GetAddressOf(),
+		NULL,
+		context.GetAddressOf()
 	);
+
+	_CrtDumpMemoryLeaks();
 
 	if (FAILED(hr))
 	{
@@ -157,6 +159,7 @@ void D3D11Engine::InitInterfaces(HWND window)
 
 void D3D11Engine::InitRTV()
 {
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> backBuffer;
 	HRESULT hr = swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), &backBuffer);
 
 	if (FAILED(hr))
@@ -173,7 +176,7 @@ void D3D11Engine::InitRTV()
 	}
 }
 
-void D3D11Engine::InitViewport(UINT width, UINT height)
+void D3D11Engine::InitViewport(const UINT& width, const UINT& height)
 {
 	viewport.Width = width;
 	viewport.Height = height;
@@ -232,9 +235,10 @@ void D3D11Engine::InitPixelShader()
 
 void D3D11Engine::InitCamera()
 {
-	m_camera.UpdateViewMatrix();
-	XMStoreFloat4x4(&m_viewProj.view, XMMatrixTranspose(m_camera.View()));
-	XMStoreFloat4x4(&m_viewProj.proj, XMMatrixTranspose(m_camera.Proj()));
+	m_camera = std::make_unique<Camera>();
+	m_camera->UpdateViewMatrix();
+	XMStoreFloat4x4(&m_viewProj.view, XMMatrixTranspose(m_camera->View()));
+	XMStoreFloat4x4(&m_viewProj.proj, XMMatrixTranspose(m_camera->Proj()));
 	m_cameraCB.Init(device.Get(), &m_viewProj, sizeof(m_viewProj));
 	//bounding frustum to be made here as well
 }

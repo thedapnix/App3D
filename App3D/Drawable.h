@@ -64,5 +64,5 @@ private:
 	Transform m_transform;
 	ConstantBuffer m_constantBuffer;
 
-	ShaderResource m_shaderResource;
+	//ShaderResource m_shaderResource;
 };

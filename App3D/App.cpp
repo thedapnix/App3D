@@ -28,6 +28,8 @@ App::App(HINSTANCE hInstance)
 
     InitWindow();
 
+    m_mouse = std::make_unique<Mouse>();
+    m_keyboard = std::make_unique<Keyboard>();
     m_timer = std::make_unique<Timer>(); //Constructor should also Start()
     m_engine = std::make_unique<D3D11Engine>(m_hwnd, m_width, m_height);
 }
@@ -71,24 +73,24 @@ void App::DoFrame(float dt)
 
 void App::InterpretKeyboardInput()
 {
-    if (this->m_keyboard.IsKeyPressed(0x57)) //W
+    if (this->m_keyboard->IsKeyPressed(0x57)) //W
     {
         m_engine->GetCamera().Walk(0.25f);
     }
-    if (this->m_keyboard.IsKeyPressed(0x53)) //S
+    if (this->m_keyboard->IsKeyPressed(0x53)) //S
     {
         m_engine->GetCamera().Walk(-0.25f);
     }
-    if (this->m_keyboard.IsKeyPressed(0x44)) //D
+    if (this->m_keyboard->IsKeyPressed(0x44)) //D
     {
         m_engine->GetCamera().Strafe(0.25f);
     }
-    if (this->m_keyboard.IsKeyPressed(0x41)) //A
+    if (this->m_keyboard->IsKeyPressed(0x41)) //A
     {
         m_engine->GetCamera().Strafe(-0.25f);
     }
 
-    if (this->m_keyboard.IsKeyPressed(0x50)) //P
+    if (this->m_keyboard->IsKeyPressed(0x50)) //P
         m_engine->GetCamera().LookAt(m_engine->GetCamera().GetPosition(), { 0.0f, 0.0f, 1.0f }, m_engine->GetCamera().GetUp());
 }
 
@@ -97,15 +99,15 @@ void App::OnMouseMove(WPARAM btnState, int x, int y)
     if ((btnState & MK_LBUTTON) != 0)
     {
         // Make each pixel correspond to a quarter of a degree.
-        float dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(x - m_mouse.GetLastPosX()));
-        float dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(y - m_mouse.GetLastPosY()));
+        float dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(x - m_mouse->GetLastPosX()));
+        float dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(y - m_mouse->GetLastPosY()));
 
         m_engine->GetCamera().Pitch(dy);
         m_engine->GetCamera().RotateY(dx);
     }
 
-    m_mouse.SetLastPosX(x);
-    m_mouse.SetLastPosY(y);
+    m_mouse->SetLastPosX(x);
+    m_mouse->SetLastPosY(y);
 }
 
 LRESULT App::HandleUserInput(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -121,11 +123,11 @@ LRESULT App::HandleUserInput(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         MOUSE INPUT
         */
     case WM_LBUTTONDOWN:
-        m_mouse.OnPress(hWnd, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+        m_mouse->OnPress(hWnd, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
         break;
 
     case WM_LBUTTONUP:
-        m_mouse.OnRelease();
+        m_mouse->OnRelease();
         break;
 
     case WM_MOUSEMOVE:
@@ -138,12 +140,12 @@ LRESULT App::HandleUserInput(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
         if (!(lParam & 0x40000000))
-            m_keyboard.OnKeyPressed(static_cast<unsigned char>(wParam));
+            m_keyboard->OnKeyPressed(static_cast<unsigned char>(wParam));
         break;
 
     case WM_KEYUP:
     case WM_SYSKEYUP:
-        m_keyboard.OnKeyReleased(static_cast<unsigned char>(wParam));
+        m_keyboard->OnKeyReleased(static_cast<unsigned char>(wParam));
         break;
     }
     return DefWindowProc(hWnd, msg, wParam, lParam);

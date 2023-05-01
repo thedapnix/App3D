@@ -40,9 +40,9 @@ private:
 	const wchar_t* m_name;
 
 	/*Variables*/
-	Mouse m_mouse;
+	std::unique_ptr<Mouse> m_mouse;
 	std::pair<float, float> m_radians;
-	Keyboard m_keyboard;
+	std::unique_ptr<Keyboard> m_keyboard;
 	std::unique_ptr<Timer> m_timer;
 	std::unique_ptr<D3D11Engine> m_engine;
 };
