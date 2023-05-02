@@ -18,15 +18,20 @@ Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOA
 
 	//Quoted stackoverflow answer to the question on which order we do world matrix multiplications: "Usually it is scale, then rotation and lastly translation."
 	//So here's the big funny matrix:
-	DirectX::XMMATRIX worldMatrix =
+	/*DirectX::XMMATRIX worldMatrix =
 		DirectX::XMMatrixScaling(scaling.x, scaling.y, scaling.z) *
 		DirectX::XMMatrixRotationX(rotation.x) * DirectX::XMMatrixRotationY(rotation.y) * DirectX::XMMatrixRotationZ(rotation.z) *
-		DirectX::XMMatrixTranslation(translation.x, translation.y, translation.z);
-	m_scale = scaling;
-	m_rotate = rotation;
-	m_translate = translation;
+		DirectX::XMMatrixTranslation(translation.x, translation.y, translation.z);*/
 	
-	DirectX::XMStoreFloat4x4(&m_transform.world, DirectX::XMMatrixTranspose(worldMatrix));
+	DirectX::XMStoreFloat4x4(&m_transform.scale, DirectX::XMMatrixTranspose(
+		DirectX::XMMatrixScaling(scaling.x, scaling.y, scaling.z)
+	));
+	DirectX::XMStoreFloat4x4(&m_transform.rotate, DirectX::XMMatrixTranspose(
+		DirectX::XMMatrixRotationX(rotation.x) * DirectX::XMMatrixRotationY(rotation.y) * DirectX::XMMatrixRotationZ(rotation.z)
+	));
+	DirectX::XMStoreFloat4x4(&m_transform.translate, DirectX::XMMatrixTranspose(
+		DirectX::XMMatrixTranslation(translation.x, translation.y, translation.z)
+	));
 	m_constantBuffer.Init(device, &m_transform, sizeof(m_transform));
 
 	//They can also have shader resource view+texture (realistically everything will be textured but hey, we have the option not to)

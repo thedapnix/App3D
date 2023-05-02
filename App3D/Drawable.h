@@ -58,11 +58,10 @@ public:
 private:
 	struct WorldTransform
 	{
-		DirectX::XMFLOAT4X4 world;
+		DirectX::XMFLOAT4X4 scale;
+		DirectX::XMFLOAT4X4 rotate;
+		DirectX::XMFLOAT4X4 translate;
 	};
-	DirectX::XMFLOAT3 m_scale;		//
-	DirectX::XMFLOAT3 m_rotate;		//store locally so we can modify separate parts
-	DirectX::XMFLOAT3 m_translate;	//
 	WorldTransform m_transform;
 	ConstantBuffer m_constantBuffer;
 
