@@ -23,14 +23,17 @@ Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOA
 		DirectX::XMMatrixRotationX(rotation.x) * DirectX::XMMatrixRotationY(rotation.y) * DirectX::XMMatrixRotationZ(rotation.z) *
 		DirectX::XMMatrixTranslation(translation.x, translation.y, translation.z);*/
 	
+	m_scale = scaling;
+	m_rotate = rotation;
+	m_translate = translation;
 	DirectX::XMStoreFloat4x4(&m_transform.scale, DirectX::XMMatrixTranspose(
-		DirectX::XMMatrixScaling(scaling.x, scaling.y, scaling.z)
+		DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z)
 	));
 	DirectX::XMStoreFloat4x4(&m_transform.rotate, DirectX::XMMatrixTranspose(
-		DirectX::XMMatrixRotationX(rotation.x) * DirectX::XMMatrixRotationY(rotation.y) * DirectX::XMMatrixRotationZ(rotation.z)
+		DirectX::XMMatrixRotationX(m_rotate.x) * DirectX::XMMatrixRotationY(m_rotate.y) * DirectX::XMMatrixRotationZ(m_rotate.z)
 	));
 	DirectX::XMStoreFloat4x4(&m_transform.translate, DirectX::XMMatrixTranspose(
-		DirectX::XMMatrixTranslation(translation.x, translation.y, translation.z)
+		DirectX::XMMatrixTranslation(m_translate.x, m_translate.y, m_translate.z)
 	));
 	m_constantBuffer.Init(device, &m_transform, sizeof(m_transform));
 
@@ -72,4 +75,14 @@ void Drawable::UpdateConstantBuffer(ID3D11DeviceContext* context)
 void Drawable::CreateBoundingBoxFromPoints(DirectX::XMVECTOR min, DirectX::XMVECTOR max)
 {
 	DirectX::BoundingBox::CreateFromPoints(m_aabb, min, max);
+}
+
+void Drawable::EditTranslation(float x, float y, float z)
+{
+	m_translate.x += x;
+	m_translate.y += y;
+	m_translate.z += z;
+	DirectX::XMStoreFloat4x4(&m_transform.translate, DirectX::XMMatrixTranspose(
+		DirectX::XMMatrixTranslation(m_translate.x, m_translate.y, m_translate.z)
+	));
 }

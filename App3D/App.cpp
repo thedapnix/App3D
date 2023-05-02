@@ -120,6 +120,15 @@ void App::InterpretKeyboardInput()
         {
             m_currentState = States::CAMERA_CONTROL;
         }
+
+        if (m_keyboard->IsKeyPressed(0x44)) //D
+        {
+            m_engine->MovePlayer(0.1f);
+        }
+        if (m_keyboard->IsKeyPressed(0x41)) //A
+        {
+            m_engine->MovePlayer(-0.1f);
+        }
     }
 }
 

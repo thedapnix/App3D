@@ -26,6 +26,7 @@ public:
 	void Update(float dt);
 	void ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps, int state);
 
+	void MovePlayer(float speed);
 	Camera& GetCamera() const noexcept;
 	//ID3D11Device* GetDevice();
 

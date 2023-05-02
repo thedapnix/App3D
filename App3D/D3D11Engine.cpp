@@ -32,8 +32,8 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	//	int r5 = -10 + (rand() % 20);
 	//	int r6 = -10 + (rand() % 20);*/
 	//}
-	InitDrawableFromFile("Models/cube.obj", { 5.0f, 0.5f, 1.0f }, {0.0f, 0.0f, 0.0f}, {-2.5f, -2.0f, 10.0f});	//Ground
-	InitDrawableFromFile("Models/cube.obj", { 1.0f, 1.0f, 1.0f }, {0.0f, 0.0f, 0.0f}, {-2.5f, -1.5f, 10.0f});	//Player
+	InitDrawableFromFile("Models/cube.obj", { 5.0f, 0.5f, 1.0f }, {0.0f, 0.0f, 0.0f}, {-2.5f, -2.0f, 5.0f});	//Ground
+	InitDrawableFromFile("Models/cube.obj", { 1.0f, 1.0f, 1.0f }, {0.0f, 0.0f, 0.0f}, {-2.5f, -1.5f, 5.0f});	//Player
 
 	SetupImGui(hWnd, device.Get(), context.Get());
 }
@@ -72,6 +72,12 @@ void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps,
 	}
 	ImGuiEngineWindow(m_camera.get(), m_fpsString, state);
 	EndImGuiFrame();
+}
+
+void D3D11Engine::MovePlayer(float speed)
+{
+	//Right now we should have 2 drawables, one at [0] which is the ground, and one at [1] that we consider to be the player. This is the biggest of temp solutions
+	m_drawables.at(1).EditTranslation(speed, 0.0f, 0.0f);
 }
 
 Camera& D3D11Engine::GetCamera() const noexcept

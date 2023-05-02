@@ -54,6 +54,7 @@ public:
 	void Draw(ID3D11DeviceContext* context) const;
 	void UpdateConstantBuffer(ID3D11DeviceContext* context);
 	void CreateBoundingBoxFromPoints(DirectX::XMVECTOR min, DirectX::XMVECTOR max);
+	void EditTranslation(float x, float y, float z);
 
 private:
 	struct WorldTransform
@@ -62,6 +63,9 @@ private:
 		DirectX::XMFLOAT4X4 rotate;
 		DirectX::XMFLOAT4X4 translate;
 	};
+	DirectX::XMFLOAT3 m_scale;
+	DirectX::XMFLOAT3 m_rotate;
+	DirectX::XMFLOAT3 m_translate;
 	WorldTransform m_transform;
 	ConstantBuffer m_constantBuffer;
 
