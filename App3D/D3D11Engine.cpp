@@ -32,8 +32,8 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	//	int r5 = -10 + (rand() % 20);
 	//	int r6 = -10 + (rand() % 20);*/
 	//}
-	InitCube({ 5.0f, 0.5f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -3.0f, 10.0f }); //Ground
-	InitCube({ 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { -4.0f, -1.5f, 10.0f });//Player
+	InitDrawableFromFile("Models/cube.obj", { 5.0f, 0.5f, 1.0f }, {0.0f, 0.0f, 0.0f}, {-2.5f, -2.0f, 10.0f});	//Ground
+	InitDrawableFromFile("Models/cube.obj", { 1.0f, 1.0f, 1.0f }, {0.0f, 0.0f, 0.0f}, {-2.5f, -1.5f, 10.0f});	//Player
 
 	SetupImGui(hWnd, device.Get(), context.Get());
 }
@@ -449,8 +449,8 @@ bool D3D11Engine::InitDrawableFromFile(std::string fileName, DirectX::XMFLOAT3 s
 	std::vector<XMFLOAT3> vNor;
 
 	//Error handling for faces (preferably every .obj file has v, vt and vn, but not all .obj files were made equal)
-	int texCount = 0;
-	int norCount = 0;
+	bool fileHasTexcoord = false;
+	bool fileHasNormal = false;
 
 	//Wrap the mesh in a bounding box by getting the highest and lowest x-, y-, and z-values (use a library for actual infinities xd)
 	XMFLOAT3 vMinf3(1000000.0f, 1000000.0f, 1000000.0f);
@@ -458,6 +458,12 @@ bool D3D11Engine::InitDrawableFromFile(std::string fileName, DirectX::XMFLOAT3 s
 
 	XMVECTOR vMin = DirectX::XMLoadFloat3(&vMinf3);
 	XMVECTOR vMax = DirectX::XMLoadFloat3(&vMaxf3);
+
+	/*Pass along to drawable*/
+	std::vector<Vertex> vertices;
+	std::vector<uint32_t> indices;
+	UINT vCount = 0u;
+	UINT iCount = 0u;
 
 	//Read the text file
 	std::string lineStr;
@@ -485,7 +491,7 @@ bool D3D11Engine::InitDrawableFromFile(std::string fileName, DirectX::XMFLOAT3 s
 			float u, v;
 			lineSS >> u >> v;
 			vTex.push_back({ u,v });
-			texCount++;
+			fileHasTexcoord = true;
 		}
 
 		if (lineType == "vn")
@@ -493,7 +499,7 @@ bool D3D11Engine::InitDrawableFromFile(std::string fileName, DirectX::XMFLOAT3 s
 			float nx, ny, nz;
 			lineSS >> nx >> ny >> nz;
 			vNor.push_back({ nx, ny, nz });
-			norCount++;
+			fileHasNormal = true;
 		}
 
 		if (lineType == "f")
@@ -526,8 +532,8 @@ bool D3D11Engine::InitDrawableFromFile(std::string fileName, DirectX::XMFLOAT3 s
 				//Subtract by one because the "faces" part of an obj-file starts counting from 1, but we want to count from 0
 				indices.push_back(v - 1);
 				refs.push_back({ v - 1 , vt - 1 , vn - 1 });
-				vCount++;
-				vCountMesh++;
+				iCount++;
+				//vCountMesh++;
 			}
 
 			//We now have all the information we need to construct our vertices
@@ -536,17 +542,13 @@ bool D3D11Engine::InitDrawableFromFile(std::string fileName, DirectX::XMFLOAT3 s
 				//Get the actual values of the vertices referenced by the face
 				const VertexReference* p[3] = { &refs[0], &refs[i], &refs[i + 1] };
 
-				//Variables for manually calculating normals
-				XMVECTOR U;
-				XMVECTOR V;
-				XMVECTOR faceNormal;
-
 				//If we haven't gotten normals from the .obj-file we calculate them manually
 				//If we already have them, skip this step so as to not waste processing power on unnecessary calculations
-				if (norCount == 0)
+				XMVECTOR faceNormal;
+				if (!fileHasNormal)
 				{
-					U = XMVectorSubtract(XMLoadFloat3(&vPos[p[1]->v]), XMLoadFloat3(&vPos[p[0]->v]));
-					V = XMVectorSubtract(XMLoadFloat3(&vPos[p[2]->v]), XMLoadFloat3(&vPos[p[0]->v]));
+					XMVECTOR U = XMVectorSubtract(XMLoadFloat3(&vPos[p[1]->v]), XMLoadFloat3(&vPos[p[0]->v]));
+					XMVECTOR V = XMVectorSubtract(XMLoadFloat3(&vPos[p[2]->v]), XMLoadFloat3(&vPos[p[0]->v]));
 					faceNormal = XMVector3Cross(U, V);
 					faceNormal = XMVector3Normalize(faceNormal);
 				}
@@ -555,10 +557,11 @@ bool D3D11Engine::InitDrawableFromFile(std::string fileName, DirectX::XMFLOAT3 s
 				{
 					Vertex vert;
 					vert.position = vPos[p[j]->v];
-					vert.texcoord = (texCount != 0 ? vTex[p[j]->vn] : XMFLOAT2({0.0f, 0.0f}));
-					vert.normal = (norCount != 0 ? vNor[p[j]->vn] : faceNormal); //hmm, faceNormal was just remade into an xmvector but now that's an issue again. rewrite this to do an "XMStoreFloat3" i guess
+					vert.texcoord = (fileHasTexcoord ? vTex[p[j]->vn] : XMFLOAT2({0.0f, 0.0f}));
+					if (fileHasNormal) vert.normal = vNor[p[j]->vn]; else XMStoreFloat3(&vert.normal, faceNormal); //Ternary operator replaced with if-else since we're having different return values
 
 					vertices.push_back(vert);
+					vCount++;
 				}
 			}
 		}
@@ -566,19 +569,20 @@ bool D3D11Engine::InitDrawableFromFile(std::string fileName, DirectX::XMFLOAT3 s
 
 	//Before we return out of this function, we store the values that we've now received to make a bounding box
 	//Either pass into the function, or perhaps more fittingly, create a new function in the Drawable-class that calls CreateFromPoints() to make its own aabb
-	DirectX::BoundingBox::CreateFromPoints(aabb, vMin, vMax);
+	//DirectX::BoundingBox::CreateFromPoints(aabb, vMin, vMax);
 
-	return true;
-
-	/*BufferData bufferData;
+	BufferData bufferData;
 	bufferData.vData.size = sizeof(Vertex);
-	bufferData.vData.count = 24;
+	bufferData.vData.count = vCount;
 	bufferData.vData.vector = vertices;
 
 	bufferData.iData.size = sizeof(uint32_t);
-	bufferData.iData.count = 36;
-	bufferData.iData.vector = indices;*/
+	bufferData.iData.count = iCount;
+	bufferData.iData.vector = indices;
 
-	/*Drawable cube(device.Get(), bufferData, scale, rotate, translate);
-	m_drawables.push_back(cube);*/
+	Drawable cube(device.Get(), bufferData, scale, rotate, translate);
+	cube.CreateBoundingBoxFromPoints(vMin, vMax);
+	m_drawables.push_back(cube);
+
+	return true;
 }

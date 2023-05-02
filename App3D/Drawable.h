@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <DirectXMath.h>
+#include <DirectXCollision.h>
 
 #include "ShaderResource.h"
 #include "VertexBuffer.h"
@@ -52,19 +53,23 @@ public:
 	void Bind(ID3D11DeviceContext* context);
 	void Draw(ID3D11DeviceContext* context) const;
 	void UpdateConstantBuffer(ID3D11DeviceContext* context);
+	void CreateBoundingBoxFromPoints(DirectX::XMVECTOR min, DirectX::XMVECTOR max);
 
 private:
-	struct Transform
+	struct WorldTransform
 	{
 		DirectX::XMFLOAT4X4 world;
 	};
+	DirectX::XMFLOAT3 m_scale;		//
+	DirectX::XMFLOAT3 m_rotate;		//store locally so we can modify separate parts
+	DirectX::XMFLOAT3 m_translate;	//
+	WorldTransform m_transform;
+	ConstantBuffer m_constantBuffer;
 
 	/*Buffers and srv+srt*/
 	VertexBuffer m_vertexBuffer;
 	IndexBuffer m_indexBuffer;
 
-	Transform m_transform;
-	ConstantBuffer m_constantBuffer;
-
 	//ShaderResource m_shaderResource;
+	DirectX::BoundingBox m_aabb;
 };

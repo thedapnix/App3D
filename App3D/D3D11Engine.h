@@ -9,7 +9,7 @@
 #include <fstream>
 #include <sstream>
 
-#include <DirectXCollision.h>
+//#include <DirectXCollision.h>
 
 #include "ConstantBuffer.h"
 #include "Drawable.h"
