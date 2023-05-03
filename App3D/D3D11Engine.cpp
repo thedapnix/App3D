@@ -71,7 +71,8 @@ void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps,
 		m_fpsCounter = 0;
 	}
 	ImGuiEngineWindow(m_camera.get(), m_fpsString, state,
-		objIsEnabled, deferredIsEnabled, cullingIsEnabled, billboardingIsEnabled, lodIsEnabled, cubemapIsEnabled, shadowIsEnabled);
+		objIsEnabled, deferredIsEnabled, cullingIsEnabled, billboardingIsEnabled, lodIsEnabled, cubemapIsEnabled, shadowIsEnabled,
+		drawablesBeingRendered);
 	EndImGuiFrame();
 }
 
@@ -102,12 +103,6 @@ void D3D11Engine::Render(float dt)
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	context->IASetInputLayout(inputLayout.Get());
 
-	//Bind vertex and index buffers (per drawable)
-	for (auto& drawable : m_drawables)
-	{
-		drawable.Bind(context.Get());
-	}
-
 	/*Vertex Shader Stage*/
 	context->VSSetConstantBuffers(0, 1, m_cameraCB.GetBufferAddress());
 	context->VSSetShader(vertexShader.Get(), NULL, 0);
@@ -116,11 +111,32 @@ void D3D11Engine::Render(float dt)
 	context->PSSetShader(pixelShader.Get(), NULL, 0);
 	//this->context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
 
-	//Draw (internally, these also do VSSetConstantBuffers so sue me for not following the Rendering Pipeline stages)
-	for (auto& drawable : m_drawables)
+	/*Culling*/
+	if (cullingIsEnabled)
 	{
-		drawable.Draw(context.Get());
+		int visibleDrawables = 0;
+		for (auto& drawable : m_drawables)
+		{
+			if (DrawableIsVisible(m_frustum, drawable.GetBoundingBox(), m_camera->View(), drawable.World()))
+			{
+				drawable.Bind(context.Get());
+				drawable.Draw(context.Get());
+				visibleDrawables++;
+			}
+			drawablesBeingRendered = visibleDrawables;
+		}
 	}
+	else
+	{
+		//Per drawable: bind vertex and index buffers, then draw them
+		for (auto& drawable : m_drawables)
+		{
+			drawable.Bind(context.Get());
+			drawable.Draw(context.Get());
+		}
+		drawablesBeingRendered = (int)m_drawables.size();
+	}
+	
 }
 
 void D3D11Engine::InitInterfaces(const HWND& window)
@@ -301,7 +317,28 @@ void D3D11Engine::InitCamera()
 	XMStoreFloat4x4(&m_viewProj.view, XMMatrixTranspose(m_camera->View()));
 	XMStoreFloat4x4(&m_viewProj.proj, XMMatrixTranspose(m_camera->Proj()));
 	m_cameraCB.Init(device.Get(), &m_viewProj, sizeof(m_viewProj));
-	//bounding frustum to be made here as well
+	DirectX::BoundingFrustum::CreateFromMatrix(m_frustum, m_camera->Proj());
+}
+
+bool D3D11Engine::DrawableIsVisible(DirectX::BoundingFrustum frustum, DirectX::BoundingBox aabb, DirectX::XMMATRIX view, DirectX::XMMATRIX world)
+{
+	//The frustum is in view space, and the AABB is in the local space of the object it wraps
+	//So the frustum needs to be multiplied by the inverse view- (which we get from the camera) and world-matrices (of the particular object) to take it to the object's local space
+
+	//Get determinants and the the inverses of the view- and world-matrices
+	DirectX::XMVECTOR detView = DirectX::XMMatrixDeterminant(view);
+	DirectX::XMVECTOR detWorld = DirectX::XMMatrixDeterminant(world);
+
+	DirectX::XMMATRIX invView = DirectX::XMMatrixInverse(&detView, view);
+	DirectX::XMMATRIX invWorld = DirectX::XMMatrixInverse(&detWorld, world);
+
+	//Create the matrix that transforms from view space to the local space of the object
+	DirectX::XMMATRIX viewToLocal = DirectX::XMMatrixMultiply(invView, invWorld);
+
+	DirectX::BoundingFrustum localFrustum = frustum; //Copy the input frustum so as to not modify the original
+	localFrustum.Transform(localFrustum, viewToLocal); //Transform the copied frustum so it's in the same space as the object we're testing it against
+
+	return localFrustum.Intersects(aabb);
 }
 
 //void D3D11Engine::InitSampler()

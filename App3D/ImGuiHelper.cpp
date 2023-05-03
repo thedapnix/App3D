@@ -52,7 +52,8 @@ void ImGuiWindowMenu(bool& isActive)
 }
 
 void ImGuiEngineWindow(Camera* camera, std::string fps, int state,
-	bool& objIsEnabled, bool& deferredIsEnabled, bool& cullingIsEnabled, bool& billboardingIsEnabled, bool& lodIsEnabled, bool& cubemapIsEnabled, bool& shadowIsEnabled)
+	bool& objIsEnabled, bool& deferredIsEnabled, bool& cullingIsEnabled, bool& billboardingIsEnabled, bool& lodIsEnabled, bool& cubemapIsEnabled, bool& shadowIsEnabled,
+	int drawables)
 {
 	//Setup
 	static bool window_active = true;
@@ -70,6 +71,7 @@ void ImGuiEngineWindow(Camera* camera, std::string fps, int state,
 		ImGui::Text("----------------------------------");
 		ImGui::Text("Camera Position: (%f, %f, %f)", camera->GetPosition().x, camera->GetPosition().y, camera->GetPosition().z);
 		ImGui::Text("Camera is looking towards: (%f, %f, %f)", camera->GetLook().x, camera->GetLook().y, camera->GetLook().z);
+		ImGui::Text("Drawables being rendered: %d", drawables);
 		ImGui::Text("----------------------------------");
 		ImGui::Text("OBJ Parsing: %s", objIsEnabled ? "Enabled" : "Disabled");
 		ImGui::Text("Deferred Rendering: %s", deferredIsEnabled ? "Enabled" : "Disabled");
@@ -79,9 +81,13 @@ void ImGuiEngineWindow(Camera* camera, std::string fps, int state,
 		ImGui::Text("Cube Mapping: %s", cubemapIsEnabled ? "Enabled" : "Disabled");
 		ImGui::Text("Shadow Mapping: %s", shadowIsEnabled ? "Enabled" : "Disabled");
 		ImGui::Text("----------------------------------");
-		if (ImGui::Button("Enable Deferred"))
+		if (ImGui::Button("Toggle Deferred Rendering"))
 		{
-			deferredIsEnabled = true;
+			if (deferredIsEnabled) deferredIsEnabled = false; else deferredIsEnabled = true;
+		}
+		if (ImGui::Button("Toggle Frustum Culling"))
+		{
+			if (cullingIsEnabled) cullingIsEnabled = false; else cullingIsEnabled = true;
 		}
 	}
 

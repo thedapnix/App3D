@@ -39,6 +39,7 @@ private:
 	};
 	ViewProj m_viewProj;
 	ConstantBuffer m_cameraCB;
+	DirectX::BoundingFrustum m_frustum;
 
 	//OBJ-parser
 	struct VertexReference
@@ -56,6 +57,8 @@ private:
 	void InitInputLayout();
 	void InitPixelShader();
 	void InitCamera();
+
+	bool DrawableIsVisible(DirectX::BoundingFrustum frustum, DirectX::BoundingBox aabb, DirectX::XMMATRIX view, DirectX::XMMATRIX world);
 	//void InitSampler();
 
 	/*Temp*/
@@ -69,6 +72,7 @@ private:
 	static constexpr float CLEAR_COLOR[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
 	std::vector<Drawable> m_drawables;
 	std::unique_ptr<Camera> m_camera;
+	int drawablesBeingRendered = 0;
 
 	/*ImGui variables*/
 	int m_fpsCounter = 0;

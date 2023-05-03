@@ -56,6 +56,10 @@ public:
 	void CreateBoundingBoxFromPoints(DirectX::XMVECTOR min, DirectX::XMVECTOR max);
 	void EditTranslation(float x, float y, float z);
 
+	/*Getters*/
+	DirectX::XMMATRIX World();
+	DirectX::BoundingBox GetBoundingBox();
+
 private:
 	struct WorldTransform
 	{

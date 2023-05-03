@@ -17,12 +17,6 @@ Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOA
 		(uint32_t*)(data.iData.vector.data()));
 
 	//Quoted stackoverflow answer to the question on which order we do world matrix multiplications: "Usually it is scale, then rotation and lastly translation."
-	//So here's the big funny matrix:
-	/*DirectX::XMMATRIX worldMatrix =
-		DirectX::XMMatrixScaling(scaling.x, scaling.y, scaling.z) *
-		DirectX::XMMatrixRotationX(rotation.x) * DirectX::XMMatrixRotationY(rotation.y) * DirectX::XMMatrixRotationZ(rotation.z) *
-		DirectX::XMMatrixTranslation(translation.x, translation.y, translation.z);*/
-	
 	m_scale = scaling;
 	m_rotate = rotation;
 	m_translate = translation;
@@ -85,4 +79,17 @@ void Drawable::EditTranslation(float x, float y, float z)
 	DirectX::XMStoreFloat4x4(&m_transform.translate, DirectX::XMMatrixTranspose(
 		DirectX::XMMatrixTranslation(m_translate.x, m_translate.y, m_translate.z)
 	));
+}
+
+DirectX::XMMATRIX Drawable::World()
+{
+	//This feels like a horribly expensive function. I might be wrong though. But if I'm not, consider storing a XMFLOAT4X4 m_world
+	return DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z) * 
+		DirectX::XMMatrixRotationX(m_rotate.x) * DirectX::XMMatrixRotationY(m_rotate.y) * DirectX::XMMatrixRotationZ(m_rotate.z) * 
+		DirectX::XMMatrixTranslation(m_translate.x, m_translate.y, m_translate.z);
+}
+
+DirectX::BoundingBox Drawable::GetBoundingBox()
+{
+	return m_aabb;
 }
