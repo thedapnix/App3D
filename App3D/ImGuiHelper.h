@@ -16,7 +16,8 @@ void SetupImGui(HWND hwnd, ID3D11Device* device, ID3D11DeviceContext* context);
 
 void StartImGuiFrame();
 
-void ImGuiEngineWindow(Camera* camera, std::string fps, int state);
+void ImGuiEngineWindow(Camera* camera, std::string fps, int state,
+	bool& objIsEnabled, bool& deferredIsEnabled, bool& cullingIsEnabled, bool& billboardingIsEnabled, bool& lodIsEnabled, bool& cubemapIsEnabled, bool& shadowIsEnabled);
 
 void EndImGuiFrame();
 

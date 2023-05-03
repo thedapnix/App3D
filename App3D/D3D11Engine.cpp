@@ -70,7 +70,8 @@ void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps,
 		m_fpsString = std::to_string(m_fpsCounter);
 		m_fpsCounter = 0;
 	}
-	ImGuiEngineWindow(m_camera.get(), m_fpsString, state);
+	ImGuiEngineWindow(m_camera.get(), m_fpsString, state,
+		objIsEnabled, deferredIsEnabled, cullingIsEnabled, billboardingIsEnabled, lodIsEnabled, cubemapIsEnabled, shadowIsEnabled);
 	EndImGuiFrame();
 }
 

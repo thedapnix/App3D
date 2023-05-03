@@ -40,6 +40,7 @@ private:
 	ViewProj m_viewProj;
 	ConstantBuffer m_cameraCB;
 
+	//OBJ-parser
 	struct VertexReference
 	{
 		int v, vt, vn;
@@ -68,8 +69,19 @@ private:
 	static constexpr float CLEAR_COLOR[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
 	std::vector<Drawable> m_drawables;
 	std::unique_ptr<Camera> m_camera;
+
+	/*ImGui variables*/
 	int m_fpsCounter = 0;
 	std::string m_fpsString = "";
+	bool objIsEnabled = true;
+	bool deferredIsEnabled = false;
+	bool cullingIsEnabled = false;
+	bool billboardingIsEnabled = false;
+	bool cubemapIsEnabled = false;
+	bool lodIsEnabled = false;
+	bool shadowIsEnabled = false;
+
+
 
 private:
 	/*D3D11 Interfaces*/
