@@ -32,8 +32,15 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	//	int r5 = -10 + (rand() % 20);
 	//	int r6 = -10 + (rand() % 20);*/
 	//}
-	InitDrawableFromFile("Models/cube.obj", { 5.0f, 0.5f, 1.0f }, {0.0f, 0.0f, 0.0f}, {-2.5f, -2.0f, 5.0f});	//Ground
-	InitDrawableFromFile("Models/cube.obj", { 1.0f, 1.0f, 1.0f }, {0.0f, 0.0f, 0.0f}, {-2.5f, -1.5f, 5.0f});	//Player
+	for (int i = 0; i < 5; i++)
+	{
+		for (int j = 0; j < 5; j++)
+		{
+			InitDrawableFromFile("Models/cube.obj", { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { -5.0f + (float)i*3, -5.0f + (float)j*3, 5.0f});
+		}
+	}
+	//InitDrawableFromFile("Models/cube.obj", { 5.0f, 0.5f, 1.0f }, {0.0f, 0.0f, 0.0f}, {-2.5f, -2.0f, 5.0f});	//Ground
+	//InitDrawableFromFile("Models/cube.obj", { 1.0f, 1.0f, 1.0f }, {0.0f, 0.0f, 0.0f}, {-2.5f, -1.5f, 5.0f});	//Player
 
 	SetupImGui(hWnd, device.Get(), context.Get());
 }
@@ -335,8 +342,8 @@ bool D3D11Engine::DrawableIsVisible(DirectX::BoundingFrustum frustum, DirectX::B
 	//Create the matrix that transforms from view space to the local space of the object
 	DirectX::XMMATRIX viewToLocal = DirectX::XMMatrixMultiply(invView, invWorld);
 
-	DirectX::BoundingFrustum localFrustum = frustum; //Copy the input frustum so as to not modify the original
-	localFrustum.Transform(localFrustum, viewToLocal); //Transform the copied frustum so it's in the same space as the object we're testing it against
+	DirectX::BoundingFrustum localFrustum = frustum;	//Copy the input frustum so as to not modify the original
+	localFrustum.Transform(localFrustum, viewToLocal);	//Transform the copied frustum so it's in the same space as the object we're testing it against
 
 	return localFrustum.Intersects(aabb);
 }
