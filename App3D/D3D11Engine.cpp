@@ -21,6 +21,9 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	//Camera setup (matrices and constant buffer)
 	InitCamera();
 
+	GBuffer gbuffers[3];
+	InitGraphicsBuffer(gbuffers, width, height);
+
 	//Init all our drawables
 	//srand((unsigned)time(NULL));
 	//for (int i = 0; i < 20; i++)
@@ -325,6 +328,59 @@ void D3D11Engine::InitCamera()
 	XMStoreFloat4x4(&m_viewProj.proj, XMMatrixTranspose(m_camera->Proj()));
 	m_cameraCB.Init(device.Get(), &m_viewProj, sizeof(m_viewProj));
 	DirectX::BoundingFrustum::CreateFromMatrix(m_frustum, m_camera->Proj());
+}
+
+void D3D11Engine::InitUAV()
+{
+	HRESULT hr;
+	ID3D11Texture2D* backBuffer = NULL;
+	hr = swapChain->GetBuffer(
+		0,
+		__uuidof(ID3D11Texture2D),
+		(void**)&backBuffer);
+	assert(SUCCEEDED(hr));
+
+	hr = device->CreateUnorderedAccessView(
+		backBuffer,
+		NULL,
+		&uav);
+	assert(SUCCEEDED(hr));
+	backBuffer->Release();
+
+	//return !FAILED(hr);
+}
+
+void D3D11Engine::InitGraphicsBuffer(GBuffer(&gbuf)[3], const UINT& width, const UINT& height)
+{
+	HRESULT hr;
+
+	D3D11_TEXTURE2D_DESC textureDesc = {};
+	textureDesc.Width = width;
+	textureDesc.Height = height;
+	textureDesc.MipLevels = 1;
+	textureDesc.ArraySize = 1;
+	textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+
+	for (UINT i = 0; i < 3; i++) //Create texture(s)
+	{
+		hr = device->CreateTexture2D(&textureDesc, NULL, &gbuf[i].texture);
+		assert(SUCCEEDED(hr));
+	}
+
+	for (UINT i = 0; i < 3; i++) //Create RTV(s), used to write geometric data to texture
+	{
+		hr = device->CreateRenderTargetView(gbuf[i].texture.Get(), NULL, &gbuf[i].rtv); //hr = device->CreateRenderTargetView(gBuffer[i].texture, &renderTargetViewDesc, &gBuffer[i].rtv);
+		assert(SUCCEEDED(hr));
+	}
+
+	for (UINT i = 0; i < 3; i++) //Create SRV(s), used to read the data from RTV(s)
+	{
+		hr = device->CreateShaderResourceView(gbuf[i].texture.Get(), NULL, &gbuf[i].srv); //hr = device->CreateShaderResourceView(gBuffer[i].texture, &shaderResourceViewDesc, &gBuffer[i].srv);
+		assert(SUCCEEDED(hr));
+	}
 }
 
 bool D3D11Engine::DrawableIsVisible(DirectX::BoundingFrustum frustum, DirectX::BoundingBox aabb, DirectX::XMMATRIX view, DirectX::XMMATRIX world)

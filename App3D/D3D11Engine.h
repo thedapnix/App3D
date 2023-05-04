@@ -17,7 +17,7 @@
 
 /*
 * Here's all my deferred rendering stuff
-* 
+THESE THINGS ARE DONE
 struct GBuffer
 {
 	//G-buffers are essentially just textures for us to render to. We also supply them with an RTV and SRV to enable reading and writing (RTV write, SRV read) of the geometry data
@@ -26,7 +26,9 @@ struct GBuffer
 	ID3D11ShaderResourceView* srv = NULL;
 };
 
-
+//header-stuff (WE'VE ADDED THESE TWO DOWN IN THE INTERFACES-PORTION)
+	ID3D11ComputeShader* pComputeShader = NULL;
+	ID3D11UnorderedAccessView* pBackBufferUAV = NULL; //Read-and-write permissions to the backbuffer when we pass it to the compute shader
 
 void InitGraphicsBuffer(GBuffer (&gbuf)[3], UINT bufferSize, ID3D11Device*& device)
 {
@@ -61,9 +63,39 @@ void InitGraphicsBuffer(GBuffer (&gbuf)[3], UINT bufferSize, ID3D11Device*& devi
 	}
 }
 
+//Will belong in our constructor here
+	//Create the diffuse buffer, position buffer, and normal buffer
+	GBuffer gbuffers[3];
+	InitGraphicsBuffer(gbuffers, 3, pDevice);
+
+//creating the uav, also belongs in the constructor
+	HRESULT hr;
+	ID3D11Texture2D* backBuffer = NULL;
+	hr = swapChain->GetBuffer(
+		0,
+		__uuidof(ID3D11Texture2D),
+		(void**)&backBuffer);
+	assert(SUCCEEDED(hr));
+
+	hr = device->CreateUnorderedAccessView(
+		backBuffer,
+		NULL,
+		&uav);
+	assert(SUCCEEDED(hr));
+	backBuffer->Release();
+
+	return !FAILED(hr);
+*/
 
 
 
+
+
+
+
+
+/*
+THESE THINGS ARE LEFT TO BE IMPLEMENTED
 void DeferredRender(UINT width, UINT height, HWND window, UINT vStride, UINT vOffset, UINT iCount,
 	ID3D11DeviceContext* context, ID3D11RenderTargetView* rtv, D3D11_VIEWPORT viewport, ID3D11InputLayout* inputLayout,
 	ID3D11Buffer* vertexBuffer, ID3D11Buffer* indexBuffer, ID3D11Buffer* constantBuffer1, ID3D11Buffer* constantBuffer2,
@@ -140,38 +172,9 @@ void DeferredRender(UINT width, UINT height, HWND window, UINT vStride, UINT vOf
 	//Finally, present
 	swapChain->Present(1, 0);
 }
-
-
-
-
-	//header-stuff
-	ID3D11ComputeShader* pComputeShader = NULL;
-	ID3D11UnorderedAccessView* pBackBufferUAV = NULL; //Read-and-write permissions to the backbuffer when we pass it to the compute shader
-
-
-	//Will belong in our constructor here
-	//Create the diffuse buffer, position buffer, and normal buffer
-	GBuffer gbuffers[3];
-	InitGraphicsBuffer(gbuffers, 3, pDevice);
-
-	//creating the uav, also belongs in the constructor
-	HRESULT hr;
-	ID3D11Texture2D* backBuffer = NULL;
-	hr = swapChain->GetBuffer(
-		0,
-		__uuidof(ID3D11Texture2D),
-		(void**)&backBuffer);
-	assert(SUCCEEDED(hr));
-
-	hr = device->CreateUnorderedAccessView(
-		backBuffer,
-		NULL,
-		&uav);
-	assert(SUCCEEDED(hr));
-	backBuffer->Release();
-
-	return !FAILED(hr);
 */
+
+//And don't forget to compile and create the compute shader
 
 class D3D11Engine
 {
@@ -205,6 +208,15 @@ private:
 		int v, vt, vn;
 	};
 
+	//Deferred Renderer
+	struct GBuffer
+	{
+		//G-buffers are essentially just textures for us to render to. We also supply them with an RTV and SRV to enable reading and writing (RTV write, SRV read) of the geometry data
+		Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
+		Microsoft::WRL::ComPtr<ID3D11RenderTargetView> rtv;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv;
+	};
+
 	/*Functions*/
 	void Render(float dt);
 	void InitInterfaces(const HWND& window);
@@ -215,6 +227,9 @@ private:
 	void InitInputLayout();
 	void InitPixelShader();
 	void InitCamera();
+
+	void InitUAV();
+	void InitGraphicsBuffer(GBuffer(&gbuf)[3], const UINT& width, const UINT& height);
 
 	bool DrawableIsVisible(DirectX::BoundingFrustum frustum, DirectX::BoundingBox aabb, DirectX::XMMATRIX view, DirectX::XMMATRIX world);
 	//void InitSampler();
@@ -271,4 +286,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3DBlob> shaderBlob;
 
 	//Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState;
+
+	Microsoft::WRL::ComPtr<ID3D11ComputeShader> computeshader;
+	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> uav;
 };

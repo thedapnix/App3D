@@ -1,6 +1,6 @@
 //Compute Shader from my Deferred Renderer project, now to be implemented in here
 
-/*RWTexture2D<unorm float4> backBufferUAV : register(u0);
+RWTexture2D<unorm float4> backBufferUAV : register(u0);
 
 Texture2D<float4> positionGBuffer : register(t0);
 Texture2D<float4> colourGBuffer : register(t1);
@@ -95,4 +95,4 @@ void main(uint3 DTid : SV_DispatchThreadID) //So the DTid is the index of the sp
     
     //Apply the appropriate effect
     backBufferUAV[DTid.xy] = float4(finalColour, 1.0f);
-}*/
+}
