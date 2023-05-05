@@ -6,9 +6,9 @@ Texture2D<float4> positionGBuffer : register(t0);
 Texture2D<float4> colourGBuffer : register(t1);
 Texture2D<float4> normalGBuffer : register(t2);
 
-[numthreads(8, 8, 1)] //Think of a grid of cells reminiscent of threads in OS programming, where every thread runs the code below
-                        //In this case, I make a 8x8 grid, making sure to cover the entire view (by dispatching 100x100)
-void main(uint3 DTid : SV_DispatchThreadID) //So the DTid is the index of the specific thread we're working with
+[numthreads(8, 8, 1)]                       //Think of a grid of cells reminiscent of threads in OS programming, where every thread runs the code below
+                                            //In this case, I make a 8x8 grid, making sure to cover the entire view (by dispatching 100x100)
+void main(uint3 DTid : SV_DispatchThreadID) //DTid is the index of the specific thread we're working with
 {
     //Lighting variables here instead of in the pixel shader
     float3 lightPos = { 0.5f, 0.5f, -2.5f }; //Center of the screen (approximately)
@@ -17,7 +17,7 @@ void main(uint3 DTid : SV_DispatchThreadID) //So the DTid is the index of the sp
     float3 cameraPos = { 0.5f, 0.5f, -2.0f }; //Slightly in front of the position of the light
     
     float3 position = positionGBuffer[DTid.xy].xyz; //Positions in world space
-    float3 colour = colourGBuffer[DTid.xy].xyz; //Colours sampled from texture
+    float3 colour = { 1.0f, 0.0f, 0.0f };//colourGBuffer[DTid.xy].xyz; //Colours sampled from texture
     float3 normal = normalize(normalGBuffer[DTid.xy].xyz); //Normals
     
     float3 finalColour = colour;

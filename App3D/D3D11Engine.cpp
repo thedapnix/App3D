@@ -7,22 +7,26 @@ using namespace DirectX;
 
 D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height)
 {
+	m_windowWidth = width;
+	m_windowHeight = height;
 	//Base setup for interface (swapchain, device and immediate context), render target (and backbuffer), and viewport
 	InitInterfaces(hWnd);
-	InitRTV();
-	InitViewport(width, height);
-	InitDepthStencil(width, height);
+	//InitRTV();
+	InitViewport();
+	InitDepthStencil();
 
 	//Render setup (Vertex shader first, then input layout, then pixel shader (for the sake of reusing the shader blob))
 	InitVertexShader();
 	InitInputLayout();
 	InitPixelShader();
 
+	//Deferred Render setup
+	InitGraphicsBuffer(m_gBuffers); //Gotta do this before trying to read the compute shader?
+	InitUAV(); //Forgot to even run this, but it doesn't work
+	InitComputeShader();
+
 	//Camera setup (matrices and constant buffer)
 	InitCamera();
-
-	GBuffer gbuffers[3];
-	InitGraphicsBuffer(gbuffers, width, height);
 
 	//Init all our drawables
 	//srand((unsigned)time(NULL));
@@ -82,19 +86,90 @@ void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps,
 	}
 	ImGuiEngineWindow(m_camera.get(), m_fpsString, state,
 		objIsEnabled, deferredIsEnabled, cullingIsEnabled, billboardingIsEnabled, lodIsEnabled, cubemapIsEnabled, shadowIsEnabled,
-		drawablesBeingRendered);
+		m_drawablesBeingRendered);
 	EndImGuiFrame();
 }
 
 void D3D11Engine::MovePlayer(float speed)
 {
 	//Right now we should have 2 drawables, one at [0] which is the ground, and one at [1] that we consider to be the player. This is the biggest of temp solutions
-	m_drawables.at(1).EditTranslation(speed, 0.0f, 0.0f);
+	//m_drawables.at(1).EditTranslation(speed, 0.0f, 0.0f);
 }
 
 Camera& D3D11Engine::GetCamera() const noexcept
 {
 	return *m_camera;
+}
+
+void D3D11Engine::RenderDef(float dt)
+{
+	//Deferred rendering splits rendering into 3 parts: A geometry pass, a draw pass, and a lighting pass
+
+	///////////////////////////////////////////////////////////////////////////////
+	//GEOMETRY PASS, FILL OUR GBUFFERS WITH DATA
+	context->IASetInputLayout(inputLayout.Get());
+	context->RSSetViewports(1, &viewport);
+
+	//Create an array of render target views and fill it with the rtv's from our gbuffers
+	ID3D11RenderTargetView* rtvArr[] = { m_gBuffers[0].rtv.Get(), m_gBuffers[1].rtv.Get(), m_gBuffers[2].rtv.Get() };
+	context->OMSetRenderTargets(3, rtvArr, dsv.Get()); //When render targets are bound to the output merger (if I understand correctly), they are sent to the pixel shader where they get filled with data yes?
+
+	context->ClearRenderTargetView(m_gBuffers[0].rtv.Get(), CLEAR_COLOR);
+	context->ClearRenderTargetView(m_gBuffers[1].rtv.Get(), CLEAR_COLOR);
+	context->ClearRenderTargetView(m_gBuffers[2].rtv.Get(), CLEAR_COLOR);
+	context->ClearDepthStencilView(dsv.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0.0f);
+
+	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	///////////////////////////////////////////////////////////////////////////////
+	//DRAW PASS, DRAW SCENE ONTO BACKBUFFER WITHOUT DOING LIGHTING CALCULATIONS
+	context->VSSetShader(vertexShader.Get(), NULL, 0);
+	context->PSSetShader(pixelShader.Get(), NULL, 0);
+
+	//context->PSSetShaderResources(0, 1, &srv);
+	//context->PSSetSamplers(0, 1, &samplerState);
+
+	for (auto& drawable : m_drawables)	//This right here is why deferred rendering is better with multiple lights, but worse with multiple drawables
+										//We're drawing all our drawables onto all 3 render targets
+	{
+		drawable.Bind(context.Get()); //Bind vertex and index buffers (textures todo)
+		drawable.Draw(context.Get()); //Set constant buffers and perform DrawIndexed()-calls
+	}
+
+	//Now that we're done writing data to the render targets, unbind them
+	rtvArr[0] = NULL;
+	rtvArr[1] = NULL;
+	rtvArr[2] = NULL;
+
+	///////////////////////////////////////////////////////////////////////////////
+	//LIGHTING PASS, USE COMPUTE SHADER TO EDIT THE BACKBUFFER AND DO LIGHTING COMPUTATIONS
+	//So now we set the rendertarget to be the *actual* backbuffer, from what I understand (Original thought)
+	//Looking at it with a more experienced eye, I'd say no. We're now no longer rendering, more like using the compute shader to edit the final image
+	//float background_colour_2[4] = { 0.9f, 0.9f, 0.9f, 1.0f };
+	ID3D11RenderTargetView* nullRtv = NULL;
+	context->OMSetRenderTargets(1, &nullRtv, NULL);
+
+	ID3D11ShaderResourceView* srvArr[] = { m_gBuffers[0].srv.Get(), m_gBuffers[1].srv.Get(), m_gBuffers[2].srv.Get()};
+	context->CSSetShaderResources(0, 3, srvArr);
+
+	//Use compute shader to edit the backbuffer
+	context->CSSetShader(computeShader.Get(), NULL, 0);
+	context->CSSetUnorderedAccessViews(0, 1, uav.GetAddressOf(), NULL); //Last value matters in case of "append consume" buffers, but I've only heard of that, I've *no idea* what it means
+	context->Dispatch(m_windowWidth / 8, m_windowHeight / 8, 1);		//In order to make our Dispatch cover the entire window, we group threads by the width and height of the 
+																		//window divided by 8 (as 8x8 is defined in compute shader)
+
+	//Unbind UAV
+	ID3D11UnorderedAccessView* nullUav = NULL;
+	context->CSSetUnorderedAccessViews(0, 1, &nullUav, NULL);
+
+	//Unbind SRVs
+	srvArr[0] = NULL;
+	srvArr[1] = NULL;
+	srvArr[2] = NULL;
+	context->CSSetShaderResources(0, 3, srvArr);
+
+	//Finally, present
+	swapChain->Present(1, 0);
 }
 
 void D3D11Engine::Render(float dt)
@@ -133,7 +208,7 @@ void D3D11Engine::Render(float dt)
 				drawable.Draw(context.Get());
 				visibleDrawables++;
 			}
-			drawablesBeingRendered = visibleDrawables;
+			m_drawablesBeingRendered = visibleDrawables;
 		}
 	}
 	else
@@ -144,7 +219,7 @@ void D3D11Engine::Render(float dt)
 			drawable.Bind(context.Get());
 			drawable.Draw(context.Get());
 		}
-		drawablesBeingRendered = (int)m_drawables.size();
+		m_drawablesBeingRendered = (int)m_drawables.size();
 	}
 	
 }
@@ -165,7 +240,7 @@ void D3D11Engine::InitInterfaces(const HWND& window)
 	desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 	desc.SampleDesc.Count = 1;
 	desc.SampleDesc.Quality = 0;
-	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; //DXGI_USAGE_UNORDERED_ACCESS has to be added here
 	desc.BufferCount = 1;
 	desc.OutputWindow = window;
 	desc.Windowed = TRUE;
@@ -217,17 +292,17 @@ void D3D11Engine::InitRTV()
 	}
 }
 
-void D3D11Engine::InitViewport(const UINT& width, const UINT& height)
+void D3D11Engine::InitViewport()
 {
-	viewport.Width = width;
-	viewport.Height = height;
+	viewport.Width = m_windowWidth;
+	viewport.Height = m_windowHeight;
 	viewport.MinDepth = 0;
 	viewport.MaxDepth = 1;
 	viewport.TopLeftX = 0;
 	viewport.TopLeftY = 0;
 }
 
-void D3D11Engine::InitDepthStencil(const UINT& width, const UINT& height)
+void D3D11Engine::InitDepthStencil()
 {
 	HRESULT hr;
 
@@ -245,8 +320,8 @@ void D3D11Engine::InitDepthStencil(const UINT& width, const UINT& height)
 	context->OMSetDepthStencilState(dss.Get(), 1u);
 
 	D3D11_TEXTURE2D_DESC dstd = {};
-	dstd.Width = width - 16u;	//offsets
-	dstd.Height = height - 39u;	//because of window borders
+	dstd.Width = m_windowWidth - 16u;	//offsets
+	dstd.Height = m_windowHeight - 39u;	//because of window borders
 	dstd.MipLevels = 1;
 	dstd.ArraySize = 1;
 	dstd.Format = DXGI_FORMAT_D32_FLOAT; //DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -310,12 +385,24 @@ void D3D11Engine::InitInputLayout()
 
 void D3D11Engine::InitPixelShader()
 {
-	D3DReadFileToBlob(L"../x64/Debug/PixelShader.cso", &shaderBlob);
+	D3DReadFileToBlob(L"../x64/Debug/PixelShader.cso", shaderBlob.GetAddressOf());
 	HRESULT hr = device->CreatePixelShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), NULL, &pixelShader);
 
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create pixel shader!", L"Error", MB_OK);
+		return;
+	}
+}
+
+void D3D11Engine::InitComputeShader()
+{
+	D3DReadFileToBlob(L"../64/Debug/ComputeShader.cso", &shaderBlob);
+	HRESULT hr = device->CreateComputeShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), NULL, &computeShader);
+
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create compute shader!", L"Error", MB_OK);
 		return;
 	}
 }
@@ -332,31 +419,23 @@ void D3D11Engine::InitCamera()
 
 void D3D11Engine::InitUAV()
 {
-	HRESULT hr;
-	ID3D11Texture2D* backBuffer = NULL;
-	hr = swapChain->GetBuffer(
-		0,
-		__uuidof(ID3D11Texture2D),
-		(void**)&backBuffer);
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> backBuffer;
+	HRESULT hr = swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), &backBuffer);
 	assert(SUCCEEDED(hr));
 
-	hr = device->CreateUnorderedAccessView(
-		backBuffer,
-		NULL,
-		&uav);
+	hr = device->CreateUnorderedAccessView(backBuffer.Get(), NULL, uav.GetAddressOf());
 	assert(SUCCEEDED(hr));
-	backBuffer->Release();
 
 	//return !FAILED(hr);
 }
 
-void D3D11Engine::InitGraphicsBuffer(GBuffer(&gbuf)[3], const UINT& width, const UINT& height)
+void D3D11Engine::InitGraphicsBuffer(GBuffer(&gbuf)[3])
 {
 	HRESULT hr;
 
 	D3D11_TEXTURE2D_DESC textureDesc = {};
-	textureDesc.Width = width;
-	textureDesc.Height = height;
+	textureDesc.Width = m_windowWidth;
+	textureDesc.Height = m_windowHeight;
 	textureDesc.MipLevels = 1;
 	textureDesc.ArraySize = 1;
 	textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
