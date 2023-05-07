@@ -16,14 +16,14 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	InitDepthStencil();
 	InitUAV(); //deferred
 
+	InitGraphicsBuffer(m_gBuffers); //deferred
+
 	//Render setup
 	InitShadersAndInputLayout();
 	//InitVertexShader();
 	//InitInputLayout();
 	//InitPixelShader();
 	//InitComputeShader(); //deferred
-
-	InitGraphicsBuffer(m_gBuffers); //deferred
 
 	//Camera setup (matrices and constant buffer)
 	InitCamera();
@@ -71,6 +71,7 @@ void D3D11Engine::Update(float dt)
 	}
 
 	Render(dt);
+	//RenderDef(dt);
 
 	swapChain->Present(1, 0); //vSync enabled
 }
@@ -167,9 +168,6 @@ void D3D11Engine::RenderDef(float dt)
 	srvArr[1] = NULL;
 	srvArr[2] = NULL;
 	context->CSSetShaderResources(0, 3, srvArr);
-
-	//Finally, present
-	swapChain->Present(1, 0);
 }
 
 void D3D11Engine::Render(float dt)
@@ -320,8 +318,8 @@ void D3D11Engine::InitDepthStencil()
 	context->OMSetDepthStencilState(dss.Get(), 1u);
 
 	D3D11_TEXTURE2D_DESC dstd = {};
-	dstd.Width = m_windowWidth - 16u;	//offsets
-	dstd.Height = m_windowHeight - 39u;	//because of window borders
+	dstd.Width = m_windowWidth;// - 16u;	//offsets
+	dstd.Height = m_windowHeight;// - 39u;	//because of window borders
 	dstd.MipLevels = 1;
 	dstd.ArraySize = 1;
 	dstd.Format = DXGI_FORMAT_D32_FLOAT; //DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -351,7 +349,7 @@ void D3D11Engine::InitDepthStencil()
 void D3D11Engine::InitShadersAndInputLayout()
 {
 	HRESULT hr;
-	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob, psBlob, csBlob;
+	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob, psBlob, csBlob, errorBlob;
 
 	//Read the shader files to blobs
 	hr = D3DReadFileToBlob(L"../x64/Debug/VertexShader.cso", &vsBlob);
@@ -364,6 +362,8 @@ void D3D11Engine::InitShadersAndInputLayout()
 	{
 		MessageBox(NULL, L"Failed to read pixel shader!", L"Error", MB_OK);
 	}
+
+	hr = D3DCompileFromFile(L"ComputeShader.hlsl", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "cs_5_0", D3DCOMPILE_DEBUG, 0, &csBlob, &errorBlob); //This works but D3DReadFileToBlob doesn't. oof ig
 	//hr = D3DReadFileToBlob(L"../64/Debug/ComputeShader.cso", &csBlob);
 	if (FAILED(hr))
 	{
@@ -384,7 +384,7 @@ void D3D11Engine::InitShadersAndInputLayout()
 		MessageBox(NULL, L"Failed to create pixel shader!", L"Error", MB_OK);
 		return;
 	}
-	//hr = device->CreateComputeShader(csBlob->GetBufferPointer(), csBlob->GetBufferSize(), NULL, &computeShader);
+	hr = device->CreateComputeShader(csBlob->GetBufferPointer(), csBlob->GetBufferSize(), NULL, &computeShader);
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create compute shader!", L"Error", MB_OK);
