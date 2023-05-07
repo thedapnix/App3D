@@ -21,10 +21,16 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance,
 	_In_ PWSTR pCmdLine,
 	_In_ int nCmdShow)
 {
-	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF); //Basic memory leak checker? Tvek
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
-	App app(hInstance);
-	app.Run();
+	//Since the App-class has access to *a lot* of pointers, wrapping its creation and runtime in these brackets allow its destructor to actually happen before we call 
+	//_CrtDumpMemoryLeaks() and exit out of the program
+	{
+		App app(hInstance);
+		app.Run();
+	}
+
+	_CrtDumpMemoryLeaks();
 
 	return 0;
 }

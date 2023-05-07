@@ -233,7 +233,7 @@ void D3D11Engine::InitInterfaces(const HWND& window)
 	ZeroMemory(&desc, sizeof(desc));
 	desc.BufferDesc.Width = 0;
 	desc.BufferDesc.Height = 0;
-	desc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; //DXGI_FORMAT_B8G8R8A8_UNORM;
 	desc.BufferDesc.RefreshRate.Numerator = 0;
 	desc.BufferDesc.RefreshRate.Denominator = 1; //previously 0
 	desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
@@ -350,8 +350,11 @@ void D3D11Engine::InitDepthStencil()
 
 void D3D11Engine::InitShadersAndInputLayout()
 {
-	ID3DBlob* vsBlob = NULL, * psBlob = NULL, * csBlob = NULL;
-	HRESULT hr = D3DReadFileToBlob(L"../x64/Debug/VertexShader.cso", &vsBlob);
+	HRESULT hr;
+	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob, psBlob, csBlob;
+
+	//Read the shader files to blobs
+	hr = D3DReadFileToBlob(L"../x64/Debug/VertexShader.cso", &vsBlob);
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to read vertex shader!", L"Error", MB_OK);
@@ -361,15 +364,14 @@ void D3D11Engine::InitShadersAndInputLayout()
 	{
 		MessageBox(NULL, L"Failed to read pixel shader!", L"Error", MB_OK);
 	}
-	hr = D3DReadFileToBlob(L"../64/Debug/ComputeShader.cso", &csBlob);
+	//hr = D3DReadFileToBlob(L"../64/Debug/ComputeShader.cso", &csBlob);
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to read compute shader!", L"Error", MB_OK);
 		return;
 	}
 
-	InitInputLayout(vsBlob);
-
+	//Use those blobs to create the shaders
 	hr = device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), NULL, &vertexShader);
 	if (FAILED(hr))
 	{
@@ -382,75 +384,25 @@ void D3D11Engine::InitShadersAndInputLayout()
 		MessageBox(NULL, L"Failed to create pixel shader!", L"Error", MB_OK);
 		return;
 	}
-	hr = device->CreateComputeShader(csBlob->GetBufferPointer(), csBlob->GetBufferSize(), NULL, &computeShader);
+	//hr = device->CreateComputeShader(csBlob->GetBufferPointer(), csBlob->GetBufferSize(), NULL, &computeShader);
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create compute shader!", L"Error", MB_OK);
 		return;
 	}
 
-	vsBlob->Release();
-	psBlob->Release();
-	csBlob->Release();
 
-	//If this function fails to finish, we'll have memory leaks OH NOOO xd dont care
-}
-
-void D3D11Engine::InitVertexShader()
-{
-	D3DReadFileToBlob(L"../x64/Debug/VertexShader.cso", &shaderBlob);
-	HRESULT hr = device->CreateVertexShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), NULL, &vertexShader);
-	
-	if (FAILED(hr))
-	{
-		MessageBox(NULL, L"Failed to create vertex shader!", L"Error", MB_OK);
-		return;
-	}
-}
-
-void D3D11Engine::InitInputLayout(ID3DBlob*& vsBlob)
-{
+	//Create Input Layout using data from our vsBlob
 	D3D11_INPUT_ELEMENT_DESC inputElementDesc[3] =
 	{
 	  { "POS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	  { "UV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	  { "NOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
-
-	HRESULT hr = device->CreateInputLayout(
-		inputElementDesc,
-		ARRAYSIZE(inputElementDesc),
-		shaderBlob->GetBufferPointer(),
-		shaderBlob->GetBufferSize(),
-		&inputLayout);
-
+	hr = device->CreateInputLayout(inputElementDesc, ARRAYSIZE(inputElementDesc), vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &inputLayout);
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create input layout!", L"Error", MB_OK);
-		return;
-	}
-}
-
-void D3D11Engine::InitPixelShader()
-{
-	D3DReadFileToBlob(L"../x64/Debug/PixelShader.cso", shaderBlob.GetAddressOf());
-	HRESULT hr = device->CreatePixelShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), NULL, &pixelShader);
-
-	if (FAILED(hr))
-	{
-		MessageBox(NULL, L"Failed to create pixel shader!", L"Error", MB_OK);
-		return;
-	}
-}
-
-void D3D11Engine::InitComputeShader()
-{
-	D3DReadFileToBlob(L"../64/Debug/ComputeShader.cso", &shaderBlob);
-	HRESULT hr = device->CreateComputeShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), NULL, &computeShader);
-
-	if (FAILED(hr))
-	{
-		MessageBox(NULL, L"Failed to create compute shader!", L"Error", MB_OK);
 		return;
 	}
 }

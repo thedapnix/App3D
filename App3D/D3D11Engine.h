@@ -60,14 +60,10 @@ private:
 	void RenderDef(float dt);
 	void Render(float dt);
 	void InitInterfaces(const HWND& window);
-	void InitRTV();
 	void InitViewport();
+	void InitRTV();
 	void InitDepthStencil();
 	void InitShadersAndInputLayout();
-	void InitVertexShader();
-	void InitInputLayout(ID3DBlob*& vsBlob);
-	void InitPixelShader();
-	void InitComputeShader();
 	void InitCamera();
 
 	void InitUAV();
@@ -128,7 +124,6 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
 	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
-	Microsoft::WRL::ComPtr<ID3DBlob> shaderBlob;
 
 	//Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState;
 
