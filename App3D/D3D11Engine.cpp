@@ -21,8 +21,8 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	InitPixelShader();
 
 	//Deferred Render setup
-	InitGraphicsBuffer(m_gBuffers); //Gotta do this before trying to read the compute shader?
-	InitUAV(); //Forgot to even run this, but it doesn't work
+	InitGraphicsBuffer(m_gBuffers);
+	InitUAV();
 	InitComputeShader();
 
 	//Camera setup (matrices and constant buffer)
@@ -240,7 +240,7 @@ void D3D11Engine::InitInterfaces(const HWND& window)
 	desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 	desc.SampleDesc.Count = 1;
 	desc.SampleDesc.Quality = 0;
-	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; //DXGI_USAGE_UNORDERED_ACCESS has to be added here
+	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_UNORDERED_ACCESS; //DXGI_USAGE_UNORDERED_ACCESS has to be added here
 	desc.BufferCount = 1;
 	desc.OutputWindow = window;
 	desc.Windowed = TRUE;
