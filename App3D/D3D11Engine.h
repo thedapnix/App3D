@@ -63,8 +63,9 @@ private:
 	void InitRTV();
 	void InitViewport();
 	void InitDepthStencil();
+	void InitShadersAndInputLayout();
 	void InitVertexShader();
-	void InitInputLayout();
+	void InitInputLayout(ID3DBlob*& vsBlob);
 	void InitPixelShader();
 	void InitComputeShader();
 	void InitCamera();

@@ -9,21 +9,21 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 {
 	m_windowWidth = width;
 	m_windowHeight = height;
-	//Base setup for interface (swapchain, device and immediate context), render target (and backbuffer), and viewport
+	//Base d3d setup
 	InitInterfaces(hWnd);
-	//InitRTV();
 	InitViewport();
+	InitRTV();
 	InitDepthStencil();
+	InitUAV(); //deferred
 
-	//Render setup (Vertex shader first, then input layout, then pixel shader (for the sake of reusing the shader blob))
-	InitVertexShader();
-	InitInputLayout();
-	InitPixelShader();
+	//Render setup
+	InitShadersAndInputLayout();
+	//InitVertexShader();
+	//InitInputLayout();
+	//InitPixelShader();
+	//InitComputeShader(); //deferred
 
-	//Deferred Render setup
-	InitGraphicsBuffer(m_gBuffers);
-	InitUAV();
-	InitComputeShader();
+	InitGraphicsBuffer(m_gBuffers); //deferred
 
 	//Camera setup (matrices and constant buffer)
 	InitCamera();
@@ -235,19 +235,19 @@ void D3D11Engine::InitInterfaces(const HWND& window)
 	desc.BufferDesc.Height = 0;
 	desc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 	desc.BufferDesc.RefreshRate.Numerator = 0;
-	desc.BufferDesc.RefreshRate.Denominator = 0;
+	desc.BufferDesc.RefreshRate.Denominator = 1; //previously 0
 	desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 	desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 	desc.SampleDesc.Count = 1;
 	desc.SampleDesc.Quality = 0;
-	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_UNORDERED_ACCESS; //DXGI_USAGE_UNORDERED_ACCESS has to be added here
+	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_UNORDERED_ACCESS;
 	desc.BufferCount = 1;
 	desc.OutputWindow = window;
 	desc.Windowed = TRUE;
 	desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	desc.Flags = 0; //DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
 
-	UINT swapCreateFlags = 0;
+	UINT swapCreateFlags = D3D11_CREATE_DEVICE_SINGLETHREADED; //previously 0
 #ifndef NDEBUG
 	swapCreateFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
@@ -348,6 +348,54 @@ void D3D11Engine::InitDepthStencil()
 	}
 }
 
+void D3D11Engine::InitShadersAndInputLayout()
+{
+	ID3DBlob* vsBlob = NULL, * psBlob = NULL, * csBlob = NULL;
+	HRESULT hr = D3DReadFileToBlob(L"../x64/Debug/VertexShader.cso", &vsBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read vertex shader!", L"Error", MB_OK);
+	}
+	hr = D3DReadFileToBlob(L"../x64/Debug/PixelShader.cso", &psBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read pixel shader!", L"Error", MB_OK);
+	}
+	hr = D3DReadFileToBlob(L"../64/Debug/ComputeShader.cso", &csBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read compute shader!", L"Error", MB_OK);
+		return;
+	}
+
+	InitInputLayout(vsBlob);
+
+	hr = device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), NULL, &vertexShader);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create vertex shader!", L"Error", MB_OK);
+		return;
+	}
+	hr = device->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(), NULL, &pixelShader);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create pixel shader!", L"Error", MB_OK);
+		return;
+	}
+	hr = device->CreateComputeShader(csBlob->GetBufferPointer(), csBlob->GetBufferSize(), NULL, &computeShader);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create compute shader!", L"Error", MB_OK);
+		return;
+	}
+
+	vsBlob->Release();
+	psBlob->Release();
+	csBlob->Release();
+
+	//If this function fails to finish, we'll have memory leaks OH NOOO xd dont care
+}
+
 void D3D11Engine::InitVertexShader()
 {
 	D3DReadFileToBlob(L"../x64/Debug/VertexShader.cso", &shaderBlob);
@@ -360,7 +408,7 @@ void D3D11Engine::InitVertexShader()
 	}
 }
 
-void D3D11Engine::InitInputLayout()
+void D3D11Engine::InitInputLayout(ID3DBlob*& vsBlob)
 {
 	D3D11_INPUT_ELEMENT_DESC inputElementDesc[3] =
 	{

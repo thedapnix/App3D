@@ -28,6 +28,8 @@ struct VertexShaderOutput
     float2 uv : TEXCOORD0;
     float4 nor : NORMAL;
     float4 col : TEXCOORD1;
+    
+    float4 worldPosition : TEXCOORD2;
 };
 
 VertexShaderOutput main(VertexShaderInput input)
@@ -39,6 +41,7 @@ VertexShaderOutput main(VertexShaderInput input)
     pos = mul(pos, scale);
     pos = mul(pos, rotate);
     pos = mul(pos, translate);
+    output.worldPosition = pos;
     pos = mul(pos, view);
     pos = mul(pos, proj);
     output.clipPosition = pos;
