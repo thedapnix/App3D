@@ -9,8 +9,6 @@
 #include <fstream>
 #include <sstream>
 
-//#include <DirectXCollision.h>
-
 #include "ConstantBuffer.h"
 #include "Drawable.h"
 #include "Camera.h"
@@ -57,9 +55,10 @@ private:
 	};
 
 	/*Functions*/
+	void Render(float dt);
 	void DefPassOne();
 	void DefPassTwo();
-	void Render(float dt);
+
 	void InitInterfaces(const HWND& window);
 	void InitViewport();
 	void InitRTV();
@@ -99,8 +98,6 @@ private:
 	bool cubemapIsEnabled = false;
 	bool lodIsEnabled = false;
 	bool shadowIsEnabled = false;
-
-
 
 private:
 	/*D3D11 Interfaces*/

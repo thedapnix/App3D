@@ -47,8 +47,6 @@ class Drawable
 public:
 	Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOAT3 scaling, DirectX::XMFLOAT3 rotation, DirectX::XMFLOAT3 translation);
 	~Drawable() = default;
-	//Drawable& operator=(const Drawable&) = delete;
-	//Drawable(const Drawable&) = delete;
 
 	void Bind(ID3D11DeviceContext* context);
 	void Draw(ID3D11DeviceContext* context) const;
@@ -76,7 +74,7 @@ private:
 	/*Buffers and srv+srt*/
 	VertexBuffer m_vertexBuffer;
 	IndexBuffer m_indexBuffer;
-
 	//ShaderResource m_shaderResource;
+
 	DirectX::BoundingBox m_aabb;
 };

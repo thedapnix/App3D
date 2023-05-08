@@ -9,6 +9,7 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 {
 	m_windowWidth = width;
 	m_windowHeight = height;
+
 	//Base d3d setup
 	InitInterfaces(hWnd);
 	InitViewport();
@@ -20,10 +21,6 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 
 	//Render setup
 	InitShadersAndInputLayout();
-	//InitVertexShader();
-	//InitInputLayout();
-	//InitPixelShader();
-	//InitComputeShader(); //deferred
 
 	//Camera setup (matrices and constant buffer)
 	InitCamera();
@@ -46,8 +43,6 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 			InitDrawableFromFile("Models/cube.obj", { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { -5.0f + (float)i*3, -5.0f + (float)j*3, 5.0f});
 		}
 	}
-	//InitDrawableFromFile("Models/cube.obj", { 5.0f, 0.5f, 1.0f }, {0.0f, 0.0f, 0.0f}, {-2.5f, -2.0f, 5.0f});	//Ground
-	//InitDrawableFromFile("Models/cube.obj", { 1.0f, 1.0f, 1.0f }, {0.0f, 0.0f, 0.0f}, {-2.5f, -1.5f, 5.0f});	//Player
 
 	SetupImGui(hWnd, device.Get(), context.Get());
 }
@@ -71,7 +66,6 @@ void D3D11Engine::Update(float dt)
 	}
 
 	Render(dt);
-	//RenderDef(dt);
 
 	swapChain->Present(1, 0); //vSync enabled
 }

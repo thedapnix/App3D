@@ -54,7 +54,7 @@ void Drawable::Bind(ID3D11DeviceContext* context)
 void Drawable::Draw(ID3D11DeviceContext* context) const
 {
 	context->VSSetConstantBuffers(1, 1, m_constantBuffer.GetBufferAddress());
-	context->Draw(m_vertexBuffer.GetVertexCount(), 0);
+	context->Draw(m_vertexBuffer.GetVertexCount(), 0); //obj-parser makes it so
 	//context->DrawIndexed(m_indexBuffer.GetIndexCount(), 0, 0);
 }
 

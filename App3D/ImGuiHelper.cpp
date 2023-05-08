@@ -89,6 +89,10 @@ void ImGuiEngineWindow(Camera* camera, std::string fps, int state,
 		{
 			if (cullingIsEnabled) cullingIsEnabled = false; else cullingIsEnabled = true;
 		}
+		if (ImGui::Button("Toggle Wireframe (Tesselation)"))
+		{
+			if (lodIsEnabled) lodIsEnabled = false; else lodIsEnabled = true;
+		}
 	}
 
 	ImGui::End();
