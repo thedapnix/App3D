@@ -57,7 +57,8 @@ private:
 	};
 
 	/*Functions*/
-	void RenderDef(float dt);
+	void DefPassOne();
+	void DefPassTwo();
 	void Render(float dt);
 	void InitInterfaces(const HWND& window);
 	void InitViewport();

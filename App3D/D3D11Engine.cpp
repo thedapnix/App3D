@@ -102,25 +102,85 @@ Camera& D3D11Engine::GetCamera() const noexcept
 	return *m_camera;
 }
 
-void D3D11Engine::RenderDef(float dt)
+void D3D11Engine::Render(float dt)
+{
+	/*Update buffers and camera frustum here*/
+
+	if (deferredIsEnabled)
+	{
+		DefPassOne(); //Does the same as what's in the else-statement, except to several rendertargets
+	}
+	else
+	{
+		// Clear the back buffer and depth stencil, as well as set viewport and render target (viewport only really needed to set after a resize, and that's disabled so uh)
+		context->ClearRenderTargetView(rtv.Get(), CLEAR_COLOR);
+		context->ClearDepthStencilView(dsv.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+		context->RSSetViewports(1, &viewport);
+		context->OMSetRenderTargets(1, rtv.GetAddressOf(), dsv.Get());
+
+		/*Input Assembler Stage*/
+		//Set primitive topology and input layout
+		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		context->IASetInputLayout(inputLayout.Get());
+
+		/*Vertex Shader Stage*/
+		context->VSSetConstantBuffers(0, 1, m_cameraCB.GetBufferAddress());
+		context->VSSetShader(vertexShader.Get(), NULL, 0);
+
+		/*Pixel Shader Stage*/
+		context->PSSetShader(pixelShader.Get(), NULL, 0);
+		//this->context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
+
+		/*Culling*/
+		if (cullingIsEnabled)
+		{
+			int visibleDrawables = 0;
+			for (auto& drawable : m_drawables)
+			{
+				if (DrawableIsVisible(m_frustum, drawable.GetBoundingBox(), m_camera->View(), drawable.World()))
+				{
+					drawable.Bind(context.Get());
+					drawable.Draw(context.Get());
+					visibleDrawables++;
+				}
+				m_drawablesBeingRendered = visibleDrawables;
+			}
+		}
+		else
+		{
+			//Per drawable: bind vertex and index buffers, then draw them
+			for (auto& drawable : m_drawables)
+			{
+				drawable.Bind(context.Get());
+				drawable.Draw(context.Get());
+			}
+			m_drawablesBeingRendered = (int)m_drawables.size();
+		}
+	}
+
+	if (deferredIsEnabled)
+	{
+		DefPassTwo(); //Lighting pass, editing the backbuffer using a compute shader
+	}
+	
+}
+
+void D3D11Engine::DefPassOne()
 {
 	//Deferred rendering splits rendering into 3 parts: A geometry pass, a draw pass, and a lighting pass
 
 	///////////////////////////////////////////////////////////////////////////////
 	//GEOMETRY PASS, FILL OUR GBUFFERS WITH DATA
-	context->IASetInputLayout(inputLayout.Get());
-	context->RSSetViewports(1, &viewport);
-
-	//Create an array of render target views and fill it with the rtv's from our gbuffers
-	ID3D11RenderTargetView* rtvArr[] = { m_gBuffers[0].rtv.Get(), m_gBuffers[1].rtv.Get(), m_gBuffers[2].rtv.Get() };
-	context->OMSetRenderTargets(3, rtvArr, dsv.Get()); //When render targets are bound to the output merger (if I understand correctly), they are sent to the pixel shader where they get filled with data yes?
-
 	context->ClearRenderTargetView(m_gBuffers[0].rtv.Get(), CLEAR_COLOR);
 	context->ClearRenderTargetView(m_gBuffers[1].rtv.Get(), CLEAR_COLOR);
 	context->ClearRenderTargetView(m_gBuffers[2].rtv.Get(), CLEAR_COLOR);
 	context->ClearDepthStencilView(dsv.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0.0f);
+	context->RSSetViewports(1, &viewport);
+	ID3D11RenderTargetView* rtvArr[] = { m_gBuffers[0].rtv.Get(), m_gBuffers[1].rtv.Get(), m_gBuffers[2].rtv.Get() }; //Create an array of render target views and fill it with the rtv's from our gbuffers
+	context->OMSetRenderTargets(3, rtvArr, dsv.Get()); //When render targets are bound to the output merger (if I understand correctly), they are sent to the pixel shader where they get filled with data yes?
 
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	context->IASetInputLayout(inputLayout.Get());
 
 	///////////////////////////////////////////////////////////////////////////////
 	//DRAW PASS, DRAW SCENE ONTO BACKBUFFER WITHOUT DOING LIGHTING CALCULATIONS
@@ -135,29 +195,31 @@ void D3D11Engine::RenderDef(float dt)
 	{
 		drawable.Bind(context.Get()); //Bind vertex and index buffers (textures todo)
 		drawable.Draw(context.Get()); //Set constant buffers and perform DrawIndexed()-calls
+		m_drawablesBeingRendered = (int)m_drawables.size();
 	}
 
 	//Now that we're done writing data to the render targets, unbind them
 	rtvArr[0] = NULL;
 	rtvArr[1] = NULL;
 	rtvArr[2] = NULL;
+}
 
+void D3D11Engine::DefPassTwo()
+{
 	///////////////////////////////////////////////////////////////////////////////
 	//LIGHTING PASS, USE COMPUTE SHADER TO EDIT THE BACKBUFFER AND DO LIGHTING COMPUTATIONS
-	//So now we set the rendertarget to be the *actual* backbuffer, from what I understand (Original thought)
 	//Looking at it with a more experienced eye, I'd say no. We're now no longer rendering, more like using the compute shader to edit the final image
-	//float background_colour_2[4] = { 0.9f, 0.9f, 0.9f, 1.0f };
 	ID3D11RenderTargetView* nullRtv = NULL;
 	context->OMSetRenderTargets(1, &nullRtv, NULL);
 
-	ID3D11ShaderResourceView* srvArr[] = { m_gBuffers[0].srv.Get(), m_gBuffers[1].srv.Get(), m_gBuffers[2].srv.Get()};
+	ID3D11ShaderResourceView* srvArr[] = { m_gBuffers[0].srv.Get(), m_gBuffers[1].srv.Get(), m_gBuffers[2].srv.Get() };
 	context->CSSetShaderResources(0, 3, srvArr);
 
 	//Use compute shader to edit the backbuffer
 	context->CSSetShader(computeShader.Get(), NULL, 0);
 	context->CSSetUnorderedAccessViews(0, 1, uav.GetAddressOf(), NULL); //Last value matters in case of "append consume" buffers, but I've only heard of that, I've *no idea* what it means
 	context->Dispatch(m_windowWidth / 8, m_windowHeight / 8, 1);		//In order to make our Dispatch cover the entire window, we group threads by the width and height of the 
-																		//window divided by 8 (as 8x8 is defined in compute shader)
+	//window divided by 8 (as 8x8 is defined in compute shader)
 
 	//Unbind UAV
 	ID3D11UnorderedAccessView* nullUav = NULL;
@@ -168,58 +230,6 @@ void D3D11Engine::RenderDef(float dt)
 	srvArr[1] = NULL;
 	srvArr[2] = NULL;
 	context->CSSetShaderResources(0, 3, srvArr);
-}
-
-void D3D11Engine::Render(float dt)
-{
-	//Viewport only ever needs to be reset if we resize the window and uh.. *I've disabled that option*
-	//RTV only needs to be reset if we change render targets, and we don't do that either (We will in the future though)
-	context->RSSetViewports(1, &viewport);
-	
-	// Clear the back buffer (and depth stencil later)
-	context->ClearRenderTargetView(rtv.Get(), CLEAR_COLOR);
-	context->ClearDepthStencilView(dsv.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
-	context->OMSetRenderTargets(1, rtv.GetAddressOf(), dsv.Get());
-
-	/*Input Assembler Stage*/
-	//Set primitive topology and input layout
-	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	context->IASetInputLayout(inputLayout.Get());
-
-	/*Vertex Shader Stage*/
-	context->VSSetConstantBuffers(0, 1, m_cameraCB.GetBufferAddress());
-	context->VSSetShader(vertexShader.Get(), NULL, 0);
-
-	/*Pixel Shader Stage*/
-	context->PSSetShader(pixelShader.Get(), NULL, 0);
-	//this->context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
-
-	/*Culling*/
-	if (cullingIsEnabled)
-	{
-		int visibleDrawables = 0;
-		for (auto& drawable : m_drawables)
-		{
-			if (DrawableIsVisible(m_frustum, drawable.GetBoundingBox(), m_camera->View(), drawable.World()))
-			{
-				drawable.Bind(context.Get());
-				drawable.Draw(context.Get());
-				visibleDrawables++;
-			}
-			m_drawablesBeingRendered = visibleDrawables;
-		}
-	}
-	else
-	{
-		//Per drawable: bind vertex and index buffers, then draw them
-		for (auto& drawable : m_drawables)
-		{
-			drawable.Bind(context.Get());
-			drawable.Draw(context.Get());
-		}
-		m_drawablesBeingRendered = (int)m_drawables.size();
-	}
-	
 }
 
 void D3D11Engine::InitInterfaces(const HWND& window)
@@ -275,14 +285,13 @@ void D3D11Engine::InitRTV()
 {
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> backBuffer;
 	HRESULT hr = swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), &backBuffer);
-
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create backbuffer!", L"Error", MB_OK);
 		return;
 	}
-	hr = device->CreateRenderTargetView(backBuffer.Get(), nullptr, rtv.GetAddressOf());
 
+	hr = device->CreateRenderTargetView(backBuffer.Get(), nullptr, rtv.GetAddressOf());
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create render target view!", L"Error", MB_OK);
@@ -318,8 +327,8 @@ void D3D11Engine::InitDepthStencil()
 	context->OMSetDepthStencilState(dss.Get(), 1u);
 
 	D3D11_TEXTURE2D_DESC dstd = {};
-	dstd.Width = m_windowWidth;// - 16u;	//offsets
-	dstd.Height = m_windowHeight;// - 39u;	//because of window borders
+	dstd.Width = m_windowWidth - 16u;	//offsets
+	dstd.Height = m_windowHeight - 39u;	//because of window borders
 	dstd.MipLevels = 1;
 	dstd.ArraySize = 1;
 	dstd.Format = DXGI_FORMAT_D32_FLOAT; //DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -434,8 +443,8 @@ void D3D11Engine::InitGraphicsBuffer(GBuffer(&gbuf)[3])
 	HRESULT hr;
 
 	D3D11_TEXTURE2D_DESC textureDesc = {};
-	textureDesc.Width = m_windowWidth;
-	textureDesc.Height = m_windowHeight;
+	textureDesc.Width = m_windowWidth - 16u;
+	textureDesc.Height = m_windowHeight - 39u;
 	textureDesc.MipLevels = 1;
 	textureDesc.ArraySize = 1;
 	textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
