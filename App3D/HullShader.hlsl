@@ -12,9 +12,9 @@ struct VertexShaderOutput //Mimic the VertexShaderOutput from our vertex shader,
 //So firstly we want to make what's known as a "patch constant function", which has the purpose of determining the tessellation factors for the patch we're currently processing
 struct HS_CONSTANT_DATA_OUTPUT //Triangle patches are defined by their 3 edges and their insides
 {
-	float EdgeTessFactor[3]	: SV_TessFactor;
-	float InsideTessFactor	: SV_InsideTessFactor;
-}
+    float EdgeTessFactor[3] : SV_TessFactor;
+    float InsideTessFactor	: SV_InsideTessFactor;
+};
 
 #define NUM_CONTROL_POINTS 3 //Better than hardcoding, since we use this in both our function calls that have the InputPatch
 
@@ -22,7 +22,7 @@ HS_CONSTANT_DATA_OUTPUT CalcHSPatchConstants(InputPatch<VertexShaderOutput, NUM_
 {
 	//Recipe example differs from VS example in that it doesn't have "uint PatchID : SV_PrimitiveID" in the function call, and that the output values get set to 32 rather than 15
 	//I assume that this is fine, since PatchID isn't used anyway (could be in the future), and the output values probably determine some sort of min- or max-lod
-	HS_CONSTANT_DATA_OUTPUT output = (HS_CONSTANT_DATA_OUTPUT)0; //Zero the memory?
+	HS_CONSTANT_DATA_OUTPUT output; // = (HS_CONSTANT_DATA_OUTPUT)0; //Zero the memory?
 
 	output.EdgeTessFactor[0] = output.EdgeTessFactor[1] = output.EdgeTessFactor[2] =
 		output.InsideTessFactor = 32;
