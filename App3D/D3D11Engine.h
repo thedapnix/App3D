@@ -128,4 +128,9 @@ private:
 	//Deferred rendering
 	Microsoft::WRL::ComPtr<ID3D11ComputeShader> computeShader;
 	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> uav;
+
+	//Tessellation
+	Microsoft::WRL::ComPtr<ID3D11HullShader> hullShader;
+	Microsoft::WRL::ComPtr<ID3D11DomainShader> domainShader;
+	//Rasterizer states for Regular rendering, Wireframe rendering, then a state to check which one we're currently in?
 };

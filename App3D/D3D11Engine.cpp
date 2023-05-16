@@ -352,7 +352,10 @@ void D3D11Engine::InitDepthStencil()
 void D3D11Engine::InitShadersAndInputLayout()
 {
 	HRESULT hr;
-	Microsoft::WRL::ComPtr<ID3DBlob> vsBlob, psBlob, csBlob, errorBlob;
+	Microsoft::WRL::ComPtr<ID3DBlob> 
+		vsBlob, psBlob, errorBlob,
+		csBlob,						//Deferred
+		hsBlob, dsBlob;				//Tessellation
 
 	//Read the shader files to blobs
 	hr = D3DReadFileToBlob(L"../x64/Debug/VertexShader.cso", &vsBlob);
@@ -374,6 +377,18 @@ void D3D11Engine::InitShadersAndInputLayout()
 		return;
 	}
 
+	hr = D3DReadFileToBlob(L"../x64/Debug/HullShader.cso", &hsBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read hull shader!", L"Error", MB_OK);
+	}
+
+	hr = D3DReadFileToBlob(L"../x64/Debug/DomainShader.cso", &dsBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read domain shader!", L"Error", MB_OK);
+	}
+
 	//Use those blobs to create the shaders
 	hr = device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), NULL, &vertexShader);
 	if (FAILED(hr))
@@ -391,6 +406,18 @@ void D3D11Engine::InitShadersAndInputLayout()
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create compute shader!", L"Error", MB_OK);
+		return;
+	}
+	hr = device->CreateHullShader(hsBlob->GetBufferPointer(), hsBlob->GetBufferSize(), NULL, &hullShader);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create hull shader!", L"Error", MB_OK);
+		return;
+	}
+	hr = device->CreateDomainShader(dsBlob->GetBufferPointer(), dsBlob->GetBufferSize(), NULL, &domainShader);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create domain shader!", L"Error", MB_OK);
 		return;
 	}
 
