@@ -134,7 +134,6 @@ private:
 	//Tessellation
 	Microsoft::WRL::ComPtr<ID3D11HullShader> hullShader;
 	Microsoft::WRL::ComPtr<ID3D11DomainShader> domainShader;
-	Microsoft::WRL::ComPtr<ID3D11RasterizerState> currentRS;
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> regularRS;
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> wireframeRS;
 };

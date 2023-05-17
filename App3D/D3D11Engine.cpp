@@ -121,11 +121,11 @@ void D3D11Engine::Render(float dt)
 		context->IASetInputLayout(inputLayout.Get());
 
 		/*Tessellation ting*/
-		currentRS = lodIsEnabled ? wireframeRS : regularRS;
-		context->RSSetState(currentRS.Get());
+		if(lodIsEnabled)context->RSSetState(wireframeRS.Get());
+		else			context->RSSetState(regularRS.Get());
 		context->HSSetShader(hullShader.Get(), NULL, 0);
 		context->DSSetShader(domainShader.Get(), NULL, 0);
-		context->DSSetConstantBuffers(0, 1, m_cameraCB.GetBufferAddress()); //Moved from vertex shader to domain shader
+		context->DSSetConstantBuffers(0, 1, m_cameraCB.GetBufferAddress()); //Moved from vertex shader to domain shader (move to hull shader? that's where patching happens so makes sense?)
 
 		/*Vertex Shader Stage*/
 		//context->VSSetConstantBuffers(0, 1, m_cameraCB.GetBufferAddress());
@@ -281,8 +281,6 @@ void D3D11Engine::InitRasterizerStates()
 	{
 		MessageBox(NULL, L"Failed to create wireframe rasterizer state!", L"Error", MB_OK);
 	}
-
-	currentRS = regularRS; //Default to using regular rasterizer state, switch to wireframe through boolean
 }
 
 void D3D11Engine::InitInterfaces(const HWND& window)
