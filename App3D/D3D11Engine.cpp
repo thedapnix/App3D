@@ -183,13 +183,20 @@ void D3D11Engine::DefPassOne()
 	ID3D11RenderTargetView* rtvArr[] = { m_gBuffers[0].rtv.Get(), m_gBuffers[1].rtv.Get(), m_gBuffers[2].rtv.Get() }; //Create an array of render target views and fill it with the rtv's from our gbuffers
 	context->OMSetRenderTargets(3, rtvArr, dsv.Get()); //When render targets are bound to the output merger (if I understand correctly), they are sent to the pixel shader where they get filled with data yes?
 
-	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);
 	context->IASetInputLayout(inputLayout.Get());
 
 	///////////////////////////////////////////////////////////////////////////////
 	//DRAW PASS, DRAW SCENE ONTO BACKBUFFER WITHOUT DOING LIGHTING CALCULATIONS
 	context->VSSetShader(vertexShader.Get(), NULL, 0);
 	context->PSSetShader(pixelShader.Get(), NULL, 0);
+
+	/*Tessellation ting*/
+	if (lodIsEnabled)context->RSSetState(wireframeRS.Get());
+	else			context->RSSetState(regularRS.Get());
+	context->HSSetShader(hullShader.Get(), NULL, 0);
+	context->DSSetShader(domainShader.Get(), NULL, 0);
+	context->DSSetConstantBuffers(0, 1, m_cameraCB.GetBufferAddress()); //Moved from vertex shader to domain shader (move to hull shader? that's where patching happens so makes sense?)
 
 	//context->PSSetShaderResources(0, 1, &srv);
 	//context->PSSetSamplers(0, 1, &samplerState);
