@@ -1,12 +1,11 @@
 
 struct VertexShaderOutput //Mimic the VertexShaderOutput from our vertex shader, but with different semantics (only the CLIP_POS semantic is apparently important, the others mimic)
 {
-    float4 clipPosition : SV_POSITION;
+    //float4 clipPosition : SV_POSITION;
+    float4 worldPosition : SV_POSITION;
     float2 uv : TEXCOORD0;
     float4 nor : NORMAL;
-    float4 col : TEXCOORD1;
-
-    float4 worldPosition : TEXCOORD2;
+    //float4 col : TEXCOORD1;
 };
 
 //So firstly we want to make what's known as a "patch constant function", which has the purpose of determining the tessellation factors for the patch we're currently processing
@@ -34,12 +33,11 @@ HS_CONSTANT_DATA_OUTPUT CalcHSPatchConstants(InputPatch<VertexShaderOutput, NUM_
 struct HullShaderOutput
 {
 	//As per routine when we want shaders to interact with eachother, mimic the structs passing data
-	float4 clipPosition : CLIP_POS;
+	//float4 clipPosition : CLIP_POS;
+    float4 worldPosition : WORLD_POS;
 	float2 uv : UV;
 	float4 nor : NORMAL;
-	float4 col : COLOR;
-
-	float4 worldPosition : WORLD_POS;
+	//float4 col : COLOR;
 };
 
 [domain("tri")]								//Tesselate as triangles
@@ -54,11 +52,11 @@ HullShaderOutput main(
 	HullShaderOutput output = (HullShaderOutput)0; //Aaaand zero the memory
 
 	//Basically just copy over the values from out vertex shader to the hull shader
-	output.clipPosition = ip[i].clipPosition;
+	//output.clipPosition = ip[i].clipPosition;
+    output.worldPosition = ip[i].worldPosition;
 	output.uv = ip[i].uv;
 	output.nor = ip[i].nor;
-	output.col = ip[i].col;
-	output.worldPosition = ip[i].worldPosition;
+	//output.col = ip[i].col;
 
 	return output;
 }

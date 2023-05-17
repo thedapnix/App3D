@@ -4,16 +4,24 @@
 //	matrix viewProjection;
 //}
 
+cbuffer CAMERA_CONSTANT_BUFFER : register(b0)
+{
+    matrix view;
+    matrix proj;
+    /*matrix viewProjection;
+    float3 cameraPosition;
+    float padding;*/
+};
+
 
 //Get our data from the output of the hullshader by mimicking structs here, as per usual
 struct HullShaderOutput 
 {
-	float4 clipPosition : CLIP_POS;
+	//float4 clipPosition : CLIP_POS;
+    float4 worldPosition : WORLD_POS;
 	float2 uv : UV;
 	float4 nor : NORMAL;
-	float4 col : COLOR;
-
-	float4 worldPosition : WORLD_POS;
+	//float4 col : COLOR;
 };
 
 struct HS_CONSTANT_DATA_OUTPUT
@@ -59,9 +67,11 @@ DomainShaderOutput main(
 		patch[1].nor * barycentric.y +
 		patch[2].nor * barycentric.z);
 
-	output.col = patch[0].col; //Praydge
+	output.col = float4(1.0f, 0.0f, 0.0f, 1.0f); //ahaaa praydge
 
-	output.clipPosition = output.worldPosition; //mul(output.worldPosition, viewProjection) but just to ignore errors for now
+    float4 pos = mul(output.worldPosition, view);
+    pos = mul(pos, proj);
+    output.clipPosition = pos;
 
 	return output;
 }
