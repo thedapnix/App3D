@@ -25,6 +25,8 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	//Camera setup (matrices and constant buffer)
 	InitCamera();
 
+	InitRasterizerStates(); //tesselation helper
+
 	//Init all our drawables
 	//srand((unsigned)time(NULL));
 	//for (int i = 0; i < 20; i++)
@@ -88,7 +90,7 @@ void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps,
 void D3D11Engine::MovePlayer(float speed)
 {
 	//Right now we should have 2 drawables, one at [0] which is the ground, and one at [1] that we consider to be the player. This is the biggest of temp solutions
-	//m_drawables.at(1).EditTranslation(speed, 0.0f, 0.0f);
+	m_drawables.at(1).EditTranslation(speed, 0.0f, 0.0f);
 }
 
 Camera& D3D11Engine::GetCamera() const noexcept
@@ -96,6 +98,7 @@ Camera& D3D11Engine::GetCamera() const noexcept
 	return *m_camera;
 }
 
+/*RENDER FUNCTIONS*/
 void D3D11Engine::Render(float dt)
 {
 	/*Update buffers and camera frustum here*/
@@ -224,6 +227,55 @@ void D3D11Engine::DefPassTwo()
 	srvArr[1] = NULL;
 	srvArr[2] = NULL;
 	context->CSSetShaderResources(0, 3, srvArr);
+}
+
+/*INITIALIZERS FOR DIRECTX STUFF*/
+void D3D11Engine::InitRasterizerStates()
+{
+	//Make two different rasterizer states so we can switch between them if we want to
+	//First one will be a "regular" rasterizer state, meant to render things the way we'd typically want to
+	D3D11_RASTERIZER_DESC regularDesc;
+	ZeroMemory(&regularDesc, sizeof(regularDesc));
+	regularDesc.AntialiasedLineEnable = false;
+	regularDesc.CullMode = D3D11_CULL_MODE::D3D11_CULL_BACK;
+	regularDesc.DepthBias = 0;
+	regularDesc.DepthBiasClamp = 0;
+	regularDesc.DepthClipEnable = true;
+	regularDesc.FillMode = D3D11_FILL_MODE::D3D11_FILL_SOLID;
+	regularDesc.FrontCounterClockwise = false;
+	regularDesc.MultisampleEnable = false;
+	regularDesc.ScissorEnable = false;
+	regularDesc.SlopeScaledDepthBias = 0;
+
+	HRESULT hr = device->CreateRasterizerState(&regularDesc, regularRS.GetAddressOf()); //& ?
+
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create regular rasterizer state!", L"Error", MB_OK);
+	}
+
+	//Second one will be for wireframe rasterization, which will help check if our tessellation is working
+	D3D11_RASTERIZER_DESC wfDesc;
+	ZeroMemory(&wfDesc, sizeof(wfDesc));
+	wfDesc.AntialiasedLineEnable = false;
+	wfDesc.CullMode = D3D11_CULL_MODE::D3D11_CULL_BACK;
+	wfDesc.DepthBias = 0;
+	wfDesc.DepthBiasClamp = 0;
+	wfDesc.DepthClipEnable = true;
+	wfDesc.FillMode = D3D11_FILL_MODE::D3D11_FILL_WIREFRAME; //otherwise identical to regular rendering, but we no longer want to fill rasterized triangles with color
+	wfDesc.FrontCounterClockwise = false;
+	wfDesc.MultisampleEnable = false;
+	wfDesc.ScissorEnable = false;
+	wfDesc.SlopeScaledDepthBias = 0;
+
+	hr = device->CreateRasterizerState(&wfDesc, wireframeRS.GetAddressOf());
+
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create wireframe rasterizer state!", L"Error", MB_OK);
+	}
+
+	currentRS = regularRS; //Default to using regular rasterizer state, switch to wireframe through boolean
 }
 
 void D3D11Engine::InitInterfaces(const HWND& window)
@@ -357,7 +409,9 @@ void D3D11Engine::InitShadersAndInputLayout()
 		csBlob,						//Deferred
 		hsBlob, dsBlob;				//Tessellation
 
-	//Read the shader files to blobs
+	/****************************
+	//////READ SHADER FILES//////
+	****************************/
 	hr = D3DReadFileToBlob(L"../x64/Debug/VertexShader.cso", &vsBlob);
 	if (FAILED(hr))
 	{
@@ -371,6 +425,7 @@ void D3D11Engine::InitShadersAndInputLayout()
 
 	hr = D3DCompileFromFile(L"ComputeShader.hlsl", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "cs_5_0", D3DCOMPILE_DEBUG, 0, &csBlob, &errorBlob); //This works but D3DReadFileToBlob doesn't. oof ig
 	//hr = D3DReadFileToBlob(L"../64/Debug/ComputeShader.cso", &csBlob);
+
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to read compute shader!", L"Error", MB_OK);
@@ -389,7 +444,9 @@ void D3D11Engine::InitShadersAndInputLayout()
 		MessageBox(NULL, L"Failed to read domain shader!", L"Error", MB_OK);
 	}
 
-	//Use those blobs to create the shaders
+	/****************************
+	//CREATE SHADERS FROM FILES//
+	****************************/
 	hr = device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), NULL, &vertexShader);
 	if (FAILED(hr))
 	{
@@ -451,12 +508,16 @@ void D3D11Engine::InitUAV()
 {
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> backBuffer;
 	HRESULT hr = swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), &backBuffer);
-	assert(SUCCEEDED(hr));
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to get backbuffer!", L"Error", MB_OK);
+	}
 
 	hr = device->CreateUnorderedAccessView(backBuffer.Get(), NULL, uav.GetAddressOf());
-	assert(SUCCEEDED(hr));
-
-	//return !FAILED(hr);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create unordered access view!", L"Error", MB_OK);
+	}
 }
 
 void D3D11Engine::InitGraphicsBuffer(GBuffer(&gbuf)[3])
@@ -464,8 +525,8 @@ void D3D11Engine::InitGraphicsBuffer(GBuffer(&gbuf)[3])
 	HRESULT hr;
 
 	D3D11_TEXTURE2D_DESC textureDesc = {};
-	textureDesc.Width = m_windowWidth - 16u;
-	textureDesc.Height = m_windowHeight - 39u;
+	textureDesc.Width = m_windowWidth - 16u;	//offsets taking into account window borders
+	textureDesc.Height = m_windowHeight - 39u;	//
 	textureDesc.MipLevels = 1;
 	textureDesc.ArraySize = 1;
 	textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -476,19 +537,28 @@ void D3D11Engine::InitGraphicsBuffer(GBuffer(&gbuf)[3])
 	for (UINT i = 0; i < 3; i++) //Create texture(s)
 	{
 		hr = device->CreateTexture2D(&textureDesc, NULL, &gbuf[i].texture);
-		assert(SUCCEEDED(hr));
+		if (FAILED(hr))
+		{
+			MessageBox(NULL, L"Failed to create gbuffer texture!", L"Error", MB_OK);
+		}
 	}
 
 	for (UINT i = 0; i < 3; i++) //Create RTV(s), used to write geometric data to texture
 	{
 		hr = device->CreateRenderTargetView(gbuf[i].texture.Get(), NULL, &gbuf[i].rtv); //hr = device->CreateRenderTargetView(gBuffer[i].texture, &renderTargetViewDesc, &gBuffer[i].rtv);
-		assert(SUCCEEDED(hr));
+		if (FAILED(hr))
+		{
+			MessageBox(NULL, L"Failed to create gbuffer rtv!", L"Error", MB_OK);
+		}
 	}
 
 	for (UINT i = 0; i < 3; i++) //Create SRV(s), used to read the data from RTV(s)
 	{
 		hr = device->CreateShaderResourceView(gbuf[i].texture.Get(), NULL, &gbuf[i].srv); //hr = device->CreateShaderResourceView(gBuffer[i].texture, &shaderResourceViewDesc, &gBuffer[i].srv);
-		assert(SUCCEEDED(hr));
+		if (FAILED(hr))
+		{
+			MessageBox(NULL, L"Failed to create gbuffer srv!", L"Error", MB_OK);
+		}
 	}
 }
 

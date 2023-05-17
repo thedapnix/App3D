@@ -69,6 +69,8 @@ private:
 	void InitUAV();
 	void InitGraphicsBuffer(GBuffer(&gbuf)[3]);
 
+	void InitRasterizerStates();
+
 	bool DrawableIsVisible(DirectX::BoundingFrustum frustum, DirectX::BoundingBox aabb, DirectX::XMMATRIX view, DirectX::XMMATRIX world);
 	//void InitSampler();
 
@@ -132,5 +134,7 @@ private:
 	//Tessellation
 	Microsoft::WRL::ComPtr<ID3D11HullShader> hullShader;
 	Microsoft::WRL::ComPtr<ID3D11DomainShader> domainShader;
-	//Rasterizer states for Regular rendering, Wireframe rendering, then a state to check which one we're currently in?
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState> currentRS;
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState> regularRS;
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState> wireframeRS;
 };
