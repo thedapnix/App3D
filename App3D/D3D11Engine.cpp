@@ -117,22 +117,23 @@ void D3D11Engine::Render(float dt)
 
 		/*Input Assembler Stage*/
 		//Set primitive topology and input layout
-		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		//context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		context->IASetInputLayout(inputLayout.Get());
 
 		/*Tessellation ting*/
 		if (lodIsEnabled)
 		{
+			context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);
 			currentRS = wireframeRS;
-			context->RSSetState(currentRS.Get());
 			context->HSSetShader(hullShader.Get(), NULL, 0);
 			context->DSSetShader(domainShader.Get(), NULL, 0);
 		}
 		else
 		{
+			context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			currentRS = regularRS;
-			context->RSSetState(currentRS.Get());
 		}
+		context->RSSetState(currentRS.Get());
 
 		/*Vertex Shader Stage*/
 		context->VSSetConstantBuffers(0, 1, m_cameraCB.GetBufferAddress());

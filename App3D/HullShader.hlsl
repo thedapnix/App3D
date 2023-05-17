@@ -1,12 +1,12 @@
 
-struct VertexShaderOutput //Mimic the VertexShaderOutput from our vertex shader, but with different semantics (upon further googling, HS semantics are basically just for show)
+struct VertexShaderOutput //Mimic the VertexShaderOutput from our vertex shader, but with different semantics (only the CLIP_POS semantic is apparently important, the others mimic)
 {
-    float4 clipPosition : CLIP_POS;
-    float2 uv : UV;
+    float4 clipPosition : SV_POSITION;
+    float2 uv : TEXCOORD0;
     float4 nor : NORMAL;
-    float4 col : COLOR;
+    float4 col : TEXCOORD1;
 
-    float4 worldPosition : WORLD_POS;
+    float4 worldPosition : TEXCOORD2;
 };
 
 //So firstly we want to make what's known as a "patch constant function", which has the purpose of determining the tessellation factors for the patch we're currently processing

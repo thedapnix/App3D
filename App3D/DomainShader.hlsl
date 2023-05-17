@@ -28,11 +28,11 @@ struct HS_CONSTANT_DATA_OUTPUT
 struct DomainShaderOutput
 {
 	float4 clipPosition : SV_POSITION; //Return of the SV_POSITION semantic? Question is, is this clip space or no? Neither the base example or the recipe confirms this
-	float2 uv : UV;
+	float2 uv : TEXCOORD0;
 	float4 nor : NORMAL;
-	float4 col : COLOR;
+	float4 col : TEXCOORD1;
 
-	float4 worldPosition : WORLD_POS;
+	float4 worldPosition : TEXCOORD2;
 };
 
 [domain("tri")]
