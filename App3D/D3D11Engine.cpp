@@ -90,7 +90,7 @@ void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps,
 void D3D11Engine::MovePlayer(float speed)
 {
 	//Right now we should have 2 drawables, one at [0] which is the ground, and one at [1] that we consider to be the player. This is the biggest of temp solutions
-	m_drawables.at(1).EditTranslation(speed, 0.0f, 0.0f);
+	//m_drawables.at(1).EditTranslation(speed, 0.0f, 0.0f);
 }
 
 Camera& D3D11Engine::GetCamera() const noexcept
@@ -119,6 +119,20 @@ void D3D11Engine::Render(float dt)
 		//Set primitive topology and input layout
 		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		context->IASetInputLayout(inputLayout.Get());
+
+		/*Tessellation ting*/
+		if (lodIsEnabled)
+		{
+			currentRS = wireframeRS;
+			context->RSSetState(currentRS.Get());
+			context->HSSetShader(hullShader.Get(), NULL, 0);
+			context->DSSetShader(domainShader.Get(), NULL, 0);
+		}
+		else
+		{
+			currentRS = regularRS;
+			context->RSSetState(currentRS.Get());
+		}
 
 		/*Vertex Shader Stage*/
 		context->VSSetConstantBuffers(0, 1, m_cameraCB.GetBufferAddress());
