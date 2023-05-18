@@ -25,6 +25,6 @@ public:
 	size_t GetSize() const;
 
 private:
-	Microsoft::WRL::ComPtr<ID3D11Buffer> m_buffer = nullptr;
+	Microsoft::WRL::ComPtr<ID3D11Buffer> m_buffer;
 	size_t m_bufferSize = 0;
 };

@@ -12,10 +12,10 @@ Camera::Camera()
     SetLens(0.25f * XM_PI, 800.0f / 600.0f, 1.0f, 1000.0f);
 }
 
-//DirectX::XMVECTOR Camera::GetPosition() const
-//{
-//    return XMLoadFloat3(&m_position);
-//}
+DirectX::XMVECTOR Camera::GetPositionVec() const
+{
+    return XMLoadFloat3(&m_position);
+}
 
 DirectX::XMFLOAT3 Camera::GetPosition() const
 {

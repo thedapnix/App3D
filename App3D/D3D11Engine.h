@@ -35,8 +35,14 @@ private:
 		DirectX::XMFLOAT4X4 view;
 		DirectX::XMFLOAT4X4 proj;
 	};
+	__declspec(align(16)) struct CameraData //Alternatively we can have an additional float in the struct just for padding, but this is it
+	{
+		DirectX::XMFLOAT3 pos;
+	};
 	ViewProj m_viewProj;
+	CameraData m_cameraData;
 	ConstantBuffer m_cameraCB;
+	ConstantBuffer m_cameraDataCB;
 	DirectX::BoundingFrustum m_frustum;
 
 	//OBJ-parser

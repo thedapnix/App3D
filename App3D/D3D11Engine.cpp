@@ -61,6 +61,9 @@ void D3D11Engine::Update(float dt)
 	DirectX::XMStoreFloat4x4(&m_viewProj.proj, XMMatrixTranspose(m_camera->Proj()));
 	UpdateConstantBuffer(m_cameraCB.GetBuffer(), &m_viewProj, sizeof(m_viewProj));
 
+	DirectX::XMStoreFloat3(&m_cameraData.pos, m_camera->GetPositionVec());
+	UpdateConstantBuffer(m_cameraDataCB.GetBuffer(), &m_cameraData, sizeof(m_cameraData));
+
 	for (auto& drawable : m_drawables)
 	{
 		//apply whatever changes should happen per tick
@@ -126,6 +129,7 @@ void D3D11Engine::Render(float dt)
 		context->HSSetShader(hullShader.Get(), NULL, 0);
 		context->DSSetShader(domainShader.Get(), NULL, 0);
 		context->DSSetConstantBuffers(0, 1, m_cameraCB.GetBufferAddress()); //Moved from vertex shader to domain shader (move to hull shader? that's where patching happens so makes sense?)
+		context->HSSetConstantBuffers(0, 1, m_cameraDataCB.GetBufferAddress()); //Nah, let's let domain shader have the view + proj matrices, and only send camera position to hull shader
 
 		/*Vertex Shader Stage*/
 		//context->VSSetConstantBuffers(0, 1, m_cameraCB.GetBufferAddress());
@@ -514,6 +518,10 @@ void D3D11Engine::InitCamera()
 	XMStoreFloat4x4(&m_viewProj.proj, XMMatrixTranspose(m_camera->Proj()));
 	m_cameraCB.Init(device.Get(), &m_viewProj, sizeof(m_viewProj));
 	DirectX::BoundingFrustum::CreateFromMatrix(m_frustum, m_camera->Proj());
+
+	//DirectX::XMStoreFloat3(&m_cameraData.pos, m_camera->GetPositionVec());
+	m_cameraData.pos = m_camera->GetPosition();
+	m_cameraDataCB.Init(device.Get(), &m_cameraData, sizeof(m_cameraData));
 }
 
 void D3D11Engine::InitUAV()

@@ -1,4 +1,12 @@
 
+cbuffer CAMERA_CONSTANT_BUFFER : register(b0)
+{
+    float3 cameraPosition;
+    /*matrix viewProjection;
+    float3 cameraPosition;
+    float padding;*/
+};
+
 struct VertexShaderOutput //Mimic the VertexShaderOutput from our vertex shader, but with different semantics (only the CLIP_POS semantic is apparently important, the others mimic)
 {
     //float4 clipPosition : SV_POSITION;

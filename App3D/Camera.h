@@ -20,7 +20,7 @@ public:
 
 	/*GETTERS*/
 	//Camera position
-	//DirectX::XMVECTOR GetPosition() const;
+	DirectX::XMVECTOR GetPositionVec() const;
 	DirectX::XMFLOAT3 GetPosition() const;
 
 	//X-, Y- and Z-vectors
