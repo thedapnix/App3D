@@ -29,10 +29,28 @@ HS_CONSTANT_DATA_OUTPUT CalcHSPatchConstants(InputPatch<VertexShaderOutput, NUM_
 {
 	//Recipe example differs from VS example in that it doesn't have "uint PatchID : SV_PrimitiveID" in the function call, and that the output values get set to 32 rather than 15
 	//I assume that this is fine, since PatchID isn't used anyway (could be in the future), and the output values probably determine some sort of min- or max-lod
-	HS_CONSTANT_DATA_OUTPUT output; // = (HS_CONSTANT_DATA_OUTPUT)0; //Zero the memory?
+    HS_CONSTANT_DATA_OUTPUT output = (HS_CONSTANT_DATA_OUTPUT) 0;
 
-	output.EdgeTessFactor[0] = output.EdgeTessFactor[1] = output.EdgeTessFactor[2] =
-		output.InsideTessFactor = 32;
+	//Constants
+    float maxDist = 800.0f;
+    float maxTess = 8.0f;
+	
+	//Store triangle centerpoint as well as distance from camera
+    float3 center = (ip[0].worldPosition + ip[1].worldPosition + ip[2].worldPosition) / 3.0f;
+    float3 dist = cameraPosition - center;
+    float distSquared = dist.x * dist.x + dist.y * dist.y + dist.z * dist.z;
+    //float distSquared = dist.x + dist.y + dist.z;
+	
+	//Calculate tessellation
+    float tess;
+    if (distSquared >= maxDist) tess = 1.0f; //Clamp to max value
+    else tess = (maxTess * (maxDist - distSquared) / maxDist);
+	
+    output.EdgeTessFactor[0] = output.EdgeTessFactor[1] = output.EdgeTessFactor[2] = tess;
+    output.InsideTessFactor = (output.EdgeTessFactor[0] + output.EdgeTessFactor[1] + output.EdgeTessFactor[2]) / 3.0f;
+	
+	//output.EdgeTessFactor[0] = output.EdgeTessFactor[1] = output.EdgeTessFactor[2] =
+	//	output.InsideTessFactor = 32;
 
 	return output;
 }
