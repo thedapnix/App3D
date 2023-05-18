@@ -32,27 +32,44 @@ HS_CONSTANT_DATA_OUTPUT CalcHSPatchConstants(InputPatch<VertexShaderOutput, NUM_
     HS_CONSTANT_DATA_OUTPUT output = (HS_CONSTANT_DATA_OUTPUT) 0;
 
 	//Constants
-    float maxDist = 800.0f;
-    float maxTess = 8.0f;
+    //float maxDist = 1600.0f; //40*40
+    float maxDist = 20.0f;
+    float minDist = 2.0f;
+    float maxTess = 16.0f;
+    float minTess = 1.0f;
 	
-	//Store triangle centerpoint as well as distance from camera
-    float3 center = (ip[0].worldPosition + ip[1].worldPosition + ip[2].worldPosition) / 3.0f;
-    float3 dist = cameraPosition - center;
-    float distSquared = dist.x * dist.x + dist.y * dist.y + dist.z * dist.z;
-    //float distSquared = dist.x + dist.y + dist.z;
+    //Linear interpolation attempt (trash)
+    //for (int i = 0; i < 3; i++)
+    //{
+    //    //lerp as defined by msdn: lerp(x,y,s) --> x = first float, y = second float, s = value that linearly interpolates between x and y
+    //    //so in this case, x is maxTess, y is minTess, and s is some function detailing distance
+    //    float dist = distance(float3(ip[i].worldPosition.x, ip[i].worldPosition.y, ip[i].worldPosition.z), cameraPosition);
+    //    float s = (dist - minDist) / (maxDist - minDist);
+    //    s = saturate(s); //clamp
+    //    output.EdgeTessFactor[i] = pow(2, lerp(maxTess, minTess, s));
+    //}
+    
+    //Store triangle centerpoint as well as distance from camera
+    float3 center = (ip[0].worldPosition + ip[1].worldPosition + ip[2].worldPosition) / 3.0f; //Triangle centerpoint formula: (Ax + Bx + Cx)/3
+    float dist = distance(center, cameraPosition); //HLSL built-in way of doing the below calculation
+    //float3 dist = cameraPosition - center;
+    //float distSquared = dist.x * dist.x + dist.y * dist.y + dist.z * dist.z;
 	
 	//Calculate tessellation
     float tess;
-    if (distSquared >= maxDist) tess = 1.0f; //Clamp to max value
-    else tess = (maxTess * (maxDist - distSquared) / maxDist);
-	
+    if (dist >= maxDist) //This is the point where we're sufficiently far away for us to only need to tessellate once
+    {
+        tess = 1.0f;
+    }
+    else
+    {
+        tess = (maxTess * (maxDist - dist) / maxDist); //I want this to be more of a smooth transition, like a linear transition from some max tessellation to some minimum
+    }
+    
     output.EdgeTessFactor[0] = output.EdgeTessFactor[1] = output.EdgeTessFactor[2] = tess;
     output.InsideTessFactor = (output.EdgeTessFactor[0] + output.EdgeTessFactor[1] + output.EdgeTessFactor[2]) / 3.0f;
-	
-	//output.EdgeTessFactor[0] = output.EdgeTessFactor[1] = output.EdgeTessFactor[2] =
-	//	output.InsideTessFactor = 32;
-
-	return output;
+    
+    return output;
 }
 
 //Now on to what this shader will actually output to the tesselation stage, this will run per control point in the input patch
