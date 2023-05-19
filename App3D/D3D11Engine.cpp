@@ -315,6 +315,58 @@ void D3D11Engine::InitRasterizerStates()
 	}
 }
 
+void D3D11Engine::InitStructuredBuffer()
+{
+	D3D11_BUFFER_DESC desc;
+	ZeroMemory(&desc, sizeof(desc));
+
+	desc.ByteWidth = sizeof(Drawable) * m_drawables.size(); //This will 100% change lmao, I think this buffer is meant to replace the standard "vertex buffer"
+	desc.Usage = D3D11_USAGE_DYNAMIC; //IMMUTABLE if not dynamic
+	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE; //0 if we don't have one
+	desc.BindFlags |= D3D11_BIND_UNORDERED_ACCESS; //also 0 if we don't have one
+	desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE; //0 if not dynamic
+	desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	desc.StructureByteStride = sizeof(Drawable);
+
+	HRESULT hr;
+	D3D11_SUBRESOURCE_DATA data;
+	ZeroMemory(&data, sizeof(data));
+
+	//data.pSysMem = vertexBufferData;
+	data.SysMemPitch = data.SysMemSlicePitch = 0;
+	hr = device->CreateBuffer(&desc, &data, &structuredBuffer);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create structured buffer!", L"Error", MB_OK);
+	}
+
+	//Bind srv and uav to the structured buffer
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+	ZeroMemory(&srvDesc, sizeof(srvDesc));
+	srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+	srvDesc.Buffer.FirstElement = 0;
+	srvDesc.Buffer.NumElements = m_drawables.size(); //change
+	hr = device->CreateShaderResourceView(structuredBuffer.Get(), &srvDesc, sbSRV.GetAddressOf());
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create shader resource view for structured buffer!", L"Error", MB_OK);
+	}
+
+	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
+	ZeroMemory(&uavDesc, sizeof(uavDesc));
+	uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+	uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+	uavDesc.Buffer.FirstElement = 0;
+	uavDesc.Buffer.NumElements = m_drawables.size(); //chaaange
+	uavDesc.Buffer.Flags = 0;
+	hr = device->CreateUnorderedAccessView(structuredBuffer.Get(), &uavDesc, sbUAV.GetAddressOf());
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create unordered access view for structured buffer!", L"Error", MB_OK);
+	}
+}
+
 void D3D11Engine::InitInterfaces(const HWND& window)
 {
 	/*

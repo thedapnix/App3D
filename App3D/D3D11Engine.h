@@ -77,6 +77,8 @@ private:
 
 	void InitRasterizerStates();
 
+	void InitStructuredBuffer();
+
 	bool DrawableIsVisible(DirectX::BoundingFrustum frustum, DirectX::BoundingBox aabb, DirectX::XMMATRIX view, DirectX::XMMATRIX world);
 	//void InitSampler();
 
@@ -142,4 +144,9 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11DomainShader> domainShader;
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> regularRS;
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> wireframeRS;
+
+	//Billboarded Particle System
+	Microsoft::WRL::ComPtr<ID3D11Buffer> structuredBuffer;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> sbSRV;
+	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> sbUAV;
 };
