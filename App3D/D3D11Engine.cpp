@@ -84,9 +84,11 @@ void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps,
 		m_fpsString = std::to_string(m_fpsCounter);
 		m_fpsCounter = 0;
 	}
-	ImGuiEngineWindow(m_camera.get(), m_fpsString, state,
+	ImGuiEngineWindow(
+		m_camera.get(), m_fpsString, state,
 		objIsEnabled, deferredIsEnabled, cullingIsEnabled, billboardingIsEnabled, lodIsEnabled, cubemapIsEnabled, shadowIsEnabled,
-		m_drawablesBeingRendered);
+		m_drawablesBeingRendered
+	);
 	EndImGuiFrame();
 }
 
@@ -205,11 +207,30 @@ void D3D11Engine::DefPassOne()
 	//context->PSSetShaderResources(0, 1, &srv);
 	//context->PSSetSamplers(0, 1, &samplerState);
 
-	for (auto& drawable : m_drawables)	//This right here is why deferred rendering is better with multiple lights, but worse with multiple drawables
-										//We're drawing all our drawables onto all 3 render targets
+	//This right here is why deferred rendering is better with multiple lights, but worse with multiple drawables
+	//We're drawing all our drawables onto all 3 render targets
+	if (cullingIsEnabled)
 	{
-		drawable.Bind(context.Get()); //Bind vertex and index buffers (textures todo)
-		drawable.Draw(context.Get()); //Set constant buffers and perform DrawIndexed()-calls
+		int visibleDrawables = 0;
+		for (auto& drawable : m_drawables)
+		{
+			if (DrawableIsVisible(m_frustum, drawable.GetBoundingBox(), m_camera->View(), drawable.World()))
+			{
+				drawable.Bind(context.Get());
+				drawable.Draw(context.Get());
+				visibleDrawables++;
+			}
+			m_drawablesBeingRendered = visibleDrawables;
+		}
+	}
+	else
+	{
+		//Per drawable: bind vertex and index buffers, then draw them
+		for (auto& drawable : m_drawables)
+		{
+			drawable.Bind(context.Get());
+			drawable.Draw(context.Get());
+		}
 		m_drawablesBeingRendered = (int)m_drawables.size();
 	}
 

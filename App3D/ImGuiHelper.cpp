@@ -93,6 +93,10 @@ void ImGuiEngineWindow(Camera* camera, std::string fps, int state,
 		{
 			if (lodIsEnabled) lodIsEnabled = false; else lodIsEnabled = true;
 		}
+		if (ImGui::Button("Toggle Particles (Billboarding)"))
+		{
+			if (billboardingIsEnabled) billboardingIsEnabled = false; else billboardingIsEnabled = true;
+		}
 	}
 
 	ImGui::End();
