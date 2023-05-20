@@ -6,9 +6,9 @@ ParticleSystem::ParticleSystem(ID3D11Device* device)
 	//Create some amount of particles (manipulate this value through imgui slider later)
 	Particle particles[m_elementCount]
 	{
-		{{-3.0f, -3.0f, 3.0f}},
-		{{-4.0f, -4.0f, 3.0f}},
-		{{-2.0f, -2.0f, 3.0f}}
+		{{-10.0f, -10.0f,  0.0f}},
+		{{  5.0f,   5.0f,  5.0f}},
+		{{ 25.0f,  25.0f, 10.0f}}
 	};
 	InitStructuredBuffer(device, false, false, true, sizeof(Particle), m_elementCount, particles);
 	
@@ -21,23 +21,24 @@ ParticleSystem::ParticleSystem(ID3D11Device* device)
 
 void ParticleSystem::Draw(ID3D11DeviceContext* context, UINT width, UINT height, ID3D11Buffer* cameraCB, D3D11_VIEWPORT viewport)
 {
+	//Maybe I need the particle system to have a render target view?
+	
+	context->RSSetViewports(1, &viewport);
+
 	/*Input Assembler Stage*/
 	context->IASetInputLayout(NULL); //Done in cookbook, feels weird
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
-	//context->IASetInputLayout(inputLayout.Get());
 
 	/*Shader Stage*/
-	//Vertex Shader
 	context->VSSetShader(vertexShader.Get(), NULL, 0);
-	//Geometry Shader
 	context->GSSetShader(geometryShader.Get(), NULL, 0);
 	context->GSSetConstantBuffers(0, 1, &cameraCB);
-	context->RSSetViewports(1, &viewport);
 	context->PSSetShader(pixelShader.Get(), NULL, 0);
+
 	//Draw
 	context->Draw(m_elementCount, 0);
 
-	//Unbind shaders
+	//Unbind shaders and constant buffer
 	context->VSSetShader(NULL, NULL, 0);
 	context->GSSetShader(NULL, NULL, 0);
 	context->GSSetConstantBuffers(0, 0, NULL);
@@ -52,6 +53,10 @@ void ParticleSystem::Draw(ID3D11DeviceContext* context, UINT width, UINT height,
 	//Unbind uav
 	ID3D11UnorderedAccessView* nullUAV = NULL;
 	context->CSSetUnorderedAccessViews(0, 1, &nullUAV, NULL);
+
+	//Unbind shader and constant buffer
+	context->CSSetShader(NULL, NULL, 0);
+	context->CSSetConstantBuffers(0, 0, NULL);
 }
 
 void ParticleSystem::InitStructuredBuffer(ID3D11Device* device, bool isDynamic, bool hasSRV, bool hasUAV, UINT elementSize, UINT elementCount, void* bufferData)

@@ -28,11 +28,13 @@ void main(
     float3 rightVec = normalize(cross(frontVec, upVec));
     upVec = normalize(cross(rightVec, frontVec));
 	//As for "scale right and up based on preference" i'm not sure. make particles larger? maybe affect value through imgui?
+    rightVec *= 0.1f;
+    upVec *= 0.1;
 	
 	//Multiply the view and projection matrices from our camera constant buffer to get vp
     matrix vp = mul(view, proj);
 	
-	GeometryShaderOutput element;
+    GeometryShaderOutput element;
 	//Append elements in clockwise order just as we do on the cpu-side, so top left -> bottom right -> bottom left
     element.pos = mul(float4(input[0] - rightVec + upVec, 1.0f), vp);
     output.Append(element);
@@ -49,11 +51,10 @@ void main(
     output.Append(element);
     element.pos = mul(float4(input[0] + rightVec - upVec, 1.0f), vp);
     output.Append(element);
-    //output.RestartStrip(); //Second triangle done, is this call redundant maybe?
 	
 	//for (uint i = 0; i < 3; i++)
 	//{
-    //  GeometryShaderOutput element;
+ //     GeometryShaderOutput element;
 	//	element.pos = input[i];
 	//	output.Append(element);
 	//}
