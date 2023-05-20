@@ -34,6 +34,9 @@
     <Filter Include="ImGui\Library Files">
       <UniqueIdentifier>{c834d52f-0f4e-4939-81ef-9a689226c74c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Particle Shaders">
+      <UniqueIdentifier>{70de1184-51c9-42d6-bfec-6f623da330a4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -183,6 +186,18 @@
     </FxCompile>
     <FxCompile Include="DomainShader.hlsl">
       <Filter>Resource Files</Filter>
+    </FxCompile>
+    <FxCompile Include="ParticleVertexShader.hlsl">
+      <Filter>Resource Files\Particle Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ParticlePixelShader.hlsl">
+      <Filter>Resource Files\Particle Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ParticleComputeShader.hlsl">
+      <Filter>Resource Files\Particle Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ParticleGeometryShader.hlsl">
+      <Filter>Resource Files\Particle Shaders</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>
