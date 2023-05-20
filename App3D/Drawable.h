@@ -57,6 +57,8 @@ public:
 	/*Getters*/
 	DirectX::XMMATRIX World();
 	DirectX::BoundingBox GetBoundingBox();
+	const VertexBuffer& GetVertexBuffer() const;
+	void* GetVertexVectorData();
 
 private:
 	struct WorldTransform
@@ -77,4 +79,6 @@ private:
 	//ShaderResource m_shaderResource;
 
 	DirectX::BoundingBox m_aabb;
+
+	void* m_vertexVectorData;
 };

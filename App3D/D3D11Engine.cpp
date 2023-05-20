@@ -29,10 +29,6 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	//Deferred setup
 	InitGraphicsBuffer(m_gBuffers);
 
-	//Billboarding setup
-	particles = ParticleSystem(device.Get(), true, true, true);
-
-	//Init all our drawables
 	//srand((unsigned)time(NULL));
 	//for (int i = 0; i < 20; i++)
 	//{
@@ -43,6 +39,8 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	//	int r5 = -10 + (rand() % 20);
 	//	int r6 = -10 + (rand() % 20);*/
 	//}
+	
+	//Drawable setup
 	for (int i = 0; i < 5; i++)
 	{
 		for (int j = 0; j < 5; j++)
@@ -51,6 +49,10 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 		}
 	}
 
+	//Billboarding setup, needs to happen after drawable setup since we need to access our filled vertex buffers
+	particles = ParticleSystem(device.Get(), true, true, true, m_drawables);
+
+	//ImGui setup
 	SetupImGui(hWnd, device.Get(), context.Get());
 }
 

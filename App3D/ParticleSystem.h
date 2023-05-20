@@ -6,15 +6,13 @@
 #include <crtdbg.h>
 #endif
 
-#include <d3d11.h>
-#include <iostream>
-#include <wrl.h>
+#include "Drawable.h"
 
 class ParticleSystem
 {
 public:
 	ParticleSystem() = default;
-	ParticleSystem(ID3D11Device* device, bool isDynamic, bool hasSRV, bool hasUAV);
+	ParticleSystem(ID3D11Device* device, bool isDynamic, bool hasSRV, bool hasUAV, std::vector<Drawable> drawables);
 	~ParticleSystem() = default;
 private:
 	Microsoft::WRL::ComPtr<ID3D11Buffer> structuredBuffer;

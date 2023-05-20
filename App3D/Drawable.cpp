@@ -3,11 +3,12 @@
 Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOAT3 scaling, DirectX::XMFLOAT3 rotation, DirectX::XMFLOAT3 translation)
 {
 	//Every drawable has a vertex buffer, an index buffer, and a constant buffer
+	m_vertexVectorData = (void*)(data.vData.vector.data());
 	m_vertexBuffer.Init(
 		device,
 		data.vData.size,
 		data.vData.count,
-		(void*)(data.vData.vector.data())
+		m_vertexVectorData
 	);
 
 	m_indexBuffer.Init(
@@ -92,4 +93,14 @@ DirectX::XMMATRIX Drawable::World()
 DirectX::BoundingBox Drawable::GetBoundingBox()
 {
 	return m_aabb;
+}
+
+const VertexBuffer& Drawable::GetVertexBuffer() const
+{
+	return m_vertexBuffer;
+}
+
+void* Drawable::GetVertexVectorData()
+{
+	return m_vertexVectorData;
 }
