@@ -22,14 +22,12 @@ void main(
 	Use front vector along with right vector to calculate our *actual* up vector
 	Scale right and up based on preference
 	*/
-	//Perpendicular vector obtained from cross product
-    float3 frontVec = cameraPosition - input[0];
+	//Perpendicular vector obtained from cross product (don't forget to normalize vectors)
+    float3 frontVec = normalize(cameraPosition - input[0]);
     float3 upVec = float3(0.0f, 1.0f, 0.0f);
-    float3 rightVec = cross(frontVec, upVec);
-    upVec = cross(rightVec, frontVec);
-	//As for "scale right and up based on preference", perhaps I should normalize these
-    rightVec = normalize(rightVec);
-    upVec = normalize(upVec);
+    float3 rightVec = normalize(cross(frontVec, upVec));
+    upVec = normalize(cross(rightVec, frontVec));
+	//As for "scale right and up based on preference" i'm not sure. make particles larger? maybe affect value through imgui?
 	
 	//Multiply the view and projection matrices from our camera constant buffer to get vp
     matrix vp = mul(view, proj);
@@ -51,7 +49,7 @@ void main(
     output.Append(element);
     element.pos = mul(float4(input[0] + rightVec - upVec, 1.0f), vp);
     output.Append(element);
-    output.RestartStrip(); //Second triangle done, is this call redundant maybe?
+    //output.RestartStrip(); //Second triangle done, is this call redundant maybe?
 	
 	//for (uint i = 0; i < 3; i++)
 	//{

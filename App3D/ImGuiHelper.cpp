@@ -97,6 +97,10 @@ void ImGuiEngineWindow(Camera* camera, std::string fps, int state,
 		{
 			if (billboardingIsEnabled) billboardingIsEnabled = false; else billboardingIsEnabled = true;
 		}
+		if (ImGui::Button("Toggle Cubemap"))
+		{
+			if (cubemapIsEnabled) cubemapIsEnabled = false; else cubemapIsEnabled = true;
+		}
 	}
 
 	ImGui::End();
