@@ -25,7 +25,7 @@ public:
 	ParticleSystem(ID3D11Device* device);
 	~ParticleSystem() = default;
 
-	void Draw(ID3D11DeviceContext* context, UINT width, UINT height, ID3D11Buffer* cameraCB);
+	void Draw(ID3D11DeviceContext* context, UINT width, UINT height, ID3D11Buffer* cameraCB, D3D11_VIEWPORT viewport);
 
 private:
 	//Structured buffer
@@ -41,10 +41,6 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
 	Microsoft::WRL::ComPtr<ID3D11ComputeShader> computeShader;
 	Microsoft::WRL::ComPtr<ID3D11GeometryShader> geometryShader;
-
-	//Input layout
-	void InitInputLayout(ID3D11Device* device, ID3DBlob* vertexData); //called by the InitShaders() function, passes the vBlob
-	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
 
 	ConstantBuffer m_constantBuffer;
 };

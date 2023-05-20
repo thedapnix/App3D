@@ -19,7 +19,7 @@ ParticleSystem::ParticleSystem(ID3D11Device* device)
 	m_constantBuffer.Init(device, &pcb, sizeof(pcb));
 }
 
-void ParticleSystem::Draw(ID3D11DeviceContext* context, UINT width, UINT height, ID3D11Buffer* cameraCB)
+void ParticleSystem::Draw(ID3D11DeviceContext* context, UINT width, UINT height, ID3D11Buffer* cameraCB, D3D11_VIEWPORT viewport)
 {
 	/*Input Assembler Stage*/
 	context->IASetInputLayout(NULL); //Done in cookbook, feels weird
@@ -32,7 +32,7 @@ void ParticleSystem::Draw(ID3D11DeviceContext* context, UINT width, UINT height,
 	//Geometry Shader
 	context->GSSetShader(geometryShader.Get(), NULL, 0);
 	context->GSSetConstantBuffers(0, 1, &cameraCB);
-	//Set viewport? Don't think I need to
+	context->RSSetViewports(1, &viewport);
 	context->PSSetShader(pixelShader.Get(), NULL, 0);
 	//Draw
 	context->Draw(m_elementCount, 0);

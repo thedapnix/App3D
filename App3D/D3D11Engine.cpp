@@ -182,7 +182,7 @@ void D3D11Engine::Render(float dt)
 	}
 
 	/*Particles*/
-	particles.Draw(context.Get(), m_windowWidth, m_windowHeight, m_cameraCB.GetBuffer());
+	particles.Draw(context.Get(), m_windowWidth, m_windowHeight, m_cameraCB.GetBuffer(), viewport);
 	
 }
 
