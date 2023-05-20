@@ -174,6 +174,15 @@ void D3D11Engine::Render(float dt)
 			}
 			m_drawablesBeingRendered = (int)m_drawables.size();
 		}
+
+		/*Unbind shaders before we move on to particle drawing?*/
+		context->VSSetShader(NULL, NULL, 0);
+		context->PSSetShader(NULL, NULL, 0);
+		context->HSSetShader(NULL, NULL, 0);
+		context->DSSetShader(NULL, NULL, 0);
+		/*Unbind constant buffers too*/
+		context->HSSetConstantBuffers(0, 0, NULL);
+		context->DSSetConstantBuffers(0, 0, NULL);
 	}
 
 	if (deferredIsEnabled)

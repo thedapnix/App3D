@@ -40,6 +40,7 @@ void ParticleSystem::Draw(ID3D11DeviceContext* context, UINT width, UINT height,
 	//Unbind shaders
 	context->VSSetShader(NULL, NULL, 0);
 	context->GSSetShader(NULL, NULL, 0);
+	context->GSSetConstantBuffers(0, 0, NULL);
 	context->PSSetShader(NULL, NULL, 0);
 
 	//Use compute shader and uav to edit stuff
