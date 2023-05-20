@@ -15,7 +15,7 @@ __declspec(align(16)) struct Particle
 
 __declspec(align(16)) struct ParticleCB
 {
-	//transformations or no? leave this empty for now
+	float angle; //let's do some sort of rotation in the shader
 };
 
 class ParticleSystem
@@ -25,9 +25,12 @@ public:
 	ParticleSystem(ID3D11Device* device);
 	~ParticleSystem() = default;
 
+	void Draw(ID3D11DeviceContext* context, UINT width, UINT height, ID3D11Buffer* cameraCB);
+
 private:
 	//Structured buffer
 	void InitStructuredBuffer(ID3D11Device* device, bool isDynamic, bool hasSRV, bool hasUAV, UINT elementSize, UINT elementCount, void* bufferData);
+	static constexpr UINT m_elementCount = 3;
 	Microsoft::WRL::ComPtr<ID3D11Buffer> structuredBuffer;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv;
 	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> uav;
@@ -39,5 +42,9 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11ComputeShader> computeShader;
 	Microsoft::WRL::ComPtr<ID3D11GeometryShader> geometryShader;
 
-	ConstantBuffer constantBuffer;
+	//Input layout
+	void InitInputLayout(ID3D11Device* device, ID3DBlob* vertexData); //called by the InitShaders() function, passes the vBlob
+	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
+
+	ConstantBuffer m_constantBuffer;
 };

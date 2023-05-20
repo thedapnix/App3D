@@ -31,19 +31,14 @@ public:
 
 private:
 	/*TODO: Move to camera*/
-	struct ViewProj
+	__declspec(align(16)) struct CameraData
 	{
 		DirectX::XMFLOAT4X4 view;
 		DirectX::XMFLOAT4X4 proj;
-	};
-	__declspec(align(16)) struct CameraData //Alternatively we can have an additional float in the struct just for padding, but this is it
-	{
 		DirectX::XMFLOAT3 pos;
 	};
-	ViewProj m_viewProj;
 	CameraData m_cameraData;
 	ConstantBuffer m_cameraCB;
-	ConstantBuffer m_cameraDataCB;
 	DirectX::BoundingFrustum m_frustum;
 
 	//OBJ-parser
@@ -77,8 +72,6 @@ private:
 	void InitGraphicsBuffer(GBuffer(&gbuf)[3]);
 
 	void InitRasterizerStates();
-
-	void InitStructuredBuffer();
 
 	bool DrawableIsVisible(DirectX::BoundingFrustum frustum, DirectX::BoundingBox aabb, DirectX::XMMATRIX view, DirectX::XMMATRIX world);
 	//void InitSampler();

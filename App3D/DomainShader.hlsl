@@ -8,6 +8,7 @@ cbuffer CAMERA_CONSTANT_BUFFER : register(b0)
 {
     matrix view;
     matrix proj;
+    float3 cameraPosition;
     /*matrix viewProjection;
     float3 cameraPosition;
     float padding;*/

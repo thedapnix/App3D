@@ -64,12 +64,13 @@ D3D11Engine::~D3D11Engine()
 void D3D11Engine::Update(float dt)
 {
 	/*Update constant buffers*/
-	DirectX::XMStoreFloat4x4(&m_viewProj.view, XMMatrixTranspose(m_camera->View()));
-	DirectX::XMStoreFloat4x4(&m_viewProj.proj, XMMatrixTranspose(m_camera->Proj()));
-	UpdateConstantBuffer(m_cameraCB.GetBuffer(), &m_viewProj, sizeof(m_viewProj));
-
+	DirectX::XMStoreFloat4x4(&m_cameraData.view, XMMatrixTranspose(m_camera->View()));
+	DirectX::XMStoreFloat4x4(&m_cameraData.proj, XMMatrixTranspose(m_camera->Proj()));
 	DirectX::XMStoreFloat3(&m_cameraData.pos, m_camera->GetPositionVec());
-	UpdateConstantBuffer(m_cameraDataCB.GetBuffer(), &m_cameraData, sizeof(m_cameraData));
+	UpdateConstantBuffer(m_cameraCB.GetBuffer(), &m_cameraData, sizeof(m_cameraData));
+
+	
+	//UpdateConstantBuffer(m_cameraDataCB.GetBuffer(), &m_cameraData, sizeof(m_cameraData));
 
 	for (auto& drawable : m_drawables)
 	{
@@ -138,7 +139,7 @@ void D3D11Engine::Render(float dt)
 		context->HSSetShader(hullShader.Get(), NULL, 0);
 		context->DSSetShader(domainShader.Get(), NULL, 0);
 		context->DSSetConstantBuffers(0, 1, m_cameraCB.GetBufferAddress()); //Moved from vertex shader to domain shader (move to hull shader? that's where patching happens so makes sense?)
-		context->HSSetConstantBuffers(0, 1, m_cameraDataCB.GetBufferAddress()); //Nah, let's let domain shader have the view + proj matrices, and only send camera position to hull shader
+		context->HSSetConstantBuffers(0, 1, m_cameraCB.GetBufferAddress()); //Nah, let's let domain shader have the view + proj matrices, and only send camera position to hull shader
 
 		/*Vertex Shader Stage*/
 		//context->VSSetConstantBuffers(0, 1, m_cameraCB.GetBufferAddress());
@@ -179,6 +180,9 @@ void D3D11Engine::Render(float dt)
 	{
 		DefPassTwo(); //Lighting pass, editing the backbuffer using a compute shader
 	}
+
+	/*Particles*/
+	particles.Draw(context.Get(), m_windowWidth, m_windowHeight, m_cameraCB.GetBuffer());
 	
 }
 
@@ -320,11 +324,6 @@ void D3D11Engine::InitRasterizerStates()
 	{
 		MessageBox(NULL, L"Failed to create wireframe rasterizer state!", L"Error", MB_OK);
 	}
-}
-
-void D3D11Engine::InitStructuredBuffer()
-{
-	
 }
 
 void D3D11Engine::InitInterfaces(const HWND& window)
@@ -547,14 +546,11 @@ void D3D11Engine::InitCamera()
 {
 	m_camera = std::make_unique<Camera>();
 	m_camera->UpdateViewMatrix();
-	XMStoreFloat4x4(&m_viewProj.view, XMMatrixTranspose(m_camera->View()));
-	XMStoreFloat4x4(&m_viewProj.proj, XMMatrixTranspose(m_camera->Proj()));
-	m_cameraCB.Init(device.Get(), &m_viewProj, sizeof(m_viewProj));
+	XMStoreFloat4x4(&m_cameraData.view, XMMatrixTranspose(m_camera->View()));
+	XMStoreFloat4x4(&m_cameraData.proj, XMMatrixTranspose(m_camera->Proj()));
+	DirectX::XMStoreFloat3(&m_cameraData.pos, m_camera->GetPositionVec());
+	m_cameraCB.Init(device.Get(), &m_cameraData, sizeof(m_cameraData));
 	DirectX::BoundingFrustum::CreateFromMatrix(m_frustum, m_camera->Proj());
-
-	//DirectX::XMStoreFloat3(&m_cameraData.pos, m_camera->GetPositionVec());
-	m_cameraData.pos = m_camera->GetPosition();
-	m_cameraDataCB.Init(device.Get(), &m_cameraData, sizeof(m_cameraData));
 }
 
 void D3D11Engine::InitUAV()

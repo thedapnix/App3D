@@ -1,7 +1,7 @@
-cbuffer PARTICLE_CONSTANT_BUFFER : register(b0)
-{
-    float angle;
-}
+//cbuffer PARTICLE_CONSTANT_BUFFER : register(b0)
+//{
+//    float angle;
+//}
 
 struct Particle //same as the one in the vertex shader
 {
