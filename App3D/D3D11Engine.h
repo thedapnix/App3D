@@ -12,6 +12,7 @@
 #include "ConstantBuffer.h"
 #include "Drawable.h"
 #include "Camera.h"
+#include "ParticleSystem.h"
 
 class D3D11Engine
 {
@@ -145,8 +146,6 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> regularRS;
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> wireframeRS;
 
-	//Billboarded Particle System
-	Microsoft::WRL::ComPtr<ID3D11Buffer> structuredBuffer;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> sbSRV;
-	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> sbUAV;
+	//Billboarding
+	ParticleSystem particles;
 };

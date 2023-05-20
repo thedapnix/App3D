@@ -93,6 +93,9 @@
     <ClCompile Include="Libraries\ImGui\imgui_widgets.cpp">
       <Filter>ImGui\Library Files</Filter>
     </ClCompile>
+    <ClCompile Include="ParticleSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h">
@@ -160,6 +163,9 @@
     </ClInclude>
     <ClInclude Include="Libraries\ImGui\imstb_truetype.h">
       <Filter>ImGui\Library Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ParticleSystem.h">
+      <Filter>Graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
