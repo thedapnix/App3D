@@ -1,30 +1,34 @@
 #include "ParticleSystem.h"
 
-ParticleSystem::ParticleSystem(ID3D11Device* device, bool isDynamic, bool hasSRV, bool hasUAV, std::vector<Drawable> drawables)
+ParticleSystem::ParticleSystem(ID3D11Device* device)
 {
-	UINT vCount = 0u, vSize = 0u;
-	for (auto& i : drawables)
+	//Create some amount of particles (manipulate this value through imgui slider later)
+	Particle particles[1]
 	{
-		vCount += i.GetVertexBuffer().GetVertexCount();
-	}
-	vSize = drawables.at(0).GetVertexBuffer().GetVertexSize(); //All vertices will have the same size so picking one at any index will do
+		{{-3.0f, -3.0f, 3.0f}}
+	};
+	InitStructuredBuffer(device, false, true, true, sizeof(Particle), 1, particles);
+	
+}
 
+void ParticleSystem::InitStructuredBuffer(ID3D11Device* device, bool isDynamic, bool hasSRV, bool hasUAV, UINT elementSize, UINT elementCount, void* bufferData)
+{
 	D3D11_BUFFER_DESC desc;
 	ZeroMemory(&desc, sizeof(desc));
-	desc.ByteWidth = vSize * vCount;
-	desc.Usage = isDynamic ? D3D11_USAGE_DYNAMIC : D3D11_USAGE_IMMUTABLE;
+	desc.ByteWidth = elementSize * elementCount;
+	desc.Usage = isDynamic ? D3D11_USAGE_DYNAMIC : D3D11_USAGE_DEFAULT; //IMMUTABLE?
 	desc.BindFlags = hasSRV ? D3D11_BIND_SHADER_RESOURCE : 0u;
 	desc.BindFlags |= hasUAV ? D3D11_BIND_UNORDERED_ACCESS : 0u;
 	desc.CPUAccessFlags = isDynamic ? D3D11_CPU_ACCESS_WRITE : 0u;
 	desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-	desc.StructureByteStride = vSize;
+	desc.StructureByteStride = elementSize;
 
 	HRESULT hr;
 	D3D11_SUBRESOURCE_DATA data;
 	ZeroMemory(&data, sizeof(data));
-	data.pSysMem = drawables.at(0).GetVertexVectorData();
+	data.pSysMem = bufferData;
 	data.SysMemPitch = data.SysMemSlicePitch = 0;
-	hr = device->CreateBuffer(&desc, &data, &structuredBuffer);
+	hr = device->CreateBuffer(&desc, &data, structuredBuffer.GetAddressOf());
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create structured buffer!", L"Error", MB_OK);
@@ -36,8 +40,8 @@ ParticleSystem::ParticleSystem(ID3D11Device* device, bool isDynamic, bool hasSRV
 	srvDesc.Format = DXGI_FORMAT_UNKNOWN;
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 	srvDesc.Buffer.FirstElement = 0;
-	srvDesc.Buffer.NumElements = vCount;
-	hr = device->CreateShaderResourceView(structuredBuffer.Get(), &srvDesc, sbSRV.GetAddressOf());
+	srvDesc.Buffer.NumElements = elementCount;
+	hr = device->CreateShaderResourceView(structuredBuffer.Get(), &srvDesc, srv.GetAddressOf());
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create shader resource view for structured buffer!", L"Error", MB_OK);
@@ -48,9 +52,9 @@ ParticleSystem::ParticleSystem(ID3D11Device* device, bool isDynamic, bool hasSRV
 	uavDesc.Format = DXGI_FORMAT_UNKNOWN;
 	uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
 	uavDesc.Buffer.FirstElement = 0;
-	uavDesc.Buffer.NumElements = vCount;
+	uavDesc.Buffer.NumElements = elementCount;
 	uavDesc.Buffer.Flags = 0;
-	hr = device->CreateUnorderedAccessView(structuredBuffer.Get(), &uavDesc, sbUAV.GetAddressOf());
+	hr = device->CreateUnorderedAccessView(structuredBuffer.Get(), &uavDesc, uav.GetAddressOf());
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create unordered access view for structured buffer!", L"Error", MB_OK);

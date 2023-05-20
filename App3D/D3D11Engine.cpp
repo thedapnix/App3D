@@ -20,14 +20,17 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	//Render setup
 	InitShadersAndInputLayout();
 
+	//Deferred setup
+	InitGraphicsBuffer(m_gBuffers);
+
 	//Camera setup (matrices and constant buffer)
 	InitCamera();
 
 	//Tesselation helper setup (allow for different rasterizer states to show tessellation works through wireframe rendering)
-	InitRasterizerStates(); 
+	InitRasterizerStates();
 
-	//Deferred setup
-	InitGraphicsBuffer(m_gBuffers);
+	//Billboarding setup
+	particles = ParticleSystem(device.Get());
 
 	//srand((unsigned)time(NULL));
 	//for (int i = 0; i < 20; i++)
@@ -48,9 +51,6 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 			InitDrawableFromFile("Models/cube.obj", { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { -5.0f + (float)i*3, -5.0f + (float)j*3, 5.0f});
 		}
 	}
-
-	//Billboarding setup, needs to happen after drawable setup since we need to access our filled vertex buffers
-	particles = ParticleSystem(device.Get(), true, true, true, m_drawables);
 
 	//ImGui setup
 	SetupImGui(hWnd, device.Get(), context.Get());
