@@ -33,7 +33,8 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	m_particles = ParticleSystem(device.Get());
 
 	//Cube environment mapping setup
-	m_cubeMap = CubeMap(device.Get(), false);
+	//m_cubeMap = CubeMap(device.Get(), false); //Complains that the copy-assignment operator has been deleted but I haven't done that?
+	m_cubeMap.Init(device.Get(), false); //Workaround, though I prefer having working constructors and operators
 
 	//srand((unsigned)time(NULL));
 	//for (int i = 0; i < 20; i++)

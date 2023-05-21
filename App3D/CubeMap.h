@@ -15,7 +15,7 @@ This is not strictly necessary however, and adjustments to get a more desirable 
 
 class CubeMap
 {
-public: //Will this need to be public? We'll find out
+private: //Will this need to be public? We'll find out
 	class CubeMapView //The view of every virtual camera
 	{
 	public:
@@ -29,10 +29,10 @@ public: //Will this need to be public? We'll find out
 	};
 public:
 	CubeMap() = default;
-	CubeMap(ID3D11Device* device, bool hasSRV);
+	//CubeMap(ID3D11Device* device, bool hasSRV);
 	~CubeMap() = default;
 
-	//some function(s)
+	void Init(ID3D11Device* device, bool hasSRV);
 
 private:
 	//Note the comment in CubeMapView constructor: "Texture cube is 6 textures combined in a cubic pattern, where we let indices 0-1 be positive and negative X, 2-3 be Y, 4-5 be Z"
