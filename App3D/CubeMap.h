@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Camera.h"
 #include <d3d11.h>
 #include <wrl.h>
 #include <vector>
@@ -14,23 +15,43 @@ This is not strictly necessary however, and adjustments to get a more desirable 
 
 class CubeMap
 {
+public: //Will this need to be public? We'll find out
+	class CubeMapView //The view of every virtual camera
+	{
+	public:
+		CubeMapView() = default;
+		CubeMapView(ID3D11Device* device, UINT width, UINT height, bool hasSRV);
+		~CubeMapView() = default;
+	private:
+		Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
+		std::vector<Microsoft::WRL::ComPtr<ID3D11RenderTargetView>> rtvs;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv;
+	};
 public:
 	CubeMap() = default;
-	CubeMap(ID3D11Device* device, UINT width, UINT height, bool hasSRV);
+	CubeMap(ID3D11Device* device, bool hasSRV);
 	~CubeMap() = default;
 
 	//some function(s)
 
 private:
-	Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
-	std::vector<Microsoft::WRL::ComPtr<ID3D11RenderTargetView>> rtvs;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv;
-
-
-	enum class CubeFace //Note the comment in constructor: "Texture cube is 6 textures combined in a cubic pattern, where we let indices 0-1 be positive and negative X, 2-3 be Y, 4-5 be Z"
+	//Note the comment in CubeMapView constructor: "Texture cube is 6 textures combined in a cubic pattern, where we let indices 0-1 be positive and negative X, 2-3 be Y, 4-5 be Z"
+	static constexpr UINT m_sides = 6;
+	enum class CubeFace
 	{
 		POSITIVE_X, NEGATIVE_X,
 		POSITIVE_Y, NEGATIVE_Y,
 		POSITIVE_Z, NEGATIVE_Z
 	};
+	Camera m_cameras[m_sides];
+	CubeMapView m_cubeMapView;
+
+	//Other required resources, as stated by the cookbook, include a depth buffer and a viewport, matching the dimensions of the texture cube sides
+	void InitDepthBuffer(ID3D11Device* device, UINT width, UINT height);
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> dst;
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> dsv;
+	D3D11_VIEWPORT viewport;
+
+	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
+	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
 };

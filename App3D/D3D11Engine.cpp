@@ -30,7 +30,10 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	InitRasterizerStates();
 
 	//Billboarding setup
-	particles = ParticleSystem(device.Get());
+	m_particles = ParticleSystem(device.Get());
+
+	//Cube environment mapping setup
+	m_cubeMap = CubeMap(device.Get(), false);
 
 	//srand((unsigned)time(NULL));
 	//for (int i = 0; i < 20; i++)
@@ -193,7 +196,7 @@ void D3D11Engine::Render(float dt)
 	/*Particles*/
 	if (billboardingIsEnabled)
 	{
-		particles.Draw(context.Get(), m_windowWidth, m_windowHeight, m_cameraCB.GetBuffer(), viewport);
+		m_particles.Draw(context.Get(), m_windowWidth, m_windowHeight, m_cameraCB.GetBuffer(), viewport);
 	}
 }
 

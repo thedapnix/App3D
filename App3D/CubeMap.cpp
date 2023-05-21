@@ -1,6 +1,6 @@
 #include "CubeMap.h"
 
-CubeMap::CubeMap(ID3D11Device* device, UINT width, UINT height, bool hasSRV)
+CubeMap::CubeMapView::CubeMapView(ID3D11Device* device, UINT width, UINT height, bool hasSRV)
 {
 	//Create texture cube
 	D3D11_TEXTURE2D_DESC texDesc;
@@ -52,5 +52,82 @@ CubeMap::CubeMap(ID3D11Device* device, UINT width, UINT height, bool hasSRV)
 		{
 			MessageBox(NULL, L"Failed to create srv for cubemap!", L"Error", MB_OK);
 		}
+	}
+}
+
+CubeMap::CubeMap(ID3D11Device* device, bool hasSRV)
+{
+	/*Create 6 cameras*/
+	//Projection info
+	float fovY = DirectX::XM_PIDIV2; //90 degree angle
+	float aspect = 1.0f;
+	float zn = 0.1f;
+	float zf = 100.0f;
+
+	//Local rotations to align the cameras to look in the proper direction?
+	float upRotations[6]	= { DirectX::XM_PIDIV2, -DirectX::XM_PIDIV2, 0.0f, 0.0f, 0.0f, DirectX::XM_PI };
+	float rightRotations[6] = { 0.0f, 0.0f, -DirectX::XM_PIDIV2, DirectX::XM_PIDIV2, 0.0f, 0.0f };
+
+	for (int i = 0; i < 6; i++)
+	{
+		//First, set position
+		m_cameras[i].SetPosition({0.0f, 0.0f, 1.0f}); //Pass this in? Set some arbitrary value for now
+
+		//Then rotate along the axes, follow ZYX convention, (changes the look-, up-, and right-vectors)
+		m_cameras[i].RotateY(upRotations[i]);
+		m_cameras[i].Pitch(rightRotations[i]);
+
+		//Set projection and view matrices
+		m_cameras[i].SetLens(fovY, aspect, zn, zf);
+		m_cameras[i].UpdateViewMatrix(); //builds view matrix from position, as well as look-, up- and right-vectors
+	}
+
+	/*Create depth buffer and set viewport dimensions, both of these are supposed to match the size of a texture cube side. How do I get that? No clue. Set some arbitrary value for now*/
+	UINT cubeWidth = 256;
+	UINT cubeHeight = 256;
+	InitDepthBuffer(device, cubeWidth, cubeHeight);
+
+	viewport.Width = cubeWidth;
+	viewport.Height = cubeHeight;
+	viewport.MinDepth = 0;
+	viewport.MaxDepth = 1;
+	viewport.TopLeftX = 0;
+	viewport.TopLeftY = 0;
+
+	//Create the thing that stores what the cube side will be reflecting
+	m_cubeMapView = CubeMapView(device, cubeWidth, cubeHeight, hasSRV);
+}
+
+void CubeMap::InitDepthBuffer(ID3D11Device* device, UINT width, UINT height)
+{
+	//Cookbook says that only the depth stencil view is necessary, so I'm skipping the depth stencil state
+	HRESULT hr;
+
+	D3D11_TEXTURE2D_DESC dstd = {};
+	dstd.Width = width;
+	dstd.Height = height;
+	dstd.MipLevels = 1;
+	dstd.ArraySize = 1;
+	dstd.Format = DXGI_FORMAT_D32_FLOAT; //DXGI_FORMAT_D24_UNORM_S8_UINT;
+	dstd.SampleDesc.Count = 1;
+	dstd.SampleDesc.Quality = 0;
+	dstd.Usage = D3D11_USAGE_DEFAULT;
+	dstd.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	hr = device->CreateTexture2D(&dstd, NULL, &dst);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create depth stencil texture for cubemap!", L"Error", MB_OK);
+		return;
+	}
+
+	D3D11_DEPTH_STENCIL_VIEW_DESC dsvd = {};
+	dsvd.Format = DXGI_FORMAT_D32_FLOAT;
+	dsvd.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	dsvd.Texture2D.MipSlice = 0;
+	hr = device->CreateDepthStencilView(dst.Get(), &dsvd, &dsv);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create depth stencil view for cubemap!", L"Error", MB_OK);
+		return;
 	}
 }

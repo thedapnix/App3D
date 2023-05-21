@@ -11,7 +11,8 @@
 
 #include "ConstantBuffer.h"
 #include "Drawable.h"
-#include "Camera.h"
+//#include "Camera.h"
+#include "CubeMap.h" //Gets camera
 #include "ParticleSystem.h"
 
 class D3D11Engine
@@ -140,5 +141,8 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> wireframeRS;
 
 	//Billboarding
-	ParticleSystem particles;
+	ParticleSystem m_particles;
+
+	//Cube environment mapping
+	CubeMap m_cubeMap;
 };
