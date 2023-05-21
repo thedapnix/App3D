@@ -99,6 +99,9 @@
     <ClCompile Include="ParticleSystem.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="CubeMap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h">
@@ -168,6 +171,9 @@
       <Filter>ImGui\Library Files</Filter>
     </ClInclude>
     <ClInclude Include="ParticleSystem.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="CubeMap.h">
       <Filter>Graphics</Filter>
     </ClInclude>
   </ItemGroup>

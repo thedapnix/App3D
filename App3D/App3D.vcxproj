@@ -165,6 +165,7 @@
   <ItemGroup>
     <ClCompile Include="App.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="CubeMap.cpp" />
     <ClCompile Include="D3D11Engine.cpp" />
     <ClCompile Include="ConstantBuffer.cpp" />
     <ClCompile Include="ImGuiHelper.cpp" />
@@ -187,6 +188,7 @@
   <ItemGroup>
     <ClInclude Include="App.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="CubeMap.h" />
     <ClInclude Include="D3D11Engine.h" />
     <ClInclude Include="ConstantBuffer.h" />
     <ClInclude Include="D3D11MathHelper.h" />

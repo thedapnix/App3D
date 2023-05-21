@@ -1,0 +1,36 @@
+#pragma once
+
+#include <d3d11.h>
+#include <wrl.h>
+#include <vector>
+
+/*Quoted from cookbook:
+As the technique aims to render the environment onto the different sides of a texture cube, there is a need for virtual "cameras" that are appropriately set up.
+There will be one camera per side, each with a 90 degree field of view in both their "X" and "Y" axis's. 
+This will result in everything in the surrounding environment being visible (but potentially obscured of course) for at least one of the cameras, without either holes or overlap. 
+The cameras are often positioned in the centre of the object that will have the texture cube applied to it. 
+This is not strictly necessary however, and adjustments to get a more desirable result can be done.
+*/
+
+class CubeMap
+{
+public:
+	CubeMap() = default;
+	CubeMap(ID3D11Device* device, UINT width, UINT height, bool hasSRV);
+	~CubeMap() = default;
+
+	//some function(s)
+
+private:
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
+	std::vector<Microsoft::WRL::ComPtr<ID3D11RenderTargetView>> rtvs;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv;
+
+
+	enum class CubeFace //Note the comment in constructor: "Texture cube is 6 textures combined in a cubic pattern, where we let indices 0-1 be positive and negative X, 2-3 be Y, 4-5 be Z"
+	{
+		POSITIVE_X, NEGATIVE_X,
+		POSITIVE_Y, NEGATIVE_Y,
+		POSITIVE_Z, NEGATIVE_Z
+	};
+};
