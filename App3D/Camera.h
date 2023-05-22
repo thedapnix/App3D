@@ -7,7 +7,10 @@
 #endif
 
 #include <vector>
+#include <d3d11.h>
+#include <DirectXCollision.h>
 
+#include "ConstantBuffer.h"
 #include "D3D11MathHelper.h"
 
 class Camera
@@ -69,6 +72,12 @@ public:
 
 	//Update view matrix after modification of position/orientation
 	void UpdateViewMatrix();
+
+	/*New functionality since moving stuff from D3D11Engine to here*/
+	void UpdateConstantBuffer(ID3D11DeviceContext* context);
+	const ConstantBuffer& GetConstantBuffer() const;
+	const DirectX::BoundingFrustum& GetFrustum() const;
+	void InitConstantBufferAndFrustum(ID3D11Device* device);
 private:
 	//Coordinate system of the camera relative to world space
 	DirectX::XMFLOAT3 m_position = { 0.0f, 0.0f, -5.0f };
@@ -90,4 +99,15 @@ private:
 	//View/Proj matrices
 	DirectX::XMFLOAT4X4 m_view = Identity4x4();
 	DirectX::XMFLOAT4X4 m_proj = Identity4x4();
+
+	//Constant buffer stuff moved from D3D11Engine
+	__declspec(align(16)) struct CameraData
+	{
+		DirectX::XMFLOAT4X4 view;
+		DirectX::XMFLOAT4X4 proj;
+		DirectX::XMFLOAT3 pos;
+	};
+	CameraData m_cameraData;
+	ConstantBuffer m_cameraCB;
+	DirectX::BoundingFrustum m_frustum;
 };

@@ -68,13 +68,7 @@ D3D11Engine::~D3D11Engine()
 void D3D11Engine::Update(float dt)
 {
 	/*Update constant buffers*/
-	DirectX::XMStoreFloat4x4(&m_cameraData.view, XMMatrixTranspose(m_camera->View()));
-	DirectX::XMStoreFloat4x4(&m_cameraData.proj, XMMatrixTranspose(m_camera->Proj()));
-	DirectX::XMStoreFloat3(&m_cameraData.pos, m_camera->GetPositionVec());
-	UpdateConstantBuffer(m_cameraCB.GetBuffer(), &m_cameraData, sizeof(m_cameraData));
-
-	
-	//UpdateConstantBuffer(m_cameraDataCB.GetBuffer(), &m_cameraData, sizeof(m_cameraData));
+	m_camera->UpdateConstantBuffer(context.Get());
 
 	for (auto& drawable : m_drawables)
 	{
@@ -82,8 +76,10 @@ void D3D11Engine::Update(float dt)
 		drawable.UpdateConstantBuffer(context.Get());
 	}
 
+	/*Render*/
 	Render(dt, rtv.Get(), dsv.Get(), viewport, m_camera.get());
 
+	/*Present the final scene*/
 	swapChain->Present(1, 0); //vSync enabled
 }
 
@@ -121,7 +117,7 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 	/*Update buffers and camera frustum here*/
 	if (deferredIsEnabled)
 	{
-		DefPassOne(); //Does the same as what's in the else-statement, except to several rendertargets
+		DefPassOne(cam); //Does the same as what's in the else-statement, except to several rendertargets
 	}
 	else
 	{
@@ -141,8 +137,8 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		else			context->RSSetState(regularRS.Get());
 		context->HSSetShader(hullShader.Get(), NULL, 0);
 		context->DSSetShader(domainShader.Get(), NULL, 0);
-		context->DSSetConstantBuffers(0, 1, m_cameraCB.GetBufferAddress()); //Moved from vertex shader to domain shader (move to hull shader? that's where patching happens so makes sense?)
-		context->HSSetConstantBuffers(0, 1, m_cameraCB.GetBufferAddress()); //Nah, let's let domain shader have the view + proj matrices, and only send camera position to hull shader
+		context->DSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress()); //m_cameraCB.GetBufferAddress()
+		context->HSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
 
 		/*Vertex Shader Stage*/
 		//context->VSSetConstantBuffers(0, 1, m_cameraCB.GetBufferAddress());
@@ -158,7 +154,7 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 			int visibleDrawables = 0;
 			for (auto& drawable : m_drawables)
 			{
-				if (DrawableIsVisible(m_frustum, drawable.GetBoundingBox(), m_camera->View(), drawable.World()))
+				if (DrawableIsVisible(cam->GetFrustum(), drawable.GetBoundingBox(), m_camera->View(), drawable.World()))
 				{
 					drawable.Bind(context.Get());
 					drawable.Draw(context.Get());
@@ -196,7 +192,7 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 	/*Particles*/
 	if (billboardingIsEnabled)
 	{
-		m_particles.Draw(context.Get(), m_windowWidth, m_windowHeight, m_cameraCB.GetBuffer(), viewport);
+		m_particles.Draw(context.Get(), m_windowWidth, m_windowHeight, cam->GetConstantBuffer().GetBuffer(), viewport);
 	}
 
 	/*Reflective cube attempt #1*/
@@ -217,7 +213,7 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 	}
 }
 
-void D3D11Engine::DefPassOne()
+void D3D11Engine::DefPassOne(Camera* cam)
 {
 	//Deferred rendering splits rendering into 3 parts: A geometry pass, a draw pass, and a lighting pass
 
@@ -244,7 +240,7 @@ void D3D11Engine::DefPassOne()
 	else			context->RSSetState(regularRS.Get());
 	context->HSSetShader(hullShader.Get(), NULL, 0);
 	context->DSSetShader(domainShader.Get(), NULL, 0);
-	context->DSSetConstantBuffers(0, 1, m_cameraCB.GetBufferAddress()); //Moved from vertex shader to domain shader (move to hull shader? that's where patching happens so makes sense?)
+	context->DSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress()); //Moved from vertex shader to domain shader (move to hull shader? that's where patching happens so makes sense?)
 
 	//context->PSSetShaderResources(0, 1, &srv);
 	//context->PSSetSamplers(0, 1, &samplerState);
@@ -256,7 +252,7 @@ void D3D11Engine::DefPassOne()
 		int visibleDrawables = 0;
 		for (auto& drawable : m_drawables)
 		{
-			if (DrawableIsVisible(m_frustum, drawable.GetBoundingBox(), m_camera->View(), drawable.World()))
+			if (DrawableIsVisible(cam->GetFrustum(), drawable.GetBoundingBox(), m_camera->View(), drawable.World()))
 			{
 				drawable.Bind(context.Get());
 				drawable.Draw(context.Get());
@@ -577,11 +573,7 @@ void D3D11Engine::InitCamera()
 {
 	m_camera = std::make_unique<Camera>();
 	m_camera->UpdateViewMatrix();
-	XMStoreFloat4x4(&m_cameraData.view, XMMatrixTranspose(m_camera->View()));
-	XMStoreFloat4x4(&m_cameraData.proj, XMMatrixTranspose(m_camera->Proj()));
-	DirectX::XMStoreFloat3(&m_cameraData.pos, m_camera->GetPositionVec());
-	m_cameraCB.Init(device.Get(), &m_cameraData, sizeof(m_cameraData));
-	DirectX::BoundingFrustum::CreateFromMatrix(m_frustum, m_camera->Proj());
+	m_camera->InitConstantBufferAndFrustum(device.Get());
 }
 
 void D3D11Engine::InitUAV()

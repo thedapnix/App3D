@@ -11,8 +11,8 @@
 
 #include "ConstantBuffer.h"
 #include "Drawable.h"
-//#include "Camera.h"
-#include "CubeMap.h" //Gets camera
+#include "Camera.h"
+#include "CubeMap.h"
 #include "ParticleSystem.h"
 
 class D3D11Engine
@@ -31,17 +31,6 @@ public:
 	//ID3D11Device* GetDevice();
 
 private:
-	/*TODO: Move to camera*/
-	__declspec(align(16)) struct CameraData
-	{
-		DirectX::XMFLOAT4X4 view;
-		DirectX::XMFLOAT4X4 proj;
-		DirectX::XMFLOAT3 pos;
-	};
-	CameraData m_cameraData;
-	ConstantBuffer m_cameraCB;
-	DirectX::BoundingFrustum m_frustum;
-
 	//OBJ-parser
 	struct VertexReference
 	{
@@ -59,7 +48,7 @@ private:
 
 	/*Functions*/
 	void Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT viewport, Camera* cam);
-	void DefPassOne();
+	void DefPassOne(Camera* cam);
 	void DefPassTwo();
 
 	void InitInterfaces(const HWND& window);

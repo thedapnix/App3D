@@ -252,3 +252,34 @@ void Camera::UpdateViewMatrix()
         m_viewDirty = false;
     }
 }
+
+void Camera::UpdateConstantBuffer(ID3D11DeviceContext* context)
+{
+    DirectX::XMStoreFloat4x4(&m_cameraData.view, XMMatrixTranspose(View()));
+    DirectX::XMStoreFloat4x4(&m_cameraData.proj, XMMatrixTranspose(Proj()));
+    DirectX::XMStoreFloat3(&m_cameraData.pos, GetPositionVec());
+
+    D3D11_MAPPED_SUBRESOURCE mapped = {};						                    //Set up the new data for the resource, zero the memory
+    context->Map(m_cameraCB.GetBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);   //Disable GPU access to the data we want to change, and get a pointer to the memory containing said data
+    memcpy(mapped.pData, &m_cameraData, sizeof(m_cameraData));						//Write the new data to memory
+    context->Unmap(m_cameraCB.GetBuffer(), 0);										//Re-enable GPU access to the data
+}
+
+const ConstantBuffer& Camera::GetConstantBuffer() const
+{
+    return m_cameraCB;
+}
+
+const DirectX::BoundingFrustum& Camera::GetFrustum() const
+{
+    return m_frustum;
+}
+
+void Camera::InitConstantBufferAndFrustum(ID3D11Device* device)
+{
+    XMStoreFloat4x4(&m_cameraData.view, XMMatrixTranspose(View()));
+    XMStoreFloat4x4(&m_cameraData.proj, XMMatrixTranspose(Proj()));
+    DirectX::XMStoreFloat3(&m_cameraData.pos, GetPositionVec());
+    m_cameraCB.Init(device, &m_cameraData, sizeof(m_cameraData));
+    DirectX::BoundingFrustum::CreateFromMatrix(m_frustum, Proj());
+}
