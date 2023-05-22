@@ -72,7 +72,7 @@ private:
 	void InitQuad(DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
 	void InitCube(DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
 
-	bool InitDrawableFromFile(std::string fileName, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
+	bool InitDrawableFromFile(std::string fileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
 
 	/*Variables*/
 	UINT m_windowWidth;
@@ -80,6 +80,7 @@ private:
 	static constexpr float CLEAR_COLOR[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
 	static constexpr float TEST_COLOR[4] = { 0.1f, 0.5f, 0.1f, 1.0f };
 	std::vector<Drawable> m_drawables;
+	std::vector<Drawable> m_reflectiveDrawables;
 	std::unique_ptr<Camera> m_camera;
 	int m_drawablesBeingRendered = 0;
 	GBuffer m_gBuffers[3];

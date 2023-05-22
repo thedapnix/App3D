@@ -1,4 +1,5 @@
-cbuffer OBJECT_CONSTANT_BUFFER : register(b1)
+
+cbuffer OBJECT_CONSTANT_BUFFER : register(b0)
 {
     //matrix world;
     matrix scale;

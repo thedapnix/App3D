@@ -40,6 +40,8 @@ public:
 	ID3D11DepthStencilView* GetDepthStencilView();
 	const D3D11_VIEWPORT& GetViewport() const;
 	Camera* GetCameraAt(int index);
+	ID3D11VertexShader* GetVertexShader();
+	ID3D11PixelShader* GetPixelShader();
 
 private:
 	//Note the comment in CubeMapView constructor: "Texture cube is 6 textures combined in a cubic pattern, where we let indices 0-1 be positive and negative X, 2-3 be Y, 4-5 be Z"

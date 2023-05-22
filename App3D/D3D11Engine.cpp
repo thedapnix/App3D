@@ -36,6 +36,8 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	//m_cubeMap = CubeMap(device.Get(), false); //Complains that the copy-assignment operator has been deleted but I haven't done that?
 	m_cubeMap.Init(device.Get(), false); //Workaround, though I prefer having working constructors and operators
 
+	InitDrawableFromFile("Models/cube.obj", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f});
+
 	//srand((unsigned)time(NULL));
 	//for (int i = 0; i < 20; i++)
 	//{
@@ -52,7 +54,7 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	{
 		for (int j = 0; j < 5; j++)
 		{
-			InitDrawableFromFile("Models/cube.obj", { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { -5.0f + (float)i*3, -5.0f + (float)j*3, 5.0f});
+			InitDrawableFromFile("Models/cube.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { -5.0f + (float)i*3, -5.0f + (float)j*3, 5.0f});
 		}
 	}
 
@@ -208,13 +210,49 @@ void D3D11Engine::RenderReflectiveObject(float dt)
 		Instead of the "normal" viewport, use the one associated with the reflective object's texture cube
 		Instead of the "normal" camera information, use the one associated with the texture cube side currently being processed
 		*/
-		//Change the standard Render()-function to take in more arguments (rtv, dsv, viewport, and camera) so we can call it from here and pass stuff from cubemap class
-		//Currently doesn't display frustum culling numbers properly, because the cameras in cubemap class haven't set their frustums
 		Render(dt, m_cubeMap.GetRenderTargetViewAt(i), m_cubeMap.GetDepthStencilView(), m_cubeMap.GetViewport(), m_cubeMap.GetCameraAt(i), TEST_COLOR);
 	}
 
-	ID3D11RenderTargetView* nullRTV = NULL;
-	context->OMSetRenderTargets(1, &nullRTV, NULL);
+	/*Copy the Render() function but remove stuff we're not interested in here*/
+	//context->ClearRenderTargetView(rtv.Get(), CLEAR_COLOR);
+	//ID3D11RenderTargetView* nullRTV = NULL;
+	//context->OMSetRenderTargets(1, &nullRTV, NULL);
+	//context->ClearDepthStencilView(dsv.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+	context->RSSetViewports(1, &viewport);
+	context->OMSetRenderTargets(1, rtv.GetAddressOf(), dsv.Get());
+
+	/*Input Assembler Stage*/
+	//Set primitive topology and input layout
+	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST); //return of trianglelist, because we're just doing old-school vertex+pixel shader, no other fancy shaders
+	context->IASetInputLayout(inputLayout.Get());
+
+	/*Tessellation ting*/
+	//if(lodIsEnabled)context->RSSetState(wireframeRS.Get());
+	//else			context->RSSetState(regularRS.Get());
+	//context->HSSetShader(hullShader.Get(), NULL, 0);
+	//context->DSSetShader(domainShader.Get(), NULL, 0);
+	//context->DSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress()); //m_cameraCB.GetBufferAddress()
+	//context->HSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
+
+	/*Shader Stage*/
+	//context->VSSetConstantBuffers(0, 1, m_cameraCB.GetBufferAddress());
+	context->VSSetShader(m_cubeMap.GetVertexShader(), NULL, 0);
+	context->VSSetConstantBuffers(1, 1, m_camera->GetConstantBuffer().GetBufferAddress());
+	context->PSSetShader(m_cubeMap.GetPixelShader(), NULL, 0);
+	//this->context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
+
+	for (auto& drawable : m_reflectiveDrawables)
+	{
+		drawable.Bind(context.Get());
+		drawable.Draw(context.Get());
+	}
+
+	/*Unbind shaders*/
+	context->VSSetShader(NULL, NULL, 0);
+	context->PSSetShader(NULL, NULL, 0);
+	/*Unbind constant buffers too*/
+	//context->HSSetConstantBuffers(0, 0, NULL);
+	//context->DSSetConstantBuffers(0, 0, NULL);
 }
 
 void D3D11Engine::DefPassOne(Camera* cam)
@@ -788,7 +826,7 @@ void D3D11Engine::InitCube(DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, Di
 	m_drawables.push_back(cube);
 }
 
-bool D3D11Engine::InitDrawableFromFile(std::string fileName, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate)
+bool D3D11Engine::InitDrawableFromFile(std::string fileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate)
 {
 	std::ifstream ifs(fileName);
 	if (!ifs)
@@ -936,7 +974,7 @@ bool D3D11Engine::InitDrawableFromFile(std::string fileName, DirectX::XMFLOAT3 s
 
 	Drawable cube(device.Get(), bufferData, scale, rotate, translate);
 	cube.CreateBoundingBoxFromPoints(vMin, vMax);
-	m_drawables.push_back(cube);
+	vecToFill.push_back(cube);
 
 	return true;
 }

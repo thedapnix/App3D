@@ -124,6 +124,16 @@ Camera* CubeMap::GetCameraAt(int index)
 	return &m_cameras[index];
 }
 
+ID3D11VertexShader* CubeMap::GetVertexShader()
+{
+	return vertexShader.Get();
+}
+
+ID3D11PixelShader* CubeMap::GetPixelShader()
+{
+	return pixelShader.Get();
+}
+
 void CubeMap::InitDepthBuffer(ID3D11Device* device, UINT width, UINT height)
 {
 	//Cookbook says that only the depth stencil view is necessary, so I'm skipping the depth stencil state
