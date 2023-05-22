@@ -1,4 +1,5 @@
 #include "CubeMap.h"
+#include <d3dcompiler.h>
 
 CubeMap::CubeMapView::CubeMapView(ID3D11Device* device, UINT width, UINT height, bool hasSRV)
 {
@@ -98,6 +99,9 @@ void CubeMap::Init(ID3D11Device* device, bool hasSRV)
 
 	//Create the thing that stores what the cube side will be reflecting
 	m_cubeMapView = CubeMapView(device, cubeWidth, cubeHeight, hasSRV);
+
+	//
+	InitShaders(device);
 }
 
 ID3D11RenderTargetView* CubeMap::GetRenderTargetViewAt(int index)
@@ -150,6 +154,44 @@ void CubeMap::InitDepthBuffer(ID3D11Device* device, UINT width, UINT height)
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create depth stencil view for cubemap!", L"Error", MB_OK);
+		return;
+	}
+}
+
+void CubeMap::InitShaders(ID3D11Device* device)
+{
+	HRESULT hr;
+	Microsoft::WRL::ComPtr<ID3DBlob>
+		vsBlob, psBlob,
+		errorBlob;
+
+	/****************************
+	//////READ SHADER FILES//////
+	****************************/
+	hr = D3DReadFileToBlob(L"../x64/Debug/CubeMapVertexShader.cso", &vsBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read vertex shader for cubemap!", L"Error", MB_OK);
+	}
+	hr = D3DReadFileToBlob(L"../x64/Debug/CubeMapPixelShader.cso", &psBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read pixel shader for cubemap!", L"Error", MB_OK);
+	}
+
+	/****************************
+	//CREATE SHADERS FROM FILES//
+	****************************/
+	hr = device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), NULL, &vertexShader);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create vertex shader for cubemap!", L"Error", MB_OK);
+		return;
+	}
+	hr = device->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(), NULL, &pixelShader);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create pixel shader for cubemap!", L"Error", MB_OK);
 		return;
 	}
 }

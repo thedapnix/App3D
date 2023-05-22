@@ -59,6 +59,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> dsv;
 	D3D11_VIEWPORT viewport;
 
+	void InitShaders(ID3D11Device* device);
 	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
 };

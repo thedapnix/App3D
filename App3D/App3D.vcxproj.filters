@@ -214,5 +214,11 @@
     <FxCompile Include="ParticleGeometryShader.hlsl">
       <Filter>Resource Files\Particle Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="CubeMapPixelShader.hlsl">
+      <Filter>Resource Files\Cubemap Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="CubeMapVertexShader.hlsl">
+      <Filter>Resource Files\Cubemap Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

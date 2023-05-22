@@ -43,7 +43,7 @@ VertexShaderOutput main(VertexShaderInput input)
     nor = mul(nor, scale); //redundant? normals should stay unit length
     nor = mul(nor, rotate);
     nor = mul(nor, translate);
-    output.nor = nor;
+    output.nor = normalize(nor);
     
     //output.col = float4(1.0f, 0.0f, 0.0f, 1.0f);
     
