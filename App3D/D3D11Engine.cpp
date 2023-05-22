@@ -78,6 +78,8 @@ void D3D11Engine::Update(float dt)
 
 	/*Render*/
 	Render(dt, rtv.Get(), dsv.Get(), viewport, m_camera.get());
+	if (billboardingIsEnabled) RenderParticles(m_camera.get());
+	if (cubemapIsEnabled)RenderReflectiveObject(dt);
 
 	/*Present the final scene*/
 	swapChain->Present(1, 0); //vSync enabled
@@ -188,29 +190,31 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 	{
 		DefPassTwo(); //Lighting pass, editing the backbuffer using a compute shader
 	}
+}
 
-	/*Particles*/
-	if (billboardingIsEnabled)
+void D3D11Engine::RenderParticles(Camera* cam)
+{
+	m_particles.Draw(context.Get(), m_windowWidth, m_windowHeight, cam->GetConstantBuffer().GetBuffer(), viewport);
+}
+
+void D3D11Engine::RenderReflectiveObject(float dt)
+{
+	for (int i = 0; i < 6; i++)
 	{
-		m_particles.Draw(context.Get(), m_windowWidth, m_windowHeight, cam->GetConstantBuffer().GetBuffer(), viewport);
+		/*Cookbook notes
+		Perform your normal rendering logic here, rendering each relevant(from the reflective object's perspective) object in the scene
+		Instead of the "normal" render target (potentially the back buffer), render to the one associated with the texture cube side currently being processed
+		Instead of the "normal" depth stencil, use the one associated with the reflective object's texture cube
+		Instead of the "normal" viewport, use the one associated with the reflective object's texture cube
+		Instead of the "normal" camera information, use the one associated with the texture cube side currently being processed
+		*/
+		//Change the standard Render()-function to take in more arguments (rtv, dsv, viewport, and camera) so we can call it from here and pass stuff from cubemap class
+		//Currently doesn't display frustum culling numbers properly, because the cameras in cubemap class haven't set their frustums
+		Render(dt, m_cubeMap.GetRenderTargetViewAt(i), m_cubeMap.GetDepthStencilView(), m_cubeMap.GetViewport(), m_cubeMap.GetCameraAt(i));
 	}
 
-	/*Reflective cube attempt #1*/
-	if (cubemapIsEnabled)
-	{
-		for (int i = 0; i < 6; i++)
-		{
-			/*Cookbook notes
-			Perform your normal rendering logic here, rendering each relevant(from the reflective object's perspective) object in the scene
-			Instead of the "normal" render target (potentially the back buffer), render to the one associated with the texture cube side currently being processed
-			Instead of the "normal" depth stencil, use the one associated with the reflective object's texture cube
-			Instead of the "normal" viewport, use the one associated with the reflective object's texture cube
-			Instead of the "normal" camera information, use the one associated with the texture cube side currently being processed
-			*/
-			//Change the standard Render()-function to take in more values (rtv, dsv, viewport, and camera) so we can call it from here and pass stuff from cubemap class
-
-		}
-	}
+	ID3D11RenderTargetView* nullRTV = NULL;
+	context->OMSetRenderTargets(1, &nullRTV, NULL);
 }
 
 void D3D11Engine::DefPassOne(Camera* cam)
@@ -782,14 +786,6 @@ void D3D11Engine::InitCube(DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, Di
 
 	Drawable cube(device.Get(), bufferData, scale, rotate, translate);
 	m_drawables.push_back(cube);
-}
-
-void D3D11Engine::UpdateConstantBuffer(ID3D11Buffer* cb, void* data, size_t size)
-{
-	D3D11_MAPPED_SUBRESOURCE mapped = {};						//Set up the new data for the resource, zero the memory
-	context->Map(cb, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);	//Disable GPU access to the data we want to change, and get a pointer to the memory containing said data
-	memcpy(mapped.pData, data, size);							//Write the new data to memory
-	context->Unmap(cb, 0);										//Re-enable GPU access to the data
 }
 
 bool D3D11Engine::InitDrawableFromFile(std::string fileName, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate)

@@ -48,6 +48,8 @@ private:
 
 	/*Functions*/
 	void Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT viewport, Camera* cam);
+	void RenderParticles(Camera* cam);
+	void RenderReflectiveObject(float dt);
 	void DefPassOne(Camera* cam);
 	void DefPassTwo();
 
@@ -69,7 +71,6 @@ private:
 	/*Temp*/
 	void InitQuad(DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
 	void InitCube(DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
-	void UpdateConstantBuffer(ID3D11Buffer* cb, void* data, size_t size);
 
 	bool InitDrawableFromFile(std::string fileName, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
 

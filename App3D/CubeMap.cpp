@@ -98,6 +98,26 @@ void CubeMap::Init(ID3D11Device* device, bool hasSRV)
 	m_cubeMapView = CubeMapView(device, cubeWidth, cubeHeight, hasSRV);
 }
 
+ID3D11RenderTargetView* CubeMap::GetRenderTargetViewAt(int index)
+{
+	return m_cubeMapView.GetRenderTargetViewAt(index);
+}
+
+ID3D11DepthStencilView* CubeMap::GetDepthStencilView()
+{
+	return dsv.Get();
+}
+
+const D3D11_VIEWPORT& CubeMap::GetViewport() const
+{
+	return viewport;
+}
+
+Camera* CubeMap::GetCameraAt(int index)
+{
+	return &m_cameras[index];
+}
+
 void CubeMap::InitDepthBuffer(ID3D11Device* device, UINT width, UINT height)
 {
 	//Cookbook says that only the depth stencil view is necessary, so I'm skipping the depth stencil state

@@ -22,6 +22,8 @@ private: //Will this need to be public? We'll find out
 		CubeMapView() = default;
 		CubeMapView(ID3D11Device* device, UINT width, UINT height, bool hasSRV);
 		~CubeMapView() = default;
+
+		ID3D11RenderTargetView* GetRenderTargetViewAt(int index) { return rtvs.at(index).Get(); }
 	private:
 		Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
 		std::vector<Microsoft::WRL::ComPtr<ID3D11RenderTargetView>> rtvs;
@@ -33,6 +35,11 @@ public:
 	~CubeMap() = default;
 
 	void Init(ID3D11Device* device, bool hasSRV);
+
+	ID3D11RenderTargetView* GetRenderTargetViewAt(int index);
+	ID3D11DepthStencilView* GetDepthStencilView();
+	const D3D11_VIEWPORT& GetViewport() const;
+	Camera* GetCameraAt(int index);
 
 private:
 	//Note the comment in CubeMapView constructor: "Texture cube is 6 textures combined in a cubic pattern, where we let indices 0-1 be positive and negative X, 2-3 be Y, 4-5 be Z"
