@@ -82,7 +82,7 @@ void D3D11Engine::Update(float dt)
 		drawable.UpdateConstantBuffer(context.Get());
 	}
 
-	Render(dt);
+	Render(dt, rtv.Get(), dsv.Get(), viewport, m_camera.get());
 
 	swapChain->Present(1, 0); //vSync enabled
 }
@@ -116,10 +116,9 @@ Camera& D3D11Engine::GetCamera() const noexcept
 }
 
 /*RENDER FUNCTIONS*/
-void D3D11Engine::Render(float dt)
+void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT viewport, Camera* cam)
 {
 	/*Update buffers and camera frustum here*/
-
 	if (deferredIsEnabled)
 	{
 		DefPassOne(); //Does the same as what's in the else-statement, except to several rendertargets
@@ -127,10 +126,10 @@ void D3D11Engine::Render(float dt)
 	else
 	{
 		// Clear the back buffer and depth stencil, as well as set viewport and render target (viewport only really needed to set after a resize, and that's disabled so uh)
-		context->ClearRenderTargetView(rtv.Get(), CLEAR_COLOR);
-		context->ClearDepthStencilView(dsv.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+		context->ClearRenderTargetView(rtv, CLEAR_COLOR);
+		context->ClearDepthStencilView(dsv, D3D11_CLEAR_DEPTH, 1.0f, 0);
 		context->RSSetViewports(1, &viewport);
-		context->OMSetRenderTargets(1, rtv.GetAddressOf(), dsv.Get());
+		context->OMSetRenderTargets(1, &rtv, dsv);
 
 		/*Input Assembler Stage*/
 		//Set primitive topology and input layout
@@ -198,6 +197,23 @@ void D3D11Engine::Render(float dt)
 	if (billboardingIsEnabled)
 	{
 		m_particles.Draw(context.Get(), m_windowWidth, m_windowHeight, m_cameraCB.GetBuffer(), viewport);
+	}
+
+	/*Reflective cube attempt #1*/
+	if (cubemapIsEnabled)
+	{
+		for (int i = 0; i < 6; i++)
+		{
+			/*Cookbook notes
+			Perform your normal rendering logic here, rendering each relevant(from the reflective object's perspective) object in the scene
+			Instead of the "normal" render target (potentially the back buffer), render to the one associated with the texture cube side currently being processed
+			Instead of the "normal" depth stencil, use the one associated with the reflective object's texture cube
+			Instead of the "normal" viewport, use the one associated with the reflective object's texture cube
+			Instead of the "normal" camera information, use the one associated with the texture cube side currently being processed
+			*/
+			//Change the standard Render()-function to take in more values (rtv, dsv, viewport, and camera) so we can call it from here and pass stuff from cubemap class
+
+		}
 	}
 }
 

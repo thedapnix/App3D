@@ -58,7 +58,7 @@ private:
 	};
 
 	/*Functions*/
-	void Render(float dt);
+	void Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT viewport, Camera* cam);
 	void DefPassOne();
 	void DefPassTwo();
 

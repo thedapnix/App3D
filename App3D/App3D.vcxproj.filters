@@ -37,6 +37,15 @@
     <Filter Include="Resource Files\Particle Shaders">
       <UniqueIdentifier>{70de1184-51c9-42d6-bfec-6f623da330a4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Graphics\Billboarding">
+      <UniqueIdentifier>{aa40cd71-f95d-4260-8be2-8d0c69cd28b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Cubemap">
+      <UniqueIdentifier>{4fd9c2b0-c112-4fbb-8526-a839f710aadd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Cubemap Shaders">
+      <UniqueIdentifier>{001789e5-5c89-4b2d-bb4b-7c7f09f6e13f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -97,10 +106,10 @@
       <Filter>ImGui\Library Files</Filter>
     </ClCompile>
     <ClCompile Include="ParticleSystem.cpp">
-      <Filter>Graphics</Filter>
+      <Filter>Graphics\Billboarding</Filter>
     </ClCompile>
     <ClCompile Include="CubeMap.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Graphics\Cubemap</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -171,10 +180,10 @@
       <Filter>ImGui\Library Files</Filter>
     </ClInclude>
     <ClInclude Include="ParticleSystem.h">
-      <Filter>Graphics</Filter>
+      <Filter>Graphics\Billboarding</Filter>
     </ClInclude>
     <ClInclude Include="CubeMap.h">
-      <Filter>Graphics</Filter>
+      <Filter>Graphics\Cubemap</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
