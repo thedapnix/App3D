@@ -71,7 +71,7 @@ void CubeMap::Init(ID3D11Device* device, bool hasSRV)
 	for (int i = 0; i < 6; i++)
 	{
 		//First, set position
-		m_cameras[i].SetPosition({ 0.0f, 0.0f, 1.0f }); //Pass this in? Set some arbitrary value for now
+		m_cameras[i].SetPosition({ 0.0f, 0.0f, -5.0f }); //Pass this in? Set some arbitrary value for now (same as the starting camera)
 
 		//Then rotate along the axes, follow ZYX convention, (changes the look-, up-, and right-vectors)
 		m_cameras[i].RotateY(upRotations[i]);
@@ -80,6 +80,8 @@ void CubeMap::Init(ID3D11Device* device, bool hasSRV)
 		//Set projection and view matrices
 		m_cameras[i].SetLens(fovY, aspect, zn, zf);
 		m_cameras[i].UpdateViewMatrix(); //builds view matrix from position, as well as look-, up- and right-vectors
+
+		m_cameras[i].InitConstantBufferAndFrustum(device); //Forgot to set this, that's pretty silly of me
 	}
 
 	/*Create depth buffer and set viewport dimensions, both of these are supposed to match the size of a texture cube side. How do I get that? No clue. Set some arbitrary value for now*/
