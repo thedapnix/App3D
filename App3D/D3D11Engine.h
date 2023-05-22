@@ -47,7 +47,7 @@ private:
 	};
 
 	/*Functions*/
-	void Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT viewport, Camera* cam);
+	void Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT viewport, Camera* cam, const float clear[4]);
 	void RenderParticles(Camera* cam);
 	void RenderReflectiveObject(float dt);
 	void DefPassOne(Camera* cam);
@@ -78,6 +78,7 @@ private:
 	UINT m_windowWidth;
 	UINT m_windowHeight;
 	static constexpr float CLEAR_COLOR[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
+	static constexpr float TEST_COLOR[4] = { 0.1f, 0.5f, 0.1f, 1.0f };
 	std::vector<Drawable> m_drawables;
 	std::unique_ptr<Camera> m_camera;
 	int m_drawablesBeingRendered = 0;

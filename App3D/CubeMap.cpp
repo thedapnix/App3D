@@ -64,9 +64,9 @@ void CubeMap::Init(ID3D11Device* device, bool hasSRV)
 	float zn = 0.1f;
 	float zf = 100.0f;
 
-	//Local rotations to align the cameras to look in the proper direction?
-	float upRotations[6] = { DirectX::XM_PIDIV2, -DirectX::XM_PIDIV2, 0.0f, 0.0f, 0.0f, DirectX::XM_PI };
-	float rightRotations[6] = { 0.0f, 0.0f, -DirectX::XM_PIDIV2, DirectX::XM_PIDIV2, 0.0f, 0.0f };
+	//Local rotations to align the cameras to look in the proper direction
+	float upRotations[6] = {	DirectX::XM_PIDIV2, -DirectX::XM_PIDIV2,	0.0f,					0.0f,				0.0f, DirectX::XM_PI };
+	float rightRotations[6] = { 0.0f,				0.0f,					-DirectX::XM_PIDIV2,	DirectX::XM_PIDIV2, 0.0f, 0.0f };
 
 	for (int i = 0; i < 6; i++)
 	{

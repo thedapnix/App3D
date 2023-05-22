@@ -77,7 +77,7 @@ void D3D11Engine::Update(float dt)
 	}
 
 	/*Render*/
-	Render(dt, rtv.Get(), dsv.Get(), viewport, m_camera.get());
+	Render(dt, rtv.Get(), dsv.Get(), viewport, m_camera.get(), CLEAR_COLOR);
 	if (billboardingIsEnabled) RenderParticles(m_camera.get());
 	if (cubemapIsEnabled)RenderReflectiveObject(dt);
 
@@ -114,7 +114,7 @@ Camera& D3D11Engine::GetCamera() const noexcept
 }
 
 /*RENDER FUNCTIONS*/
-void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT viewport, Camera* cam)
+void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT viewport, Camera* cam, const float clear[4])
 {
 	/*Update buffers and camera frustum here*/
 	if (deferredIsEnabled)
@@ -124,7 +124,7 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 	else
 	{
 		// Clear the back buffer and depth stencil, as well as set viewport and render target (viewport only really needed to set after a resize, and that's disabled so uh)
-		context->ClearRenderTargetView(rtv, CLEAR_COLOR);
+		context->ClearRenderTargetView(rtv, clear);
 		context->ClearDepthStencilView(dsv, D3D11_CLEAR_DEPTH, 1.0f, 0);
 		context->RSSetViewports(1, &viewport);
 		context->OMSetRenderTargets(1, &rtv, dsv);
@@ -210,7 +210,7 @@ void D3D11Engine::RenderReflectiveObject(float dt)
 		*/
 		//Change the standard Render()-function to take in more arguments (rtv, dsv, viewport, and camera) so we can call it from here and pass stuff from cubemap class
 		//Currently doesn't display frustum culling numbers properly, because the cameras in cubemap class haven't set their frustums
-		Render(dt, m_cubeMap.GetRenderTargetViewAt(i), m_cubeMap.GetDepthStencilView(), m_cubeMap.GetViewport(), m_cubeMap.GetCameraAt(i));
+		Render(dt, m_cubeMap.GetRenderTargetViewAt(i), m_cubeMap.GetDepthStencilView(), m_cubeMap.GetViewport(), m_cubeMap.GetCameraAt(i), TEST_COLOR);
 	}
 
 	ID3D11RenderTargetView* nullRTV = NULL;
