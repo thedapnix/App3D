@@ -181,14 +181,19 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 			m_drawablesBeingRendered = (int)m_drawables.size();
 		}
 
-		/*Unbind shaders before we move on to particle drawing?*/
+		/*Unbind shaders before we move on to particle drawing*/
 		context->VSSetShader(NULL, NULL, 0);
 		context->PSSetShader(NULL, NULL, 0);
 		context->HSSetShader(NULL, NULL, 0);
 		context->DSSetShader(NULL, NULL, 0);
+
 		/*Unbind constant buffers too*/
 		context->HSSetConstantBuffers(0, 0, NULL);
 		context->DSSetConstantBuffers(0, 0, NULL);
+
+		/*Unbind rtv*/
+		ID3D11RenderTargetView* nullRTV = NULL;
+		context->OMSetRenderTargets(1, &nullRTV, NULL);
 	}
 
 	if (deferredIsEnabled)
@@ -218,6 +223,7 @@ void D3D11Engine::RenderReflectiveObject(float dt)
 
 	/*Copy the Render() function but remove stuff we're not interested in here*/
 	context->RSSetViewports(1, &viewport);
+	context->OMSetRenderTargets(1, rtv.GetAddressOf(), dsv.Get());
 
 	/*Input Assembler Stage*/
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST); //return of trianglelist, because we're just doing old-school vertex+pixel shader, no other fancy shaders
@@ -254,11 +260,13 @@ void D3D11Engine::RenderReflectiveObject(float dt)
 	context->PSSetConstantBuffers(0, 0, NULL);
 	/*Unbind shader resources*/
 	context->PSSetShaderResources(0, 0, NULL);
-	/*Unbind rtv, but i feel like this is redundant since we clear and set a new one once the og Render() function gets called*/
-	//ID3D11RenderTargetView* nullRTV = NULL;
-	//context->OMSetRenderTargets(1, &nullRTV, NULL);
+	/*Unbind rtv*/
+	ID3D11RenderTargetView* nullRTV = NULL;
+	context->OMSetRenderTargets(1, &nullRTV, NULL);
+	
 }
 
+/*DEFERRED RENDERING PASSES*/
 void D3D11Engine::DefPassOne(Camera* cam)
 {
 	//Deferred rendering splits rendering into 3 parts: A geometry pass, a draw pass, and a lighting pass
@@ -722,104 +730,6 @@ void D3D11Engine::InitSampler()
 	{
 		MessageBox(NULL, L"Failed to create sampler!", L"Error", MB_OK);
 	}
-}
-
-void D3D11Engine::InitQuad(DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate)
-{
-	std::vector<Vertex> vertices({
-	{ {-1.0f,   1.0f, 0.0f}, {0.0f,0.0f}, {0.0f, 0.0f, -1.0f}}, //Top left
-	{ { 1.0f,  -1.0f, 0.0f}, {1.0f,1.0f}, {0.0f, 0.0f, -1.0f}}, //Bottom right
-	{ {-1.0f,  -1.0f, 0.0f}, {0.0f,1.0f}, {0.0f, 0.0f, -1.0f}}, //Bottom left
-	{ { 1.0f,   1.0,  0.0f}, {1.0f,0.0f}, {0.0f, 0.0f, -1.0f}}, //Top right
-	});
-
-	BufferData bufferData;
-	bufferData.vData.size = sizeof(Vertex);
-	bufferData.vData.count = 4;
-	bufferData.vData.vector = vertices;
-
-	std::vector<uint32_t> indices({ 
-		0, 1, 2, 
-		0, 3, 1 
-	});
-
-	bufferData.iData.size = sizeof(uint32_t);
-	bufferData.iData.count = 6;
-	bufferData.iData.vector = indices;
-
-	Drawable quad(device.Get(), bufferData, scale, rotate, translate);
-	m_drawables.push_back(quad);
-
-	//meshData.textureFile = "dog.png";
-
-	/*MeshData::SubMeshInfo subMeshInfo;
-	subMeshInfo.startIndexValue = 0;
-	subMeshInfo.nrOfIndicesInSubMesh = 6;
-
-	meshData.subMeshInfo.push_back(subMeshInfo);*/
-}
-
-void D3D11Engine::InitCube(DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate)
-{
-	//Ain't no way I'm doing this by hand
-	std::vector<Vertex> vertices({
-		//Front
-		{ {-1.0f, -1.0f,  -1.0f, }, {0.0f, 0.0f,}, { 0.0f, 0.0f, -1.0f,} },
-		{ { 1.0f, -1.0f,  -1.0f, }, {1.0f, 0.0f,}, { 0.0f, 0.0f, -1.0f,} },
-		{ {-1.0f,  1.0f,  -1.0f, }, {0.0f, 1.0f,}, { 0.0f, 0.0f, -1.0f,} },
-		{ { 1.0f,  1.0f,  -1.0f, }, {1.0f, 1.0f,}, { 0.0f, 0.0f, -1.0f,} },
-
-		//Back
-		{ {-1.0f, -1.0f,   1.0f, }, {1.0f, 0.0f,}, { 0.0f, 0.0f,  1.0f,} },
-		{ { 1.0f, -1.0f,   1.0f, }, {0.0f, 0.0f,}, { 0.0f, 0.0f,  1.0f,} },
-		{ {-1.0f,  1.0f,   1.0f, }, {1.0f, 1.0f,}, { 0.0f, 0.0f,  1.0f,} },
-		{ { 1.0f,  1.0f,   1.0f, }, {0.0f, 1.0f,}, { 0.0f, 0.0f,  1.0f,} },
-
-		//Right
-		{ { 1.0f, -1.0f,  -1.0f, }, {0.0f, 0.0f,}, { 1.0f, 0.0f,  0.0f,} },
-		{ { 1.0f, -1.0f,   1.0f, }, {1.0f, 0.0f,}, { 1.0f, 0.0f,  0.0f,} },
-		{ { 1.0f,  1.0f,  -1.0f, }, {0.0f, 1.0f,}, { 1.0f, 0.0f,  0.0f,} },
-		{ { 1.0f,  1.0f,   1.0f, }, {1.0f, 1.0f,}, { 1.0f, 0.0f,  0.0f,} },
-
-		//Left
-		{ {-1.0f, -1.0f,  -1.0f, }, {1.0f, 0.0f,}, {-1.0f, 0.0f,  0.0f,} },
-		{ {-1.0f, -1.0f,   1.0f, }, {0.0f, 0.0f,}, {-1.0f, 0.0f,  0.0f,} },
-		{ {-1.0f,  1.0f,  -1.0f, }, {1.0f, 1.0f,}, {-1.0f, 0.0f,  0.0f,} },
-		{ {-1.0f,  1.0f,   1.0f, }, {0.0f, 1.0f,}, {-1.0f, 0.0f,  0.0f,} },
-
-		//Top
-		{ {-1.0f,  1.0f,  -1.0f, }, {0.0f, 0.0f,}, {0.0f, -1.0f,  0.0f,} },
-		{ {-1.0f,  1.0f,   1.0f, }, {0.0f, 1.0f,}, {0.0f, -1.0f,  0.0f,} },
-		{ { 1.0f,  1.0f,  -1.0f, }, {1.0f, 0.0f,}, {0.0f, -1.0f,  0.0f,} },
-		{ { 1.0f,  1.0f,   1.0f, }, {1.0f, 1.0f,}, {0.0f, -1.0f,  0.0f,} },
-
-		//Bot
-		{ {-1.0f, -1.0f,  -1.0f, }, {0.0f, 1.0f,}, {0.0f,  1.0f,  0.0f,} },
-		{ { 1.0f, -1.0f,  -1.0f, }, {1.0f, 1.0f,}, {0.0f,  1.0f,  0.0f,} },
-		{ {-1.0f, -1.0f,   1.0f, }, {0.0f, 0.0f,}, {0.0f,  1.0f,  0.0f,} },
-		{ { 1.0f, -1.0f,   1.0f, }, {1.0f, 0.0f,}, {0.0f,  1.0f,  0.0f,} },
-		});
-
-	BufferData bufferData;
-	bufferData.vData.size = sizeof(Vertex);
-	bufferData.vData.count = 24;
-	bufferData.vData.vector = vertices;
-
-	std::vector<uint32_t> indices({
-		 0, 2, 1,  2, 3, 1, //Front
-		 8,10, 9, 10,11, 9, //Right
-	    16,17,18, 18,17,19,//Top
-		 4, 5, 7,  4, 7, 6, //Back
-		12,13,14, 14,13,15, //Left
-		20,21,22, 22,21,23  //Bot
-		});
-
-	bufferData.iData.size = sizeof(uint32_t);
-	bufferData.iData.count = 36;
-	bufferData.iData.vector = indices;
-
-	Drawable cube(device.Get(), bufferData, scale, rotate, translate);
-	m_drawables.push_back(cube);
 }
 
 bool D3D11Engine::InitDrawableFromFile(std::string fileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate)

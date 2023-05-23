@@ -10,7 +10,7 @@ CubeMap::CubeMapView::CubeMapView(ID3D11Device* device, UINT width, UINT height,
 	texDesc.Height = height;
 	texDesc.MipLevels = 1;
 	texDesc.ArraySize = 6; //Texture cube is 6 textures combined in a cubic pattern, where we let indices 0-1 be positive and negative X, 2-3 be Y, 4-5 be Z
-	texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; //damn we pass this in too, cringe, default as 4-dimensional 32-bit floats?
+	texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; //pass this in?
 	texDesc.SampleDesc.Count = 1;
 	texDesc.SampleDesc.Quality = 0;
 	texDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -86,6 +86,7 @@ void CubeMap::Init(ID3D11Device* device, bool hasSRV)
 	}
 
 	/*Create depth buffer and set viewport dimensions, both of these are supposed to match the size of a texture cube side. How do I get that? No clue. Set some arbitrary value for now*/
+	//Rather than width and height, these values represent the resolution of our reflections. The current reflections are pretty jagged, but bumping these up makes them look better
 	UINT cubeWidth = 256;
 	UINT cubeHeight = 256;
 	InitDepthBuffer(device, cubeWidth, cubeHeight);

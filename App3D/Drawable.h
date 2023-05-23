@@ -10,7 +10,6 @@
 #include <DirectXMath.h>
 #include <DirectXCollision.h>
 
-#include "ShaderResource.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 #include "ConstantBuffer.h"
@@ -73,10 +72,11 @@ private:
 	WorldTransform m_transform;
 	ConstantBuffer m_constantBuffer;
 
-	/*Buffers and srv+srt*/
+	/*Buffers*/
 	VertexBuffer m_vertexBuffer;
 	IndexBuffer m_indexBuffer;
-	//ShaderResource m_shaderResource;
+
+	/*To-do, shader resource views allowing for all drawables to be textured*/
 
 	DirectX::BoundingBox m_aabb;
 

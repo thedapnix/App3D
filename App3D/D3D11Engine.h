@@ -64,14 +64,10 @@ private:
 	void InitGraphicsBuffer(GBuffer(&gbuf)[3]);
 
 	void InitRasterizerStates();
-	void InitSampler();
 
 	bool DrawableIsVisible(DirectX::BoundingFrustum frustum, DirectX::BoundingBox aabb, DirectX::XMMATRIX view, DirectX::XMMATRIX world);
-	//void InitSampler();
-
-	/*Temp*/
-	void InitQuad(DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
-	void InitCube(DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
+	
+	void InitSampler();
 
 	bool InitDrawableFromFile(std::string fileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
 

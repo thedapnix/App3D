@@ -75,9 +75,6 @@
     <ClCompile Include="Drawable.cpp">
       <Filter>Graphics\Drawable</Filter>
     </ClCompile>
-    <ClCompile Include="ShaderResource.cpp">
-      <Filter>Graphics\Drawable</Filter>
-    </ClCompile>
     <ClCompile Include="ConstantBuffer.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
@@ -138,9 +135,6 @@
       <Filter>Graphics\Drawable\Buffers</Filter>
     </ClInclude>
     <ClInclude Include="Drawable.h">
-      <Filter>Graphics\Drawable</Filter>
-    </ClInclude>
-    <ClInclude Include="ShaderResource.h">
       <Filter>Graphics\Drawable</Filter>
     </ClInclude>
     <ClInclude Include="D3D11MathHelper.h">
