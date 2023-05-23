@@ -39,7 +39,7 @@ public:
 
 	ID3D11RenderTargetView* GetRenderTargetViewAt(int index);
 	ID3D11DepthStencilView* GetDepthStencilView();
-	const D3D11_VIEWPORT& GetViewport() const;
+	D3D11_VIEWPORT* GetViewport();
 	Camera* GetCameraAt(int index);
 	ID3D11VertexShader* GetVertexShader();
 	ID3D11PixelShader* GetPixelShader();

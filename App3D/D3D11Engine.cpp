@@ -36,7 +36,7 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	//m_cubeMap = CubeMap(device.Get(), false); //Complains that the copy-assignment operator has been deleted but I haven't done that?
 	m_cubeMap.Init(device.Get(), true); //Workaround, though I prefer having working constructors and operators
 
-	InitDrawableFromFile("Models/cube.obj", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f});
+	InitDrawableFromFile("Models/cube.obj", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, -5.0f}); //The internal cubemap camera is at (0, 0, -5) so match
 
 	//srand((unsigned)time(NULL));
 	//for (int i = 0; i < 20; i++)
@@ -54,7 +54,7 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	{
 		for (int j = 0; j < 5; j++)
 		{
-			InitDrawableFromFile("Models/cube.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { -5.0f + (float)i*3, -5.0f + (float)j*3, 5.0f});
+			InitDrawableFromFile("Models/cube.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -5.0f + (float)i*3, -5.0f + (float)j*3, 5.0f});
 		}
 	}
 
@@ -82,7 +82,7 @@ void D3D11Engine::Update(float dt)
 	}
 
 	/*Render*/
-	Render(dt, rtv.Get(), dsv.Get(), viewport, m_camera.get(), CLEAR_COLOR);
+	Render(dt, rtv.Get(), dsv.Get(), &viewport, m_camera.get(), CLEAR_COLOR);
 	if (billboardingIsEnabled) RenderParticles(m_camera.get());
 	if (cubemapIsEnabled)RenderReflectiveObject(dt);
 
@@ -119,7 +119,7 @@ Camera& D3D11Engine::GetCamera() const noexcept
 }
 
 /*RENDER FUNCTIONS*/
-void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT viewport, Camera* cam, const float clear[4])
+void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, Camera* cam, const float clear[4])
 {
 	/*Update buffers and camera frustum here*/
 	if (deferredIsEnabled)
@@ -130,8 +130,8 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 	{
 		// Clear the back buffer and depth stencil, as well as set viewport and render target (viewport only really needed to set after a resize, and that's disabled so uh)
 		context->ClearRenderTargetView(rtv, clear);
-		context->ClearDepthStencilView(dsv, D3D11_CLEAR_DEPTH, 1.0f, 0);
-		context->RSSetViewports(1, &viewport);
+		context->ClearDepthStencilView(dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+		context->RSSetViewports(1, viewport);
 		context->OMSetRenderTargets(1, &rtv, dsv);
 
 		/*Input Assembler Stage*/
@@ -139,21 +139,16 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST); //farewell D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST
 		context->IASetInputLayout(inputLayout.Get());
 
-		/*Tessellation ting*/
+		/*Shader Stage*/
+		context->VSSetShader(vertexShader.Get(), NULL, 0);
+		context->PSSetShader(pixelShader.Get(), NULL, 0);
+		//Tessellation
 		if(lodIsEnabled)context->RSSetState(wireframeRS.Get());
 		else			context->RSSetState(regularRS.Get());
 		context->HSSetShader(hullShader.Get(), NULL, 0);
 		context->DSSetShader(domainShader.Get(), NULL, 0);
 		context->DSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress()); //m_cameraCB.GetBufferAddress()
 		context->HSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
-
-		/*Vertex Shader Stage*/
-		//context->VSSetConstantBuffers(0, 1, m_cameraCB.GetBufferAddress());
-		context->VSSetShader(vertexShader.Get(), NULL, 0);
-
-		/*Pixel Shader Stage*/
-		context->PSSetShader(pixelShader.Get(), NULL, 0);
-		//this->context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
 
 		/*Culling*/
 		if (cullingIsEnabled)
@@ -190,10 +185,6 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		/*Unbind constant buffers too*/
 		context->HSSetConstantBuffers(0, 0, NULL);
 		context->DSSetConstantBuffers(0, 0, NULL);
-
-		/*Unbind rtv*/
-		ID3D11RenderTargetView* nullRTV = NULL;
-		context->OMSetRenderTargets(1, &nullRTV, NULL);
 	}
 
 	if (deferredIsEnabled)
@@ -209,6 +200,7 @@ void D3D11Engine::RenderParticles(Camera* cam)
 
 void D3D11Engine::RenderReflectiveObject(float dt)
 {
+
 	for (int i = 0; i < 6; i++)
 	{
 		/*Cookbook notes
@@ -229,14 +221,6 @@ void D3D11Engine::RenderReflectiveObject(float dt)
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST); //return of trianglelist, because we're just doing old-school vertex+pixel shader, no other fancy shaders
 	context->IASetInputLayout(inputLayout.Get());
 
-	/*Tessellation ting*/
-	//if(lodIsEnabled)context->RSSetState(wireframeRS.Get());
-	//else			context->RSSetState(regularRS.Get());
-	//context->HSSetShader(hullShader.Get(), NULL, 0);
-	//context->DSSetShader(domainShader.Get(), NULL, 0);
-	//context->DSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress()); //m_cameraCB.GetBufferAddress()
-	//context->HSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
-
 	/*Shader Stage*/
 	context->VSSetShader(m_cubeMap.GetVertexShader(), NULL, 0);
 	context->VSSetConstantBuffers(1, 1, m_camera->GetConstantBuffer().GetBufferAddress());
@@ -255,15 +239,16 @@ void D3D11Engine::RenderReflectiveObject(float dt)
 	/*Unbind shaders*/
 	context->VSSetShader(NULL, NULL, 0);
 	context->PSSetShader(NULL, NULL, 0);
+
 	/*Unbind constant buffers*/
 	context->VSSetConstantBuffers(0, 0, NULL);
 	context->PSSetConstantBuffers(0, 0, NULL);
-	/*Unbind shader resources*/
-	context->PSSetShaderResources(0, 0, NULL);
-	/*Unbind rtv*/
+
+	/*Unbind rtv+srv*/
 	ID3D11RenderTargetView* nullRTV = NULL;
 	context->OMSetRenderTargets(1, &nullRTV, NULL);
-	
+	ID3D11ShaderResourceView* nullSRV = NULL;
+	context->PSSetShaderResources(0, 1, &nullSRV);
 }
 
 /*DEFERRED RENDERING PASSES*/
@@ -368,7 +353,7 @@ void D3D11Engine::InitRasterizerStates()
 	D3D11_RASTERIZER_DESC regularDesc;
 	ZeroMemory(&regularDesc, sizeof(regularDesc));
 	regularDesc.AntialiasedLineEnable = false;
-	regularDesc.CullMode = D3D11_CULL_MODE::D3D11_CULL_BACK;
+	regularDesc.CullMode = D3D11_CULL_MODE::D3D11_CULL_NONE;//D3D11_CULL_MODE::D3D11_CULL_BACK;
 	regularDesc.DepthBias = 0;
 	regularDesc.DepthBiasClamp = 0;
 	regularDesc.DepthClipEnable = true;

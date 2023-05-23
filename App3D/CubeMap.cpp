@@ -75,8 +75,8 @@ void CubeMap::Init(ID3D11Device* device, bool hasSRV)
 		m_cameras[i].SetPosition({ 0.0f, 0.0f, -5.0f }); //Pass this in? Set some arbitrary value for now (same as the starting camera)
 
 		//Then rotate along the axes, follow ZYX convention, (changes the look-, up-, and right-vectors)
-		m_cameras[i].RotateY(upRotations[i]);
-		m_cameras[i].Pitch(rightRotations[i]);
+		m_cameras[i].RotateY(rightRotations[i]);
+		m_cameras[i].Pitch(upRotations[i]);
 
 		//Set projection and view matrices
 		m_cameras[i].SetLens(fovY, aspect, zn, zf);
@@ -87,8 +87,8 @@ void CubeMap::Init(ID3D11Device* device, bool hasSRV)
 
 	/*Create depth buffer and set viewport dimensions, both of these are supposed to match the size of a texture cube side. How do I get that? No clue. Set some arbitrary value for now*/
 	//Rather than width and height, these values represent the resolution of our reflections. The current reflections are pretty jagged, but bumping these up makes them look better
-	UINT cubeWidth = 256;
-	UINT cubeHeight = 256;
+	UINT cubeWidth = 2048;
+	UINT cubeHeight = 2048;
 	InitDepthBuffer(device, cubeWidth, cubeHeight);
 
 	viewport.Width = cubeWidth;
@@ -115,9 +115,9 @@ ID3D11DepthStencilView* CubeMap::GetDepthStencilView()
 	return dsv.Get();
 }
 
-const D3D11_VIEWPORT& CubeMap::GetViewport() const
+D3D11_VIEWPORT* CubeMap::GetViewport()
 {
-	return viewport;
+	return &viewport;
 }
 
 Camera* CubeMap::GetCameraAt(int index)
