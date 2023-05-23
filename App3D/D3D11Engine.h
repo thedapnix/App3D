@@ -64,6 +64,7 @@ private:
 	void InitGraphicsBuffer(GBuffer(&gbuf)[3]);
 
 	void InitRasterizerStates();
+	void InitSampler();
 
 	bool DrawableIsVisible(DirectX::BoundingFrustum frustum, DirectX::BoundingBox aabb, DirectX::XMMATRIX view, DirectX::XMMATRIX world);
 	//void InitSampler();
@@ -120,7 +121,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
 
-	//Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState;
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState;
 
 	//Deferred rendering
 	Microsoft::WRL::ComPtr<ID3D11ComputeShader> computeShader;

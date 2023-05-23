@@ -24,6 +24,7 @@ private: //Will this need to be public? We'll find out
 		~CubeMapView() = default;
 
 		ID3D11RenderTargetView* GetRenderTargetViewAt(int index) { return rtvs.at(index).Get(); }
+		ID3D11ShaderResourceView* const *GetShaderResourceViewAddress() { return srv.GetAddressOf(); }
 	private:
 		Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
 		std::vector<Microsoft::WRL::ComPtr<ID3D11RenderTargetView>> rtvs;
@@ -42,6 +43,7 @@ public:
 	Camera* GetCameraAt(int index);
 	ID3D11VertexShader* GetVertexShader();
 	ID3D11PixelShader* GetPixelShader();
+	ID3D11ShaderResourceView* const *GetShaderResourceViewAddress();
 
 private:
 	//Note the comment in CubeMapView constructor: "Texture cube is 6 textures combined in a cubic pattern, where we let indices 0-1 be positive and negative X, 2-3 be Y, 4-5 be Z"

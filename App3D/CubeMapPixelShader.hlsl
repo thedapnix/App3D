@@ -1,13 +1,15 @@
 
 struct PixelShaderInput
 {
-	float4 clipPos : SV_POSITION;
+    float4 clipPos : SV_POSITION;
     float3 worldPos : TEXCOORD0;
-    float3 normal : TEXCOORD1;
+    float2 uv : TEXCOORD1;
+    float3 normal : TEXCOORD2;
 };
 
 TextureCube reflectionTexture : register(t0);
-sampler standardSampler : register(s0); //not SamplerState?
+//sampler standardSampler : register(s0); //not SamplerState?
+SamplerState standardSampler : register(s0);
 
 cbuffer CAMERA_CONSTANT_BUFFER : register(b0)
 {
@@ -27,7 +29,7 @@ float4 main(PixelShaderInput input) : SV_TARGET
     float3 reflectedView = reflect(incomingView, input.normal);
     
     //Sample from reflectionTexture using the sampler and the reflected view vector
-    float4 sampledValue = float4(reflectedView, 1.0f); //reflectionTexture.Sample(standardSampler, reflectedView);
+    float4 sampledValue = reflectionTexture.Sample(standardSampler, reflectedView);
     
     return sampledValue;
 }

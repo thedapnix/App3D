@@ -24,7 +24,8 @@ struct VertexShaderOutput
 {
     float4 clipPos : SV_POSITION;
     float3 worldPos : TEXCOORD0;
-    float3 normal : TEXCOORD1;
+    float2 uv : TEXCOORD1;
+    float3 normal : TEXCOORD2;
 };
 
 VertexShaderOutput main( VertexShaderInput input ) //standard vertex shader, actually thinking i don't need this new vertex shader at all.
@@ -41,6 +42,8 @@ VertexShaderOutput main( VertexShaderInput input ) //standard vertex shader, act
     pos = mul(pos, view);
     pos = mul(pos, proj);
     output.clipPos = pos;
+    
+    output.uv = input.uv;
     
     float4 nor = float4(input.localNormal, 0.0f);
     nor = mul(nor, scale);

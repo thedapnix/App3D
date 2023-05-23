@@ -10,7 +10,7 @@ CubeMap::CubeMapView::CubeMapView(ID3D11Device* device, UINT width, UINT height,
 	texDesc.Height = height;
 	texDesc.MipLevels = 1;
 	texDesc.ArraySize = 6; //Texture cube is 6 textures combined in a cubic pattern, where we let indices 0-1 be positive and negative X, 2-3 be Y, 4-5 be Z
-	texDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT; //damn we pass this in too, cringe, default as 4-dimensional 32-bit floats?
+	texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; //damn we pass this in too, cringe, default as 4-dimensional 32-bit floats?
 	texDesc.SampleDesc.Count = 1;
 	texDesc.SampleDesc.Quality = 0;
 	texDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -28,7 +28,7 @@ CubeMap::CubeMapView::CubeMapView(ID3D11Device* device, UINT width, UINT height,
 	//Create render target views for every side of the cube
 	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
 	ZeroMemory(&rtvDesc, sizeof(rtvDesc));
-	rtvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT; // grr, same as above
+	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // grr, same as above
 	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
 	rtvDesc.Texture2DArray.ArraySize = 1;
 	rtvDesc.Texture2DArray.MipSlice = 0;
@@ -132,6 +132,11 @@ ID3D11VertexShader* CubeMap::GetVertexShader()
 ID3D11PixelShader* CubeMap::GetPixelShader()
 {
 	return pixelShader.Get();
+}
+
+ID3D11ShaderResourceView* const *CubeMap::GetShaderResourceViewAddress()
+{
+	return m_cubeMapView.GetShaderResourceViewAddress();
 }
 
 void CubeMap::InitDepthBuffer(ID3D11Device* device, UINT width, UINT height)

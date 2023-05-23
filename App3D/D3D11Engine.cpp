@@ -34,7 +34,7 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 
 	//Cube environment mapping setup
 	//m_cubeMap = CubeMap(device.Get(), false); //Complains that the copy-assignment operator has been deleted but I haven't done that?
-	m_cubeMap.Init(device.Get(), false); //Workaround, though I prefer having working constructors and operators
+	m_cubeMap.Init(device.Get(), true); //Workaround, though I prefer having working constructors and operators
 
 	InitDrawableFromFile("Models/cube.obj", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f});
 
@@ -57,6 +57,9 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 			InitDrawableFromFile("Models/cube.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { -5.0f + (float)i*3, -5.0f + (float)j*3, 5.0f});
 		}
 	}
+
+	//Ability to sample from textures in a shader-file
+	InitSampler();
 
 	//ImGui setup
 	SetupImGui(hWnd, device.Get(), context.Get());
@@ -214,15 +217,9 @@ void D3D11Engine::RenderReflectiveObject(float dt)
 	}
 
 	/*Copy the Render() function but remove stuff we're not interested in here*/
-	//context->ClearRenderTargetView(rtv.Get(), CLEAR_COLOR);
-	//ID3D11RenderTargetView* nullRTV = NULL;
-	//context->OMSetRenderTargets(1, &nullRTV, NULL);
-	//context->ClearDepthStencilView(dsv.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	context->RSSetViewports(1, &viewport);
-	context->OMSetRenderTargets(1, rtv.GetAddressOf(), dsv.Get());
 
 	/*Input Assembler Stage*/
-	//Set primitive topology and input layout
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST); //return of trianglelist, because we're just doing old-school vertex+pixel shader, no other fancy shaders
 	context->IASetInputLayout(inputLayout.Get());
 
@@ -235,11 +232,13 @@ void D3D11Engine::RenderReflectiveObject(float dt)
 	//context->HSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
 
 	/*Shader Stage*/
-	//context->VSSetConstantBuffers(0, 1, m_cameraCB.GetBufferAddress());
 	context->VSSetShader(m_cubeMap.GetVertexShader(), NULL, 0);
 	context->VSSetConstantBuffers(1, 1, m_camera->GetConstantBuffer().GetBufferAddress());
+
 	context->PSSetShader(m_cubeMap.GetPixelShader(), NULL, 0);
-	//this->context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
+	context->PSSetShaderResources(0, 1, m_cubeMap.GetShaderResourceViewAddress());
+	context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
+	context->PSSetConstantBuffers(0, 1, m_camera->GetConstantBuffer().GetBufferAddress());
 
 	for (auto& drawable : m_reflectiveDrawables)
 	{
@@ -250,9 +249,14 @@ void D3D11Engine::RenderReflectiveObject(float dt)
 	/*Unbind shaders*/
 	context->VSSetShader(NULL, NULL, 0);
 	context->PSSetShader(NULL, NULL, 0);
-	/*Unbind constant buffers too*/
-	//context->HSSetConstantBuffers(0, 0, NULL);
-	//context->DSSetConstantBuffers(0, 0, NULL);
+	/*Unbind constant buffers*/
+	context->VSSetConstantBuffers(0, 0, NULL);
+	context->PSSetConstantBuffers(0, 0, NULL);
+	/*Unbind shader resources*/
+	context->PSSetShaderResources(0, 0, NULL);
+	/*Unbind rtv, but i feel like this is redundant since we clear and set a new one once the og Render() function gets called*/
+	//ID3D11RenderTargetView* nullRTV = NULL;
+	//context->OMSetRenderTargets(1, &nullRTV, NULL);
 }
 
 void D3D11Engine::DefPassOne(Camera* cam)
@@ -697,36 +701,28 @@ bool D3D11Engine::DrawableIsVisible(DirectX::BoundingFrustum frustum, DirectX::B
 	return localFrustum.Intersects(aabb);
 }
 
-//void D3D11Engine::InitSampler()
-//{
-//	D3D11_SAMPLER_DESC desc;
-//	ZeroMemory(&desc, sizeof(desc));
-//
-//	//desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-//	//desc.Filter = D3D11_FILTER_ANISOTROPIC;
-//	desc.AddressU = adressMode;
-//	desc.AddressV = adressMode;
-//	desc.AddressW = adressMode;
-//	desc.MinLOD = 0.0f;
-//	desc.MaxLOD = D3D11_FLOAT32_MAX;
-//	desc.MipLODBias = 0.0f;
-//	desc.MaxAnisotropy = 1;
-//	desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-//
-//	/*if (borderColour.has_value())
-//	{
-//		for (size_t i = 0; i < borderColour.value().size(); i++)
-//		{
-//			desc.BorderColor[i] = borderColour.value()[i];
-//		}
-//	}*/
-//	HRESULT hr = device->CreateSamplerState(&desc, samplerState.GetAddressOf());
-//
-//	if (FAILED(hr))
-//	{
-//		MessageBox(NULL, L"Failed to create sampler!", L"Error", MB_OK);
-//	}
-//}
+void D3D11Engine::InitSampler()
+{
+	D3D11_SAMPLER_DESC desc;
+	ZeroMemory(&desc, sizeof(desc));
+
+	desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	desc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	desc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	desc.MinLOD = 0;
+	desc.MaxLOD = D3D11_FLOAT32_MAX;
+	desc.MipLODBias = 0;
+	desc.MaxAnisotropy = 1;
+	desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+
+	HRESULT hr = device->CreateSamplerState(&desc, samplerState.GetAddressOf());
+
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create sampler!", L"Error", MB_OK);
+	}
+}
 
 void D3D11Engine::InitQuad(DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate)
 {
