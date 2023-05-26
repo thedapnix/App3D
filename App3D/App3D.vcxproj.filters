@@ -46,6 +46,9 @@
     <Filter Include="Resource Files\Cubemap Shaders">
       <UniqueIdentifier>{001789e5-5c89-4b2d-bb4b-7c7f09f6e13f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Graphics\Shadowmap">
+      <UniqueIdentifier>{30ccf86d-bd5d-40c8-95f7-fe8fd50028b9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -107,6 +110,9 @@
     </ClCompile>
     <ClCompile Include="CubeMap.cpp">
       <Filter>Graphics\Cubemap</Filter>
+    </ClCompile>
+    <ClCompile Include="ShadowMap.cpp">
+      <Filter>Graphics\Shadowmap</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -178,6 +184,9 @@
     </ClInclude>
     <ClInclude Include="CubeMap.h">
       <Filter>Graphics\Cubemap</Filter>
+    </ClInclude>
+    <ClInclude Include="ShadowMap.h">
+      <Filter>Graphics\Shadowmap</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -91,7 +91,7 @@ private:
 	bool billboardingIsEnabled = false;
 	bool cubemapIsEnabled = false;
 	bool lodIsEnabled = false;
-	bool shadowIsEnabled = false;
+	bool shadowmapIsEnabled = false;
 
 private:
 	/*D3D11 Interfaces*/

@@ -101,7 +101,7 @@ void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps,
 	}
 	ImGuiEngineWindow(
 		m_camera.get(), m_fpsString, state,
-		objIsEnabled, deferredIsEnabled, cullingIsEnabled, billboardingIsEnabled, lodIsEnabled, cubemapIsEnabled, shadowIsEnabled,
+		objIsEnabled, deferredIsEnabled, cullingIsEnabled, billboardingIsEnabled, lodIsEnabled, cubemapIsEnabled, shadowmapIsEnabled,
 		m_drawablesBeingRendered
 	);
 	EndImGuiFrame();

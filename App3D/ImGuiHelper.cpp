@@ -52,7 +52,7 @@ void ImGuiWindowMenu(bool& isActive)
 }
 
 void ImGuiEngineWindow(Camera* camera, std::string fps, int state,
-	bool& objIsEnabled, bool& deferredIsEnabled, bool& cullingIsEnabled, bool& billboardingIsEnabled, bool& lodIsEnabled, bool& cubemapIsEnabled, bool& shadowIsEnabled,
+	bool& objIsEnabled, bool& deferredIsEnabled, bool& cullingIsEnabled, bool& billboardingIsEnabled, bool& lodIsEnabled, bool& cubemapIsEnabled, bool& shadowmapIsEnabled,
 	int drawables)
 {
 	//Setup
@@ -79,7 +79,7 @@ void ImGuiEngineWindow(Camera* camera, std::string fps, int state,
 		ImGui::Text("Billboarding: %s", billboardingIsEnabled ? "Enabled" : "Disabled");
 		ImGui::Text("LOD Tesselation: %s", lodIsEnabled ? "Enabled" : "Disabled");	
 		ImGui::Text("Cube Mapping: %s", cubemapIsEnabled ? "Enabled" : "Disabled");
-		ImGui::Text("Shadow Mapping: %s", shadowIsEnabled ? "Enabled" : "Disabled");
+		ImGui::Text("Shadow Mapping: %s", shadowmapIsEnabled ? "Enabled" : "Disabled");
 		ImGui::Text("----------------------------------");
 		if (ImGui::Button("Toggle Deferred Rendering"))
 		{
@@ -89,17 +89,21 @@ void ImGuiEngineWindow(Camera* camera, std::string fps, int state,
 		{
 			if (cullingIsEnabled) cullingIsEnabled = false; else cullingIsEnabled = true;
 		}
-		if (ImGui::Button("Toggle Wireframe (Tesselation)"))
-		{
-			if (lodIsEnabled) lodIsEnabled = false; else lodIsEnabled = true;
-		}
 		if (ImGui::Button("Toggle Particles (Billboarding)"))
 		{
 			if (billboardingIsEnabled) billboardingIsEnabled = false; else billboardingIsEnabled = true;
 		}
+		if (ImGui::Button("Toggle Wireframe (Tesselation)"))
+		{
+			if (lodIsEnabled) lodIsEnabled = false; else lodIsEnabled = true;
+		}
 		if (ImGui::Button("Toggle Cubemap"))
 		{
 			if (cubemapIsEnabled) cubemapIsEnabled = false; else cubemapIsEnabled = true;
+		}
+		if (ImGui::Button("Toggle Shadowmap"))
+		{
+			if (shadowmapIsEnabled) shadowmapIsEnabled = false; else shadowmapIsEnabled = true;
 		}
 	}
 
