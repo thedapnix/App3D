@@ -2,6 +2,7 @@
 
 #include "Camera.h"
 #include <wrl.h>
+#include <memory>
 
 struct LightData
 {
@@ -23,8 +24,9 @@ class SpotLight
 {
 public:
 	SpotLight() = default;
-	SpotLight(ID3D11Device* device, LightData& lightData);
+	SpotLight(ID3D11Device* device, const LightData& lightData);
 	~SpotLight() = default;
+
 private:
 	Camera m_camera;
 };

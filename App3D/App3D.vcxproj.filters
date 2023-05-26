@@ -49,6 +49,9 @@
     <Filter Include="Graphics\Shadowmap">
       <UniqueIdentifier>{30ccf86d-bd5d-40c8-95f7-fe8fd50028b9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Shadowmap Shaders">
+      <UniqueIdentifier>{3a3b831e-0cbd-4efa-a2b9-2578913e86c0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -228,6 +231,9 @@
     </FxCompile>
     <FxCompile Include="CubeMapVertexShader.hlsl">
       <Filter>Resource Files\Cubemap Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ShadowMapVertexShader.hlsl">
+      <Filter>Resource Files\Shadowmap Shaders</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

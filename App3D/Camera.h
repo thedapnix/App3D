@@ -18,8 +18,8 @@ class Camera
 public:
 	Camera();
 	~Camera() = default;
-	Camera& operator=(const Camera&) = delete;
-	Camera(const Camera&) = delete;
+	//Camera& operator=(const Camera&) = delete;
+	//Camera(const Camera&) = delete;
 
 	/*GETTERS*/
 	//Camera position

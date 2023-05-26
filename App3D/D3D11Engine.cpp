@@ -36,6 +36,10 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	//m_cubeMap = CubeMap(device.Get(), false); //Complains that the copy-assignment operator has been deleted but I haven't done that?
 	m_cubeMap.Init(device.Get(), true); //Workaround, though I prefer having working constructors and operators
 
+	//Shadowmap setup
+	InitSpotlights();
+	m_shadowMap = ShadowMap(device.Get(), &m_drawables, &m_spotlights);
+
 	InitDrawableFromFile("Models/cube.obj", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, -5.0f}); //The internal cubemap camera is at (0, 0, -5) so match
 
 	//srand((unsigned)time(NULL));
@@ -677,7 +681,7 @@ void D3D11Engine::InitSpotlights()
 {
 	LightData data;
 	data.pos = XMFLOAT3(0.0f, 0.0f, -10.0f);
-	data.fovY = 0.0f;
+	data.fovY = XM_PI / 4.0f;
 	data.rotX = 0.0f;
 	data.rotY = 0.0f;
 	data.col = XMFLOAT3(1.0f, 1.0f, 1.0f);

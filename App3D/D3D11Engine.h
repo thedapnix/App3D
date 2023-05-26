@@ -14,7 +14,7 @@
 #include "Camera.h"
 #include "CubeMap.h"
 #include "ParticleSystem.h"
-#include "Spotlight.h"
+#include "ShadowMap.h"
 
 class D3D11Engine
 {
@@ -81,7 +81,7 @@ private:
 	static constexpr float TEST_COLOR[4] = { 0.1f, 0.5f, 0.1f, 1.0f };
 	std::vector<Drawable> m_drawables;
 	std::vector<Drawable> m_reflectiveDrawables;
-	std::vector<SpotLight> m_spotlights; //Shadowmap stuff
+	std::vector<SpotLight> m_spotlights;
 	std::unique_ptr<Camera> m_camera;
 	int m_drawablesBeingRendered = 0;
 	GBuffer m_gBuffers[3];
@@ -138,4 +138,6 @@ private:
 
 	//Cube environment mapping
 	CubeMap m_cubeMap;
+
+	ShadowMap m_shadowMap;
 };

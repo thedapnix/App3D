@@ -105,6 +105,55 @@ void CubeMap::Init(ID3D11Device* device, bool hasSRV)
 	InitShaders(device);
 }
 
+//CubeMap::CubeMap(ID3D11Device* device, bool hasSRV)
+//{
+//	/*Create 6 cameras*/
+//	//Projection info
+//	float fovY = DirectX::XM_PIDIV2; //90 degree angle
+//	float aspect = 1.0f;
+//	float zn = 0.1f;
+//	float zf = 100.0f;
+//
+//	//Local rotations to align the cameras to look in the proper direction
+//	float upRotations[6] = { DirectX::XM_PIDIV2, -DirectX::XM_PIDIV2,	0.0f,					0.0f,				0.0f, DirectX::XM_PI };
+//	float rightRotations[6] = { 0.0f,				0.0f,					-DirectX::XM_PIDIV2,	DirectX::XM_PIDIV2, 0.0f, 0.0f };
+//
+//	for (int i = 0; i < 6; i++)
+//	{
+//		//First, set position
+//		m_cameras[i].SetPosition({ 0.0f, 0.0f, -5.0f }); //Pass this in? Set some arbitrary value for now (same as the starting camera)
+//
+//		//Then rotate along the axes, follow ZYX convention, (changes the look-, up-, and right-vectors)
+//		m_cameras[i].RotateY(rightRotations[i]);
+//		m_cameras[i].Pitch(upRotations[i]);
+//
+//		//Set projection and view matrices
+//		m_cameras[i].SetLens(fovY, aspect, zn, zf);
+//		m_cameras[i].UpdateViewMatrix(); //builds view matrix from position, as well as look-, up- and right-vectors
+//
+//		m_cameras[i].InitConstantBufferAndFrustum(device); //Forgot to set this, that's pretty silly of me
+//	}
+//
+//	/*Create depth buffer and set viewport dimensions, both of these are supposed to match the size of a texture cube side. How do I get that? No clue. Set some arbitrary value for now*/
+//	//Rather than width and height, these values represent the resolution of our reflections. The current reflections are pretty jagged, but bumping these up makes them look better
+//	UINT cubeWidth = 2048;
+//	UINT cubeHeight = 2048;
+//	InitDepthBuffer(device, cubeWidth, cubeHeight);
+//
+//	viewport.Width = cubeWidth;
+//	viewport.Height = cubeHeight;
+//	viewport.MinDepth = 0;
+//	viewport.MaxDepth = 1;
+//	viewport.TopLeftX = 0;
+//	viewport.TopLeftY = 0;
+//
+//	//Create the thing that stores what the cube side will be reflecting
+//	m_cubeMapView = CubeMapView(device, cubeWidth, cubeHeight, hasSRV);
+//
+//	//
+//	InitShaders(device);
+//}
+
 ID3D11RenderTargetView* CubeMap::GetRenderTargetViewAt(int index)
 {
 	return m_cubeMapView.GetRenderTargetViewAt(index);

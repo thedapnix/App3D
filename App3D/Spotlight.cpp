@@ -1,6 +1,6 @@
 #include "Spotlight.h"
 
-SpotLight::SpotLight(ID3D11Device* device, LightData& lightData)
+SpotLight::SpotLight(ID3D11Device* device, const LightData& lightData)
 {
 	//Create virtual camera just like in cubemap
 	float fovY = lightData.fovY;
