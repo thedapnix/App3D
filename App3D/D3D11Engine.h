@@ -14,6 +14,7 @@
 #include "Camera.h"
 #include "CubeMap.h"
 #include "ParticleSystem.h"
+#include "Spotlight.h"
 
 class D3D11Engine
 {
@@ -63,6 +64,8 @@ private:
 	void InitUAV();
 	void InitGraphicsBuffer(GBuffer(&gbuf)[3]);
 
+	void InitSpotlights();
+
 	void InitRasterizerStates();
 
 	bool DrawableIsVisible(DirectX::BoundingFrustum frustum, DirectX::BoundingBox aabb, DirectX::XMMATRIX view, DirectX::XMMATRIX world);
@@ -78,6 +81,7 @@ private:
 	static constexpr float TEST_COLOR[4] = { 0.1f, 0.5f, 0.1f, 1.0f };
 	std::vector<Drawable> m_drawables;
 	std::vector<Drawable> m_reflectiveDrawables;
+	std::vector<SpotLight> m_spotlights; //Shadowmap stuff
 	std::unique_ptr<Camera> m_camera;
 	int m_drawablesBeingRendered = 0;
 	GBuffer m_gBuffers[3];

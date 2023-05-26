@@ -673,6 +673,18 @@ void D3D11Engine::InitGraphicsBuffer(GBuffer(&gbuf)[3])
 	}
 }
 
+void D3D11Engine::InitSpotlights()
+{
+	LightData data;
+	data.pos = XMFLOAT3(0.0f, 0.0f, -10.0f);
+	data.fovY = 0.0f;
+	data.rotX = 0.0f;
+	data.rotY = 0.0f;
+	data.col = XMFLOAT3(1.0f, 1.0f, 1.0f);
+
+	m_spotlights.push_back(SpotLight(device.Get(), data));
+}
+
 bool D3D11Engine::DrawableIsVisible(DirectX::BoundingFrustum frustum, DirectX::BoundingBox aabb, DirectX::XMMATRIX view, DirectX::XMMATRIX world)
 {
 	//The frustum is in view space, and the AABB is in the local space of the object it wraps

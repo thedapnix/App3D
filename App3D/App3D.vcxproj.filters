@@ -114,6 +114,9 @@
     <ClCompile Include="ShadowMap.cpp">
       <Filter>Graphics\Shadowmap</Filter>
     </ClCompile>
+    <ClCompile Include="Spotlight.cpp">
+      <Filter>Graphics\Shadowmap</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h">
@@ -186,6 +189,9 @@
       <Filter>Graphics\Cubemap</Filter>
     </ClInclude>
     <ClInclude Include="ShadowMap.h">
+      <Filter>Graphics\Shadowmap</Filter>
+    </ClInclude>
+    <ClInclude Include="Spotlight.h">
       <Filter>Graphics\Shadowmap</Filter>
     </ClInclude>
   </ItemGroup>

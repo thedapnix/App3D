@@ -1,10 +1,11 @@
 #include "ShadowMap.h"
 #include <d3dcompiler.h>
 
-ShadowMap::ShadowMap(ID3D11Device* device, std::vector<Drawable>* drawables)
+ShadowMap::ShadowMap(ID3D11Device* device, std::vector<Drawable>* drawables, std::vector<SpotLight>* spotlights)
 {
 	//Fill vectors
 	m_drawables = drawables;
+	m_spotlights = spotlights;
 
 	InitShaderAndInputLayout(device);
 
