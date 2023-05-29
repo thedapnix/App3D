@@ -24,7 +24,47 @@ ShadowMap::ShadowMap(ID3D11Device* device, std::vector<Drawable>* drawables, std
 	viewport.TopLeftX = 0;
 	viewport.TopLeftY = 0;
 
+	InitStructuredBuffer(device, false, false, sizeof(SpotLight), m_spotlights->size(), &m_spotlights);
 	InitShaderResourceView(device, m_spotlights->size());
+}
+
+ID3D11VertexShader* ShadowMap::GetVertexShader()
+{
+	return vertexShader.Get();
+}
+
+const D3D11_VIEWPORT* ShadowMap::GetViewport() const
+{
+	return &viewport;
+}
+
+ID3D11DepthStencilView* ShadowMap::GetDepthStencilViewAt(UINT index)
+{
+	return DSVs.at(index).Get();
+}
+
+void ShadowMap::InitStructuredBuffer(ID3D11Device* device, bool isDynamic, bool hasUAV, UINT elementSize, UINT elementCount, void* bufferData)
+{
+	D3D11_BUFFER_DESC desc;
+	ZeroMemory(&desc, sizeof(desc));
+	desc.ByteWidth = elementSize * elementCount;
+	desc.Usage = isDynamic ? D3D11_USAGE_DYNAMIC : D3D11_USAGE_IMMUTABLE;
+	desc.BindFlags =  D3D11_BIND_SHADER_RESOURCE;
+	desc.BindFlags |= hasUAV ? D3D11_BIND_UNORDERED_ACCESS : 0u;
+	desc.CPUAccessFlags = isDynamic ? D3D11_CPU_ACCESS_WRITE : 0u;
+	desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	desc.StructureByteStride = elementSize;
+
+	HRESULT hr;
+	D3D11_SUBRESOURCE_DATA data;
+	ZeroMemory(&data, sizeof(data));
+	data.pSysMem = bufferData;
+	data.SysMemPitch = data.SysMemSlicePitch = 0;
+	hr = device->CreateBuffer(&desc, &data, structuredBuffer.GetAddressOf());
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create structured buffer!", L"Error", MB_OK);
+	}
 }
 
 void ShadowMap::InitDepthBuffer(ID3D11Device* device, UINT resolution, UINT arraySize)
@@ -110,16 +150,16 @@ void ShadowMap::InitShaderAndInputLayout(ID3D11Device* device)
 	}
 
 	//Create Input Layout using data from our vsBlob, copied from D3D11Engine
-	D3D11_INPUT_ELEMENT_DESC inputElementDesc[1] =
-	{
-	  { "POS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	  //{ "UV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	  //{ "NOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
-	hr = device->CreateInputLayout(inputElementDesc, ARRAYSIZE(inputElementDesc), vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &inputLayout);
-	if (FAILED(hr))
-	{
-		MessageBox(NULL, L"Failed to create input layout for shadowmap!", L"Error", MB_OK);
-		return;
-	}
+	//D3D11_INPUT_ELEMENT_DESC inputElementDesc[1] =
+	//{
+	//  { "POS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	//  //{ "UV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	//  //{ "NOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	//};
+	//hr = device->CreateInputLayout(inputElementDesc, ARRAYSIZE(inputElementDesc), vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &inputLayout);
+	//if (FAILED(hr))
+	//{
+	//	MessageBox(NULL, L"Failed to create input layout for shadowmap!", L"Error", MB_OK);
+	//	return;
+	//}
 }

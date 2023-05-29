@@ -89,6 +89,7 @@ void D3D11Engine::Update(float dt)
 	Render(dt, rtv.Get(), dsv.Get(), &viewport, m_camera.get(), CLEAR_COLOR);
 	if (billboardingIsEnabled) RenderParticles(m_camera.get());
 	if (cubemapIsEnabled)RenderReflectiveObject(dt);
+	if (shadowmapIsEnabled)RenderDepth(dt);
 
 	/*Present the final scene*/
 	swapChain->Present(1, 0); //vSync enabled
@@ -253,6 +254,37 @@ void D3D11Engine::RenderReflectiveObject(float dt)
 	context->OMSetRenderTargets(1, &nullRTV, NULL);
 	ID3D11ShaderResourceView* nullSRV = NULL;
 	context->PSSetShaderResources(0, 1, &nullSRV);
+}
+
+void D3D11Engine::RenderDepth(float dt)
+{
+	/*Bind stuff*/
+	context->IASetInputLayout(inputLayout.Get());
+	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	context->VSSetShader(m_shadowMap.GetVertexShader(), NULL, 0);
+	context->RSSetViewports(1, m_shadowMap.GetViewport());
+
+	/*Render depth from the perspective of every light*/
+	for (UINT i = 0; i < m_spotlights.size(); i++)
+	{
+		ID3D11DepthStencilView* dsView = m_shadowMap.GetDepthStencilViewAt(i);
+		context->ClearDepthStencilView(dsView, D3D11_CLEAR_DEPTH, 1, 0);
+		context->OMSetRenderTargets(0, NULL, dsView); //no rtv, only dsv
+
+		//Some way of getting the camera cb of individual lights
+		ID3D11Buffer* cameraCB = m_spotlights.at(i).GetCameraConstantBuffer().GetBuffer();
+		context->VSSetConstantBuffers(1, 1, &cameraCB);
+
+		for (auto& drawable : m_drawables)
+		{
+			drawable.Bind(context.Get());
+			drawable.Draw(context.Get());
+		}
+	}
+
+	/*Unbind stuff*/
+	context->OMSetRenderTargets(0, NULL, NULL);
+	context->VSSetShader(NULL, NULL, 0);
 }
 
 /*DEFERRED RENDERING PASSES*/
@@ -455,7 +487,7 @@ void D3D11Engine::InitRTV()
 		return;
 	}
 
-	hr = device->CreateRenderTargetView(backBuffer.Get(), nullptr, rtv.GetAddressOf());
+	hr = device->CreateRenderTargetView(backBuffer.Get(), NULL, rtv.GetAddressOf());
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create render target view!", L"Error", MB_OK);

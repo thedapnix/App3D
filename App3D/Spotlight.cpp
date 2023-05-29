@@ -20,3 +20,8 @@ SpotLight::SpotLight(ID3D11Device* device, const LightData& lightData)
 	m_camera.UpdateViewMatrix();
 	m_camera.InitConstantBufferAndFrustum(device);
 }
+
+const ConstantBuffer& SpotLight::GetCameraConstantBuffer() const
+{
+	return m_camera.GetConstantBuffer();
+}

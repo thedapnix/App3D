@@ -27,6 +27,8 @@ public:
 	SpotLight(ID3D11Device* device, const LightData& lightData);
 	~SpotLight() = default;
 
+	const ConstantBuffer& GetCameraConstantBuffer() const;
+
 private:
 	Camera m_camera;
 };
