@@ -1,5 +1,5 @@
-//Texture2D tex2D : register(t0);
-//SamplerState samplerState : register(s0);
+Texture2D tex2D : register(t0);
+SamplerState samplerState : register(s0);
 
 struct PixelShaderInput
 {
@@ -25,9 +25,8 @@ PixelShaderOutput main(PixelShaderInput input) //: SV_TARGET //previously float4
     //return (tex, 1.0f);
     PixelShaderOutput output;
     output.position = input.worldPosition;
-    output.colour = input.col; //sample from texture here if you want
+    output.colour = tex2D.Sample(samplerState, input.uv); //input.col; //sample from texture here if you want
     output.normal = input.nor;
     
     return output;
-    //return float4(input.uv, 1.0f, 1.0f);  //input.col;
 }

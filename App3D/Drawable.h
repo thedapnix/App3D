@@ -38,7 +38,7 @@ struct BufferData
 		std::vector<UINT> vector;
 	} iData;
 
-	//std::string textureFileName;
+	std::string textureFileName;
 };
 
 class Drawable
@@ -47,8 +47,11 @@ public:
 	Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOAT3 scaling, DirectX::XMFLOAT3 rotation, DirectX::XMFLOAT3 translation);
 	~Drawable() = default;
 
-	void Bind(ID3D11DeviceContext* context);
+	void InitTexture(ID3D11Device* device, const char* textureFileName);
+
+	void Bind(ID3D11DeviceContext* context, ID3D11ShaderResourceView* inputSRV);
 	void Draw(ID3D11DeviceContext* context) const;
+	void Unbind(ID3D11DeviceContext* context);
 	void UpdateConstantBuffer(ID3D11DeviceContext* context);
 	void CreateBoundingBoxFromPoints(DirectX::XMVECTOR min, DirectX::XMVECTOR max);
 	void EditTranslation(float x, float y, float z);
@@ -77,6 +80,9 @@ private:
 	IndexBuffer m_indexBuffer;
 
 	/*To-do, shader resource views allowing for all drawables to be textured*/
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> srt;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv;
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
 
 	DirectX::BoundingBox m_aabb;
 

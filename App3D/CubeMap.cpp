@@ -72,11 +72,11 @@ void CubeMap::Init(ID3D11Device* device, bool hasSRV)
 	for (int i = 0; i < 6; i++)
 	{
 		//First, set position
-		m_cameras[i].SetPosition({ 0.0f, 0.0f, -5.0f }); //Pass this in? Set some arbitrary value for now (same as the starting camera)
+		m_cameras[i].SetPosition({ 0.0f, -2.5f, 5.0f }); //Pass this in? Set some arbitrary value for now (same as the starting camera)
 
 		//Then rotate along the axes, follow ZYX convention, (changes the look-, up-, and right-vectors)
-		m_cameras[i].RotateY(rightRotations[i]);
-		m_cameras[i].Pitch(upRotations[i]);
+		m_cameras[i].RotateY(upRotations[i]);
+		m_cameras[i].Pitch(rightRotations[i]);
 
 		//Set projection and view matrices
 		m_cameras[i].SetLens(fovY, aspect, zn, zf);
@@ -187,6 +187,11 @@ ID3D11PixelShader* CubeMap::GetPixelShader()
 ID3D11ShaderResourceView* const *CubeMap::GetShaderResourceViewAddress()
 {
 	return m_cubeMapView.GetShaderResourceViewAddress();
+}
+
+ID3D11ShaderResourceView* CubeMap::GetShaderResourceView()
+{
+	return m_cubeMapView.GetShaderResourceView();
 }
 
 void CubeMap::InitDepthBuffer(ID3D11Device* device, UINT width, UINT height)

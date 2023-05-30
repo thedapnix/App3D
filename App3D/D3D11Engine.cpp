@@ -40,8 +40,6 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	InitSpotlights();
 	m_shadowMap = ShadowMap(device.Get(), &m_drawables, &m_spotlights);
 
-	InitDrawableFromFile("Models/cube.obj", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, -5.0f}); //The internal cubemap camera is at (0, 0, -5) so match
-
 	//srand((unsigned)time(NULL));
 	//for (int i = 0; i < 20; i++)
 	//{
@@ -54,13 +52,27 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	//}
 	
 	//Drawable setup
-	for (int i = 0; i < 5; i++)
-	{
-		for (int j = 0; j < 5; j++)
-		{
-			InitDrawableFromFile("Models/cube.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -5.0f + (float)i*3, -5.0f + (float)j*3, 5.0f});
-		}
-	}
+	//for (int i = 0; i < 5; i++)
+	//{
+	//	for (int j = 0; j < 5; j++)
+	//	{
+	//		InitDrawableFromFile("Models/cube3.obj", "Textures/brick_wall.jpg", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -5.0f + (float)i * 3, -5.0f + (float)j * 3, 5.0f });
+	//		//InitCube("Textures/icon.png", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -5.0f + (float)i*3, -5.0f + (float)j*3, 5.0f});
+	//	}
+	//}
+
+	//Ground
+	InitDrawableFromFile("Meshes/cube.obj", "Textures/gravel.png", m_drawables, {14.0f, 1.0f, 14.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, -10.0f, 5.0f});
+
+	//Back wall
+	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, 19.0f });
+
+	//Left and right wall
+	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 1.0f, 5.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, { -14.0f, -4.0f, 4.0f });
+	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 1.0f, 5.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, {  14.0f, -4.0f, 4.0f });
+
+	//Reflective drawable
+	InitDrawableFromFile("Meshes/sphere.obj", "Textures/dog.png", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, 5.0f }); //The internal cubemap camera is at (0, 0, -5) so match
 
 	//Ability to sample from textures in a shader-file
 	InitSampler();
@@ -147,6 +159,8 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		/*Shader Stage*/
 		context->VSSetShader(vertexShader.Get(), NULL, 0);
 		context->PSSetShader(pixelShader.Get(), NULL, 0);
+		//context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
+
 		//Tessellation
 		if(lodIsEnabled)context->RSSetState(wireframeRS.Get());
 		else			context->RSSetState(regularRS.Get());
@@ -163,7 +177,7 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 			{
 				if (DrawableIsVisible(cam->GetFrustum(), drawable.GetBoundingBox(), m_camera->View(), drawable.World()))
 				{
-					drawable.Bind(context.Get());
+					drawable.Bind(context.Get(), NULL);
 					drawable.Draw(context.Get());
 					visibleDrawables++;
 				}
@@ -175,7 +189,7 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 			//Per drawable: bind vertex and index buffers, then draw them
 			for (auto& drawable : m_drawables)
 			{
-				drawable.Bind(context.Get());
+				drawable.Bind(context.Get(), NULL);
 				drawable.Draw(context.Get());
 			}
 			m_drawablesBeingRendered = (int)m_drawables.size();
@@ -190,6 +204,14 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		/*Unbind constant buffers too*/
 		context->HSSetConstantBuffers(0, 0, NULL);
 		context->DSSetConstantBuffers(0, 0, NULL);
+
+		/*Aaaand shader resource stuff*/
+		ID3D11RenderTargetView* nullRTV = NULL;
+		context->OMSetRenderTargets(1, &nullRTV, NULL);
+		ID3D11ShaderResourceView* nullSRV = NULL;
+		context->PSSetShaderResources(0, 0, &nullSRV);
+		ID3D11SamplerState* nullSampler = NULL;
+		context->PSSetSamplers(0, 0, &nullSampler);
 	}
 
 	if (deferredIsEnabled)
@@ -215,7 +237,7 @@ void D3D11Engine::RenderReflectiveObject(float dt)
 		Instead of the "normal" viewport, use the one associated with the reflective object's texture cube
 		Instead of the "normal" camera information, use the one associated with the texture cube side currently being processed
 		*/
-		Render(dt, m_cubeMap.GetRenderTargetViewAt(i), m_cubeMap.GetDepthStencilView(), m_cubeMap.GetViewport(), m_cubeMap.GetCameraAt(i), TEST_COLOR);
+		Render(dt, m_cubeMap.GetRenderTargetViewAt(i), m_cubeMap.GetDepthStencilView(), m_cubeMap.GetViewport(), m_cubeMap.GetCameraAt(i), CLEAR_COLOR);
 	}
 
 	/*Copy the Render() function but remove stuff we're not interested in here*/
@@ -237,23 +259,25 @@ void D3D11Engine::RenderReflectiveObject(float dt)
 
 	for (auto& drawable : m_reflectiveDrawables)
 	{
-		drawable.Bind(context.Get());
+		drawable.Bind(context.Get(), m_cubeMap.GetShaderResourceView());
 		drawable.Draw(context.Get());
 	}
 
 	/*Unbind shaders*/
+	//Vertex shader
 	context->VSSetShader(NULL, NULL, 0);
-	context->PSSetShader(NULL, NULL, 0);
-
-	/*Unbind constant buffers*/
 	context->VSSetConstantBuffers(0, 0, NULL);
+	//Pixel shader
+	context->PSSetShader(NULL, NULL, 0);
 	context->PSSetConstantBuffers(0, 0, NULL);
+	ID3D11ShaderResourceView* nullSRV = NULL;
+	context->PSSetShaderResources(0, 0, &nullSRV);
+	ID3D11SamplerState* nullSampler = NULL;
+	context->PSSetSamplers(0, 0, &nullSampler);
 
-	/*Unbind rtv+srv*/
+	/*Unbind rtv*/
 	ID3D11RenderTargetView* nullRTV = NULL;
 	context->OMSetRenderTargets(1, &nullRTV, NULL);
-	ID3D11ShaderResourceView* nullSRV = NULL;
-	context->PSSetShaderResources(0, 1, &nullSRV);
 }
 
 void D3D11Engine::RenderDepth(float dt)
@@ -277,7 +301,7 @@ void D3D11Engine::RenderDepth(float dt)
 
 		for (auto& drawable : m_drawables)
 		{
-			drawable.Bind(context.Get());
+			drawable.Bind(context.Get(), NULL);
 			drawable.Draw(context.Get());
 		}
 	}
@@ -309,6 +333,7 @@ void D3D11Engine::DefPassOne(Camera* cam)
 	//DRAW PASS, DRAW SCENE ONTO BACKBUFFER WITHOUT DOING LIGHTING CALCULATIONS
 	context->VSSetShader(vertexShader.Get(), NULL, 0);
 	context->PSSetShader(pixelShader.Get(), NULL, 0);
+	context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
 
 	/*Tessellation ting*/
 	if (lodIsEnabled)context->RSSetState(wireframeRS.Get());
@@ -329,7 +354,7 @@ void D3D11Engine::DefPassOne(Camera* cam)
 		{
 			if (DrawableIsVisible(cam->GetFrustum(), drawable.GetBoundingBox(), m_camera->View(), drawable.World()))
 			{
-				drawable.Bind(context.Get());
+				drawable.Bind(context.Get(), NULL);
 				drawable.Draw(context.Get());
 				visibleDrawables++;
 			}
@@ -341,7 +366,7 @@ void D3D11Engine::DefPassOne(Camera* cam)
 		//Per drawable: bind vertex and index buffers, then draw them
 		for (auto& drawable : m_drawables)
 		{
-			drawable.Bind(context.Get());
+			drawable.Bind(context.Get(), NULL);
 			drawable.Draw(context.Get());
 		}
 		m_drawablesBeingRendered = (int)m_drawables.size();
@@ -389,7 +414,7 @@ void D3D11Engine::InitRasterizerStates()
 	D3D11_RASTERIZER_DESC regularDesc;
 	ZeroMemory(&regularDesc, sizeof(regularDesc));
 	regularDesc.AntialiasedLineEnable = false;
-	regularDesc.CullMode = D3D11_CULL_MODE::D3D11_CULL_NONE;//D3D11_CULL_MODE::D3D11_CULL_BACK;
+	regularDesc.CullMode = D3D11_CULL_MODE::D3D11_CULL_BACK;//D3D11_CULL_MODE::D3D11_CULL_NONE;
 	regularDesc.DepthBias = 0;
 	regularDesc.DepthBiasClamp = 0;
 	regularDesc.DepthClipEnable = true;
@@ -765,12 +790,12 @@ void D3D11Engine::InitSampler()
 	}
 }
 
-bool D3D11Engine::InitDrawableFromFile(std::string fileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate)
+bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::string textureFileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate)
 {
-	std::ifstream ifs(fileName);
+	std::ifstream ifs(objFileName);
 	if (!ifs)
 	{
-		MessageBox(NULL, L"Couldn't read file name!", L"Error", MB_OK);
+		MessageBox(NULL, L"Couldn't read obj file name!", L"Error", MB_OK);
 		return false;
 	}
 
@@ -888,7 +913,7 @@ bool D3D11Engine::InitDrawableFromFile(std::string fileName, std::vector<Drawabl
 				{
 					Vertex vert;
 					vert.position = vPos[p[j]->v];
-					vert.texcoord = (fileHasTexcoord ? vTex[p[j]->vn] : XMFLOAT2({0.0f, 0.0f}));
+					vert.texcoord = (fileHasTexcoord ? vTex[p[j]->vt] : XMFLOAT2({0.0f, 0.0f}));
 					if (fileHasNormal) vert.normal = vNor[p[j]->vn]; else XMStoreFloat3(&vert.normal, faceNormal); //Ternary operator replaced with if-else since we're having different return values
 
 					vertices.push_back(vert);
@@ -910,6 +935,8 @@ bool D3D11Engine::InitDrawableFromFile(std::string fileName, std::vector<Drawabl
 	bufferData.iData.size = sizeof(uint32_t);
 	bufferData.iData.count = iCount;
 	bufferData.iData.vector = indices;
+
+	bufferData.textureFileName = textureFileName;
 
 	Drawable cube(device.Get(), bufferData, scale, rotate, translate);
 	cube.CreateBoundingBoxFromPoints(vMin, vMax);

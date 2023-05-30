@@ -73,8 +73,8 @@ private:
 	
 	void InitSampler();
 
-	bool InitDrawableFromFile(std::string fileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
-
+	bool InitDrawableFromFile(std::string objFileName, std::string textureFileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
+	
 	/*Variables*/
 	UINT m_windowWidth;
 	UINT m_windowHeight;
