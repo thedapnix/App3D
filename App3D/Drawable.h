@@ -54,7 +54,10 @@ public:
 	void Unbind(ID3D11DeviceContext* context);
 	void UpdateConstantBuffer(ID3D11DeviceContext* context);
 	void CreateBoundingBoxFromPoints(DirectX::XMVECTOR min, DirectX::XMVECTOR max);
+
+	//Movement stuff
 	void EditTranslation(float x, float y, float z);
+	void RotateY(float dt);
 
 	/*Getters*/
 	DirectX::XMMATRIX World();

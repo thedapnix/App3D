@@ -72,7 +72,7 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 1.0f, 5.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, {  14.0f, -4.0f, 4.0f });
 
 	//Reflective drawable
-	InitDrawableFromFile("Meshes/sphere.obj", "Textures/dog.png", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, 5.0f }); //The internal cubemap camera is at (0, 0, -5) so match
+	InitDrawableFromFile("Meshes/cube.obj", "Textures/dog.png", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, 5.0f }); //The internal cubemap camera is at (0, 0, -5) so match
 
 	//Ability to sample from textures in a shader-file
 	InitSampler();
@@ -96,6 +96,9 @@ void D3D11Engine::Update(float dt)
 		//apply whatever changes should happen per tick
 		drawable.UpdateConstantBuffer(context.Get());
 	}
+
+	m_reflectiveDrawables.at(0).RotateY(dt);
+	m_reflectiveDrawables.at(0).UpdateConstantBuffer(context.Get());
 
 	/*Render*/
 	Render(dt, rtv.Get(), dsv.Get(), &viewport, m_camera.get(), CLEAR_COLOR);

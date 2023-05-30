@@ -175,6 +175,14 @@ void Drawable::EditTranslation(float x, float y, float z)
 	));
 }
 
+void Drawable::RotateY(float dt)
+{
+	m_rotate.y += 0.025;
+	DirectX::XMStoreFloat4x4(&m_transform.rotate, DirectX::XMMatrixTranspose(
+		DirectX::XMMatrixRotationX(m_rotate.x) * DirectX::XMMatrixRotationY(m_rotate.y) * DirectX::XMMatrixRotationZ(m_rotate.z)
+	));
+}
+
 DirectX::XMMATRIX Drawable::World()
 {
 	//This feels like a horribly expensive function. I might be wrong though. But if I'm not, consider storing a XMFLOAT4X4 m_world
