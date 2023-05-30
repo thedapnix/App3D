@@ -36,8 +36,6 @@ public:
 	CubeMap(ID3D11Device* device, bool hasSRV);
 	~CubeMap() = default;
 
-	void Init(ID3D11Device* device, bool hasSRV);
-
 	ID3D11RenderTargetView* GetRenderTargetViewAt(int index);
 	ID3D11DepthStencilView* GetDepthStencilView();
 	D3D11_VIEWPORT* GetViewport();
