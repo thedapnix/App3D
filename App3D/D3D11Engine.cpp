@@ -97,8 +97,8 @@ void D3D11Engine::Update(float dt)
 		drawable.UpdateConstantBuffer(context.Get());
 	}
 
-	//m_reflectiveDrawables.at(0).RotateY(dt);
-	//m_reflectiveDrawables.at(0).UpdateConstantBuffer(context.Get());
+	m_reflectiveDrawables.at(0).RotateY(0.005);
+	m_reflectiveDrawables.at(0).UpdateConstantBuffer(context.Get());
 
 	/*Render*/
 	Render(dt, rtv.Get(), dsv.Get(), &viewport, m_camera.get(), CLEAR_COLOR);

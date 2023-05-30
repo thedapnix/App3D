@@ -177,7 +177,7 @@ void Drawable::EditTranslation(float x, float y, float z)
 
 void Drawable::RotateY(float dt)
 {
-	m_rotate.y += 0.025;
+	m_rotate.y += dt;
 	DirectX::XMStoreFloat4x4(&m_transform.rotate, DirectX::XMMatrixTranspose(
 		DirectX::XMMatrixRotationX(m_rotate.x) * DirectX::XMMatrixRotationY(m_rotate.y) * DirectX::XMMatrixRotationZ(m_rotate.z)
 	));
