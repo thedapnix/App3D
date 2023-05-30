@@ -19,44 +19,39 @@ ParticleSystem::ParticleSystem(ID3D11Device* device)
 	m_constantBuffer.Init(device, &pcb, sizeof(pcb));
 }
 
-void ParticleSystem::Draw(ID3D11DeviceContext* context, UINT width, UINT height, ID3D11Buffer* cameraCB, D3D11_VIEWPORT viewport)
+ID3D11VertexShader* ParticleSystem::GetVertexShader()
 {
-	//Maybe I need the particle system to have a render target view?
-	
-	context->RSSetViewports(1, &viewport);
+	return vertexShader.Get();
+}
 
-	/*Input Assembler Stage*/
-	context->IASetInputLayout(NULL); //Done in cookbook, feels weird
-	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+ID3D11GeometryShader* ParticleSystem::GetGeometryShader()
+{
+	return geometryShader.Get();
+}
 
-	/*Shader Stage*/
-	context->VSSetShader(vertexShader.Get(), NULL, 0);
-	context->GSSetShader(geometryShader.Get(), NULL, 0);
-	context->GSSetConstantBuffers(0, 1, &cameraCB);
-	context->PSSetShader(pixelShader.Get(), NULL, 0);
+ID3D11PixelShader* ParticleSystem::GetPixelShader()
+{
+	return pixelShader.Get();
+}
 
-	//Draw
-	context->Draw(m_elementCount, 0);
+const UINT& ParticleSystem::GetElementCount() const
+{
+	return m_elementCount;
+}
 
-	//Unbind shaders and constant buffer
-	context->VSSetShader(NULL, NULL, 0);
-	context->GSSetShader(NULL, NULL, 0);
-	context->GSSetConstantBuffers(0, 0, NULL);
-	context->PSSetShader(NULL, NULL, 0);
+ID3D11ComputeShader* ParticleSystem::GetComputeShader()
+{
+	return computeShader.Get();
+}
 
-	//Use compute shader and uav to edit stuff
-	context->CSSetShader(computeShader.Get(), NULL, 0);
-	context->CSSetConstantBuffers(0, 1, m_constantBuffer.GetBufferAddress());
-	context->CSSetUnorderedAccessViews(0, 1, uav.GetAddressOf(), NULL);
-	context->Dispatch(width / 32, height, 1); //Match the compute shader numthreads, [32, 1, 1]
+const ConstantBuffer& ParticleSystem::GetConstantBuffer() const
+{
+	return m_constantBuffer;
+}
 
-	//Unbind uav
-	ID3D11UnorderedAccessView* nullUAV = NULL;
-	context->CSSetUnorderedAccessViews(0, 1, &nullUAV, NULL);
-
-	//Unbind shader and constant buffer
-	context->CSSetShader(NULL, NULL, 0);
-	context->CSSetConstantBuffers(0, 0, NULL);
+ID3D11UnorderedAccessView* const* ParticleSystem::GetUAVAddress()
+{
+	return uav.GetAddressOf();
 }
 
 void ParticleSystem::InitStructuredBuffer(ID3D11Device* device, bool isDynamic, bool hasSRV, bool hasUAV, UINT elementSize, UINT elementCount, void* bufferData)

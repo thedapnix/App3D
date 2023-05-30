@@ -97,8 +97,11 @@ void D3D11Engine::Update(float dt)
 		drawable.UpdateConstantBuffer(context.Get());
 	}
 
-	m_reflectiveDrawables.at(0).RotateY(0.005);
-	m_reflectiveDrawables.at(0).UpdateConstantBuffer(context.Get());
+	for (auto& mirror : m_reflectiveDrawables)
+	{
+		mirror.RotateY(0.005f);
+		mirror.UpdateConstantBuffer(context.Get());
+	}
 
 	/*Render*/
 	Render(dt, rtv.Get(), dsv.Get(), &viewport, m_camera.get(), CLEAR_COLOR);
@@ -225,7 +228,41 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 
 void D3D11Engine::RenderParticles(Camera* cam)
 {
-	m_particles.Draw(context.Get(), m_windowWidth, m_windowHeight, cam->GetConstantBuffer().GetBuffer(), viewport);
+	context->RSSetViewports(1, &viewport);
+	context->OMSetRenderTargets(1, rtv.GetAddressOf(), dsv.Get());
+
+	/*Input Assembler Stage*/
+	context->IASetInputLayout(NULL); //Done in cookbook, feels weird
+	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+
+	/*Shader Stage*/
+	context->VSSetShader(m_particles.GetVertexShader(), NULL, 0);
+	context->GSSetShader(m_particles.GetGeometryShader(), NULL, 0);
+	context->GSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
+	context->PSSetShader(m_particles.GetPixelShader(), NULL, 0);
+
+	//Draw
+	context->Draw(m_particles.GetElementCount(), 0);
+
+	//Unbind shaders and constant buffer
+	context->VSSetShader(NULL, NULL, 0);
+	context->GSSetShader(NULL, NULL, 0);
+	context->GSSetConstantBuffers(0, 0, NULL);
+	context->PSSetShader(NULL, NULL, 0);
+
+	//Use compute shader and uav to edit stuff
+	context->CSSetShader(m_particles.GetComputeShader(), NULL, 0);
+	context->CSSetConstantBuffers(0, 1, m_particles.GetConstantBuffer().GetBufferAddress());
+	context->CSSetUnorderedAccessViews(0, 1, m_particles.GetUAVAddress(), NULL);
+	context->Dispatch(m_windowWidth / 32, m_windowHeight, 1); //Match the compute shader numthreads, [32, 1, 1]
+
+	//Unbind uav
+	ID3D11UnorderedAccessView* nullUAV = NULL;
+	context->CSSetUnorderedAccessViews(0, 1, &nullUAV, NULL);
+
+	//Unbind shader and constant buffer
+	context->CSSetShader(NULL, NULL, 0);
+	context->CSSetConstantBuffers(0, 0, NULL);
 }
 
 void D3D11Engine::RenderReflectiveObject(float dt)

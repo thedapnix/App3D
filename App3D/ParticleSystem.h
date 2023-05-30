@@ -25,7 +25,13 @@ public:
 	ParticleSystem(ID3D11Device* device);
 	~ParticleSystem() = default;
 
-	void Draw(ID3D11DeviceContext* context, UINT width, UINT height, ID3D11Buffer* cameraCB, D3D11_VIEWPORT viewport);
+	ID3D11VertexShader* GetVertexShader();
+	ID3D11GeometryShader* GetGeometryShader();
+	ID3D11PixelShader* GetPixelShader();
+	const UINT& GetElementCount() const;
+	ID3D11ComputeShader* GetComputeShader();
+	const ConstantBuffer& GetConstantBuffer() const;
+	ID3D11UnorderedAccessView* const* GetUAVAddress();
 
 private:
 	//Structured buffer
