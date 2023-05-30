@@ -11,22 +11,7 @@ struct PixelShaderInput
     float4 worldPosition : TEXCOORD2;
 };
 
-//Deferred renderer requires pixel shader to output more than just a color
-struct PixelShaderOutput
+float4 main(PixelShaderInput input) : SV_TARGET
 {
-    float4 position : SV_Target0;
-    float4 colour : SV_Target1; //Rename to diffuse instead of colour?
-    float4 normal : SV_Target2;
-};
-
-PixelShaderOutput main(PixelShaderInput input) //: SV_TARGET //previously float4 main
-{
-    //float3 tex = tex2D.Sample(samplerState, input.uv).rgb;
-    //return (tex, 1.0f);
-    PixelShaderOutput output;
-    output.position = input.worldPosition;
-    output.colour = tex2D.Sample(samplerState, input.uv); //input.col; //sample from texture here if you want
-    output.normal = input.nor;
-    
-    return output;
+    return float4(tex2D.Sample(samplerState, input.uv));
 }

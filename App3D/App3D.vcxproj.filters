@@ -235,5 +235,8 @@
     <FxCompile Include="ShadowMapVertexShader.hlsl">
       <Filter>Resource Files\Shadowmap Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="DeferredPixelShader.hlsl">
+      <Filter>Resource Files</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

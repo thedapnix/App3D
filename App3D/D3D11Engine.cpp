@@ -97,8 +97,8 @@ void D3D11Engine::Update(float dt)
 		drawable.UpdateConstantBuffer(context.Get());
 	}
 
-	m_reflectiveDrawables.at(0).RotateY(dt);
-	m_reflectiveDrawables.at(0).UpdateConstantBuffer(context.Get());
+	//m_reflectiveDrawables.at(0).RotateY(dt);
+	//m_reflectiveDrawables.at(0).UpdateConstantBuffer(context.Get());
 
 	/*Render*/
 	Render(dt, rtv.Get(), dsv.Get(), &viewport, m_camera.get(), CLEAR_COLOR);
@@ -335,7 +335,7 @@ void D3D11Engine::DefPassOne(Camera* cam)
 	///////////////////////////////////////////////////////////////////////////////
 	//DRAW PASS, DRAW SCENE ONTO BACKBUFFER WITHOUT DOING LIGHTING CALCULATIONS
 	context->VSSetShader(vertexShader.Get(), NULL, 0);
-	context->PSSetShader(pixelShader.Get(), NULL, 0);
+	context->PSSetShader(deferredPixelShader.Get(), NULL, 0);
 	context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
 
 	/*Tessellation ting*/
@@ -584,7 +584,7 @@ void D3D11Engine::InitShadersAndInputLayout()
 	HRESULT hr;
 	Microsoft::WRL::ComPtr<ID3DBlob> 
 		vsBlob, psBlob, errorBlob,
-		csBlob,						//Deferred
+		dpsBlob, csBlob,			//Deferred
 		hsBlob, dsBlob;				//Tessellation
 
 	/****************************
@@ -599,6 +599,11 @@ void D3D11Engine::InitShadersAndInputLayout()
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to read pixel shader!", L"Error", MB_OK);
+	}
+	hr = D3DReadFileToBlob(L"../x64/Debug/DeferredPixelShader.cso", &dpsBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read deferred pixel shader!", L"Error", MB_OK);
 	}
 
 	hr = D3DCompileFromFile(L"ComputeShader.hlsl", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "cs_5_0", D3DCOMPILE_DEBUG, 0, &csBlob, &errorBlob); //This works but D3DReadFileToBlob doesn't. oof ig
@@ -635,6 +640,12 @@ void D3D11Engine::InitShadersAndInputLayout()
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create pixel shader!", L"Error", MB_OK);
+		return;
+	}
+	hr = device->CreatePixelShader(dpsBlob->GetBufferPointer(), dpsBlob->GetBufferSize(), NULL, &deferredPixelShader);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create deferred pixel shader!", L"Error", MB_OK);
 		return;
 	}
 	hr = device->CreateComputeShader(csBlob->GetBufferPointer(), csBlob->GetBufferSize(), NULL, &computeShader);
