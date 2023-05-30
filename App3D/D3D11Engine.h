@@ -29,7 +29,6 @@ public:
 
 	void MovePlayer(float speed);
 	Camera& GetCamera() const noexcept;
-	//ID3D11Device* GetDevice();
 
 private:
 	//OBJ-parser
@@ -47,7 +46,8 @@ private:
 		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv;
 	};
 
-	/*Functions*/
+	/*PRIVATE FUNCTIONS*/
+	/*Render functions*/
 	void Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, Camera* cam, const float clear[4]);
 	void RenderParticles(Camera* cam);
 	void RenderReflectiveObject(float dt);
@@ -55,27 +55,31 @@ private:
 	void DefPassOne(Camera* cam);
 	void DefPassTwo();
 
+	/*Initializers because this constructor would be HUGE otherwise*/
+	//"Regular" stuff
 	void InitInterfaces(const HWND& window);
 	void InitViewport();
 	void InitRTV();
 	void InitDepthStencil();
 	void InitShadersAndInputLayout();
+	bool InitDrawableFromFile(std::string objFileName, std::string textureFileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
+	void InitSampler();
 	void InitCamera();
 
+	//Deferred
 	void InitUAV();
 	void InitGraphicsBuffer(GBuffer(&gbuf)[3]);
 
-	void InitSpotlights();
+	//Culling
+	bool DrawableIsVisible(DirectX::BoundingFrustum frustum, DirectX::BoundingBox aabb, DirectX::XMMATRIX view, DirectX::XMMATRIX world);
 
+	//LOD
 	void InitRasterizerStates();
 
-	bool DrawableIsVisible(DirectX::BoundingFrustum frustum, DirectX::BoundingBox aabb, DirectX::XMMATRIX view, DirectX::XMMATRIX world);
+	//Shadow
+	void InitSpotlights();
 	
-	void InitSampler();
-
-	bool InitDrawableFromFile(std::string objFileName, std::string textureFileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
-	
-	/*Variables*/
+	/*VARIABLES*/
 	UINT m_windowWidth;
 	UINT m_windowHeight;
 	static constexpr float CLEAR_COLOR[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
@@ -116,16 +120,15 @@ private:
 	//Viewport(s)
 	D3D11_VIEWPORT viewport;
 
-	//AudioManager audioManager;
-
+	//Shaders + input layout
 	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
 	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
-	Microsoft::WRL::ComPtr<ID3D11PixelShader> deferredPixelShader;
 
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState;
 
 	//Deferred rendering
+	Microsoft::WRL::ComPtr<ID3D11PixelShader> deferredPixelShader;
 	Microsoft::WRL::ComPtr<ID3D11ComputeShader> computeShader;
 	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> uav;
 
@@ -135,11 +138,9 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> regularRS;
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> wireframeRS;
 
-	//Billboarding
+	//Clearly there came a time where I started making actual classes instead of bloating this D3D11Engine class. Will I rewrite things?
+	//Guhhh...?
 	ParticleSystem m_particles;
-
-	//Cube environment mapping
 	CubeMap m_cubeMap;
-
 	ShadowMap m_shadowMap;
 };

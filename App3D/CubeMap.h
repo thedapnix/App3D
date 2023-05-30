@@ -33,7 +33,7 @@ private: //Will this need to be public? We'll find out
 	};
 public:
 	CubeMap() = default;
-	//CubeMap(ID3D11Device* device, bool hasSRV);
+	CubeMap(ID3D11Device* device, bool hasSRV);
 	~CubeMap() = default;
 
 	void Init(ID3D11Device* device, bool hasSRV);
