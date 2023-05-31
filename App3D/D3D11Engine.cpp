@@ -38,42 +38,15 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	//Shadowmap setup
 	InitSpotlights();
 	m_shadowMap = ShadowMap(device.Get(), &m_drawables, &m_spotlights);
-
-	//srand((unsigned)time(NULL));
-	//for (int i = 0; i < 20; i++)
-	//{
-	//	//Generate random numbers between -+10
-	//	/*int r1 = -10 + (rand() % 20);
-	//	int r2 = -10 + (rand() % 20);
-	//	int r4 = -10 + (rand() % 20);
-	//	int r5 = -10 + (rand() % 20);
-	//	int r6 = -10 + (rand() % 20);*/
-	//}
 	
 	//Drawable setup
-	//for (int i = 0; i < 5; i++)
-	//{
-	//	for (int j = 0; j < 5; j++)
-	//	{
-	//		InitDrawableFromFile("Models/cube3.obj", "Textures/brick_wall.jpg", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -5.0f + (float)i * 3, -5.0f + (float)j * 3, 5.0f });
-	//		//InitCube("Textures/icon.png", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -5.0f + (float)i*3, -5.0f + (float)j*3, 5.0f});
-	//	}
-	//}
+	InitDrawableFromFile("Meshes/cube.obj", "Textures/gravel.png", m_drawables, {14.0f, 1.0f, 14.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, -10.0f, 5.0f}); //Ground
+	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, 19.0f }); //Back wall
+	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 1.0f, 5.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, { -14.0f, -4.0f, 4.0f }); //Left wall
+	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 1.0f, 5.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, {  14.0f, -4.0f, 4.0f }); //Right wall
+	InitDrawableFromFile("Meshes/cube.obj", "Textures/dog.png", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, 5.0f }); //Mirror cube
 
-	//Ground
-	InitDrawableFromFile("Meshes/cube.obj", "Textures/gravel.png", m_drawables, {14.0f, 1.0f, 14.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, -10.0f, 5.0f});
-
-	//Back wall
-	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, 19.0f });
-
-	//Left and right wall
-	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 1.0f, 5.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, { -14.0f, -4.0f, 4.0f });
-	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 1.0f, 5.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, {  14.0f, -4.0f, 4.0f });
-
-	//Reflective drawable
-	InitDrawableFromFile("Meshes/cube.obj", "Textures/dog.png", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, 5.0f }); //The internal cubemap camera is at (0, 0, -5) so match
-
-	//Ability to sample from textures in a shader-file
+	//Sampler setup for texture access in shaders
 	InitSampler();
 
 	//ImGui setup
@@ -101,6 +74,9 @@ void D3D11Engine::Update(float dt)
 		mirror.RotateY(0.005f);
 		mirror.UpdateConstantBuffer(context.Get());
 	}
+
+	/*Update structured buffers*/
+
 
 	/*Render*/
 	Render(dt, rtv.Get(), dsv.Get(), &viewport, m_camera.get(), CLEAR_COLOR);
@@ -164,7 +140,8 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		/*Shader Stage*/
 		context->VSSetShader(vertexShader.Get(), NULL, 0);
 		context->PSSetShader(pixelShader.Get(), NULL, 0);
-		//context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
+		//context->PSSetSamplers(0, 1, samplerState.GetAddressOf()); //temp? shadowstuff
+		//context->PSSetShaderResources(0, )
 
 		//Tessellation
 		if(lodIsEnabled)context->RSSetState(wireframeRS.Get());
@@ -348,6 +325,7 @@ void D3D11Engine::RenderDepth(float dt)
 	/*Unbind stuff*/
 	context->OMSetRenderTargets(0, NULL, NULL);
 	context->VSSetShader(NULL, NULL, 0);
+	context->VSSetConstantBuffers(0, 0, NULL);
 }
 
 /*DEFERRED RENDERING PASSES*/
@@ -793,7 +771,9 @@ void D3D11Engine::InitSpotlights()
 	data.rotY = 0.0f;
 	data.col = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
-	m_spotlights.push_back(SpotLight(device.Get(), data));
+	SpotLight light1(device.Get(), data);
+
+	m_spotlights.push_back(light1);
 }
 
 bool D3D11Engine::DrawableIsVisible(DirectX::BoundingFrustum frustum, DirectX::BoundingBox aabb, DirectX::XMMATRIX view, DirectX::XMMATRIX world)

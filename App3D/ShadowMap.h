@@ -19,14 +19,12 @@ private:
 
 	void InitStructuredBuffer(ID3D11Device* device, bool isDynamic, bool hasUAV, UINT elementSize, UINT elementCount, void* bufferData);
 	Microsoft::WRL::ComPtr<ID3D11Buffer> structuredBuffer;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv;
 
 	void InitDepthBuffer(ID3D11Device* device, UINT resolution, UINT arraySize);
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> DST;
 	std::vector<Microsoft::WRL::ComPtr<ID3D11DepthStencilView>> DSVs;
 	D3D11_VIEWPORT viewport = {};
-
-	void InitShaderResourceView(ID3D11Device* device, UINT arraySize);
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv;
 
 	void InitShaderAndInputLayout(ID3D11Device* device);
 	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;

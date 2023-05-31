@@ -25,7 +25,6 @@ ShadowMap::ShadowMap(ID3D11Device* device, std::vector<Drawable>* drawables, std
 	viewport.TopLeftY = 0;
 
 	InitStructuredBuffer(device, false, false, sizeof(SpotLight), m_spotlights->size(), &m_spotlights);
-	InitShaderResourceView(device, m_spotlights->size());
 }
 
 ID3D11VertexShader* ShadowMap::GetVertexShader()
@@ -63,7 +62,21 @@ void ShadowMap::InitStructuredBuffer(ID3D11Device* device, bool isDynamic, bool 
 	hr = device->CreateBuffer(&desc, &data, structuredBuffer.GetAddressOf());
 	if (FAILED(hr))
 	{
-		MessageBox(NULL, L"Failed to create structured buffer!", L"Error", MB_OK);
+		MessageBox(NULL, L"Failed to create structured buffer for shadowmap!", L"Error", MB_OK);
+	}
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+	ZeroMemory(&srvDesc, sizeof(srvDesc));
+	srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+	srvDesc.Buffer.FirstElement = 0;
+	srvDesc.Buffer.NumElements = elementCount;
+
+	hr = device->CreateShaderResourceView(structuredBuffer.Get(), &srvDesc, &srv);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create shader resource view for shadowmap!", L"Error", MB_OK);
+		return;
 	}
 }
 
@@ -105,27 +118,6 @@ void ShadowMap::InitDepthBuffer(ID3D11Device* device, UINT resolution, UINT arra
 			return;
 		}
 		DSVs.push_back(dsv);
-	}
-}
-
-void ShadowMap::InitShaderResourceView(ID3D11Device* device, UINT arraySize)
-{
-	HRESULT hr;
-
-	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-	ZeroMemory(&srvDesc, sizeof(srvDesc));
-	srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
-	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
-	srvDesc.Texture2DArray.MostDetailedMip = 0;
-	srvDesc.Texture2DArray.MipLevels = 1;
-	srvDesc.Texture2DArray.FirstArraySlice = 0;
-	srvDesc.Texture2DArray.ArraySize = arraySize;
-	
-	hr = device-> CreateShaderResourceView(DST.Get(), &srvDesc, &srv);
-	if (FAILED(hr))
-	{
-		MessageBox(NULL, L"Failed to create shader resource view for shadowmap!", L"Error", MB_OK);
-		return;
 	}
 }
 

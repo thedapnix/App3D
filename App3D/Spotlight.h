@@ -6,6 +6,8 @@
 
 struct LightData
 {
+	DirectX::XMFLOAT3 col{ 1.0f, 1.0f, 1.0f };	//Default white light color
+
 	//Think camera view
 	DirectX::XMFLOAT3 pos{ 0.0f, 0.0f, 0.0f };
 	float rotX = 0.0f;
@@ -16,8 +18,16 @@ struct LightData
 	//float aspect = 0.0f;
 	//float zn = 0.1f;
 	//float zf = 100.0f;
+};
 
-	DirectX::XMFLOAT3 col{ 1.0f, 1.0f, 1.0f };	//Default white light color
+__declspec(align(16)) struct LightBuffer
+{
+	//Passing data to shaders
+	DirectX::XMFLOAT4X4 view; 
+	DirectX::XMFLOAT4X4 proj;
+	DirectX::XMFLOAT3 col;
+	DirectX::XMFLOAT3 origin;
+	DirectX::XMFLOAT3 direction;
 };
 
 class SpotLight
