@@ -142,8 +142,8 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		context->PSSetShader(pixelShader.Get(), NULL, 0);
 		//context->PSSetSamplers(0, 1, samplerState.GetAddressOf()); //temp? shadowstuff
 		ID3D11ShaderResourceView* shadowViews[2] = {};
-		shadowViews[0] = m_shadowMap.GetLightSRV();
-		shadowViews[1] = m_shadowMap.GetSRV();
+		shadowViews[0] = m_spotlights.GetStructuredBufferSRV();
+		shadowViews[1] = m_spotlights.GetDepthBufferSRV();
 		context->PSSetShaderResources(1, 2, shadowViews);
 
 		//Tessellation
@@ -308,14 +308,14 @@ void D3D11Engine::RenderDepth(float dt)
 	context->RSSetViewports(1, m_shadowMap.GetViewport());
 
 	/*Render depth from the perspective of every light*/
-	for (UINT i = 0; i < m_spotlights.size(); i++)
+	for (UINT i = 0; i < m_spotlights.GetLightCount(); i++)
 	{
 		ID3D11DepthStencilView* dsView = m_shadowMap.GetDepthStencilViewAt(i);
 		context->ClearDepthStencilView(dsView, D3D11_CLEAR_DEPTH, 1, 0);
 		context->OMSetRenderTargets(0, NULL, dsView); //no rtv, only dsv
 
 		//Some way of getting the camera cb of individual lights
-		ID3D11Buffer* cameraCB = m_spotlights.at(i).GetCameraConstantBuffer().GetBuffer();
+		ID3D11Buffer* cameraCB = m_spotlights.GetCameraConstantBufferAt(i).GetBuffer();
 		context->VSSetConstantBuffers(1, 1, &cameraCB);
 
 		for (auto& drawable : m_drawables)
@@ -774,9 +774,7 @@ void D3D11Engine::InitSpotlights()
 	data.rotY = 0.0f;
 	data.col = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
-	SpotLight light1(device.Get(), data);
-
-	m_spotlights.push_back(light1);
+	m_spotlights.AddLight(data);
 }
 
 bool D3D11Engine::DrawableIsVisible(DirectX::BoundingFrustum frustum, DirectX::BoundingBox aabb, DirectX::XMMATRIX view, DirectX::XMMATRIX world)
