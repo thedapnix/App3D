@@ -8,13 +8,14 @@ SpotLights::SpotLights(ID3D11Device* device, const std::vector<LightData>& light
 		float fovY = lights.at(i).fovY;
 		float aspect = 1.0f;
 		float zn = 0.1f;
-		float zf = 100.0f;
+		float zf = 1000.0f;
 
 		//Local rotations to align the cameras to look in the proper direction
 		float upRotation = lights.at(i).rotY;
 		float rightRotation = lights.at(i).rotX;
 
 		//Create virtual camera with the data we have
+		m_cameras.push_back(Camera());
 		m_cameras.at(i).SetPosition(lights.at(i).pos);
 		m_cameras.at(i).RotateY(rightRotation);
 		m_cameras.at(i).Pitch(upRotation);
@@ -29,6 +30,8 @@ SpotLights::SpotLights(ID3D11Device* device, const std::vector<LightData>& light
 		buf.direction = m_cameras.at(i).GetLook();
 		DirectX::XMStoreFloat4x4(&buf.view, m_cameras.at(i).View()); //Alternatively I make other getters for view- and projection-matrices in camera class
 		DirectX::XMStoreFloat4x4(&buf.proj, m_cameras.at(i).Proj());
+		buf.angle.x = lights.at(i).rotX;
+		buf.angle.y = lights.at(i).rotY;
 		m_lightBuffers.push_back(buf);
 	}
 	
@@ -43,14 +46,9 @@ const ConstantBuffer& SpotLights::GetCameraConstantBufferAt(UINT index) const
 	return m_cameras.at(index).GetConstantBuffer();
 }
 
-void SpotLights::AddLight(LightData data)
-{
-	m_lights.push_back(data);
-}
-
 const UINT& SpotLights::GetLightCount() const
 {
-	return m_lights.size();
+	return m_lightBuffers.size(); //Little hack where we can assume that the amount of buffers will equal the amount of lights (cameras would work too)
 }
 
 ID3D11ShaderResourceView* SpotLights::GetStructuredBufferSRV() const
@@ -156,7 +154,7 @@ void SpotLights::InitDepthBuffer(ID3D11Device* device, UINT resolution, UINT arr
 	srvDesc.Texture2DArray.ArraySize = arraySize;
 	srvDesc.Texture2DArray.FirstArraySlice = 0;
 
-	hr = device->CreateShaderResourceView(structuredBuffer.Get(), &srvDesc, &depthSRV);
+	hr = device->CreateShaderResourceView(DST.Get(), &srvDesc, &depthSRV);
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create shader resource view for spotlight depth buffer!", L"Error", MB_OK);

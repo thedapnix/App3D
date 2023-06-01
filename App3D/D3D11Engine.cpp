@@ -141,10 +141,14 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		context->VSSetShader(vertexShader.Get(), NULL, 0);
 		context->PSSetShader(pixelShader.Get(), NULL, 0);
 		//context->PSSetSamplers(0, 1, samplerState.GetAddressOf()); //temp? shadowstuff
-		ID3D11ShaderResourceView* shadowViews[2] = {};
-		shadowViews[0] = m_spotlights.GetStructuredBufferSRV();
-		shadowViews[1] = m_spotlights.GetDepthBufferSRV();
-		context->PSSetShaderResources(1, 2, shadowViews);
+		
+		ID3D11ShaderResourceView* shadowView1 = m_spotlights.GetStructuredBufferSRV();
+		context->PSSetShaderResources(1, 1, &shadowView1);
+		if (shadowmapIsEnabled)
+		{
+			ID3D11ShaderResourceView* shadowView2 = m_spotlights.GetDepthBufferSRV();
+			context->PSSetShaderResources(2, 1, &shadowView2);
+		}
 
 		//Tessellation
 		if(lodIsEnabled)context->RSSetState(wireframeRS.Get());
@@ -767,14 +771,16 @@ void D3D11Engine::InitGraphicsBuffer(GBuffer(&gbuf)[3])
 
 void D3D11Engine::InitSpotlights()
 {
+	std::vector<LightData> dataVec;
 	LightData data;
-	data.pos = XMFLOAT3(0.0f, 0.0f, -10.0f);
+	data.pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	data.fovY = XM_PI / 4.0f;
 	data.rotX = 0.0f;
 	data.rotY = 0.0f;
 	data.col = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	dataVec.push_back(data);
 
-	m_spotlights.AddLight(data);
+	m_spotlights = SpotLights(device.Get(), dataVec);
 }
 
 bool D3D11Engine::DrawableIsVisible(DirectX::BoundingFrustum frustum, DirectX::BoundingBox aabb, DirectX::XMMATRIX view, DirectX::XMMATRIX world)

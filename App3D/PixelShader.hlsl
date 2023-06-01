@@ -18,6 +18,9 @@ struct SpotLight
     float3 colour;
     float3 origin;
     float3 direction;
+    float2 angle;
+    
+    float padding; //hlsl pain
 };
 
 StructuredBuffer<SpotLight> spotlights : register(t1);
@@ -26,9 +29,11 @@ float4 main(PixelShaderInput input) : SV_TARGET
 {
     float3 ambient = 0.25f;
     float4 base = tex2D.Sample(samplerState, input.uv);
-    float3 result = 0.0f;
-    float3 shininess = 32.0f;      //Hardcoding these because uhh
-    float specularPower = 0.5f; //Pretty sure this would need me to rewrite hundreds of lines to do materials with different levels of specularity
+    float3 specularAlbedo = 32.0f;  //Hardcoding these because uhh
+    float specularPower = 32.0f;     //Pretty sure this would need me to rewrite hundreds of lines to do materials with different levels of specularity
+    
+    float3 lighting = 0.0f;
+    float3 specular = 0.0f;
     
     //Allow for multiple spotlights
     //https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/sm5-object-structuredbuffer-getdimensions
@@ -49,11 +54,11 @@ float4 main(PixelShaderInput input) : SV_TARGET
         L /= dist;
         
         //Also add in the spotlight attenuation factor (rotX and rotY in spotlight class?)
-        //float3 L2 = spotlights[i].direction;
-        //float rho = dot(-L, L2);
-        //attenuation *= saturate(
-        //(rho - spotlights[i].angleY) /
-        //(spotlights[i].angleX - spotlights[i].angleY));
+        float3 L2 = spotlights[i].direction;
+        float rho = dot(-L, L2);
+        attenuation *= saturate(
+        (rho - spotlights[i].angle.y) /
+        (spotlights[i].angle.y - spotlights[i].angle.y));
 
         float nDotL = saturate(dot(input.nor.xyz, L));
         float3 diffuse = nDotL * spotlights[i].colour * base.xyz;
@@ -61,11 +66,14 @@ float4 main(PixelShaderInput input) : SV_TARGET
         //Calculate the specular term
         float3 V = float3(0.0f, 0.0f, -5.0f); //Camera position, pass in cb
         float3 H = normalize(L + V);
-        float3 specular = pow(saturate(dot(input.nor.xyz, H)), specularPower) * spotlights[i].colour * shininess * nDotL;
+        specular = pow(saturate(dot(input.nor.xyz, H)), specularPower) * spotlights[i].colour * specularAlbedo * nDotL; //previously float3 specular, now gets defined higher up so we can access outside of scope
         
-        result += (diffuse + specular) * attenuation;
+        lighting = (diffuse + specular) * attenuation;
     }
-    result += ambient; //Apply ambient lighting to the scene
+    //result += ambient; //Apply ambient lighting to the scene
+    float3 finalColor = (ambient + lighting) * base.xyz;
+    finalColor += (specular * 10.0f);
     
-    return float4(result, 1.0f);
+    return float4(finalColor, 1.0f);
+    //return float4(result, 1.0f);
 }

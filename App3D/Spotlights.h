@@ -28,6 +28,7 @@ __declspec(align(16)) struct LightBuffer
 	DirectX::XMFLOAT3 col;
 	DirectX::XMFLOAT3 origin;
 	DirectX::XMFLOAT3 direction;
+	DirectX::XMFLOAT2 angle;
 };
 
 class SpotLights
@@ -38,14 +39,12 @@ public:
 	~SpotLights() = default;
 
 	const ConstantBuffer& GetCameraConstantBufferAt(UINT index) const;
-	void AddLight(LightData data);
 	const UINT& GetLightCount() const;
 	ID3D11ShaderResourceView* GetStructuredBufferSRV() const;
 	ID3D11ShaderResourceView* GetDepthBufferSRV() const;
 	ID3D11DepthStencilView* GetDepthStencilViewAt(UINT index) const;
 
 private:
-	std::vector<LightData> m_lights;
 	std::vector<LightBuffer> m_lightBuffers;
 	std::vector<Camera> m_cameras; //Previously, one camera. Now a camera for each light
 
