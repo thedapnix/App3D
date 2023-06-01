@@ -1,6 +1,6 @@
-#include "Spotlight.h"
+#include "Spotlights.h"
 
-SpotLight::SpotLight(ID3D11Device* device, const LightData& lightData)
+SpotLights::SpotLights(ID3D11Device* device, const LightData& lightData)
 {
 	//Create virtual camera just like in cubemap
 	float fovY = lightData.fovY;
@@ -29,7 +29,7 @@ SpotLight::SpotLight(ID3D11Device* device, const LightData& lightData)
 	DirectX::XMStoreFloat4x4(&buf.proj, m_camera.Proj());
 }
 
-const ConstantBuffer& SpotLight::GetCameraConstantBuffer() const
+const ConstantBuffer& SpotLights::GetCameraConstantBuffer() const
 {
 	return m_camera.GetConstantBuffer();
 }

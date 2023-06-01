@@ -30,12 +30,12 @@ __declspec(align(16)) struct LightBuffer
 	DirectX::XMFLOAT3 direction;
 };
 
-class SpotLight
+class SpotLights
 {
 public:
-	SpotLight() = default;
-	SpotLight(ID3D11Device* device, const LightData& lightData);
-	~SpotLight() = default;
+	SpotLights() = default;
+	SpotLights(ID3D11Device* device, const LightData& lightData);
+	~SpotLights() = default;
 
 	const ConstantBuffer& GetCameraConstantBuffer() const;
 
