@@ -83,10 +83,10 @@ void SpotLights::InitStructuredBuffer(ID3D11Device* device, bool isDynamic, bool
 	srvDesc.Buffer.FirstElement = 0;
 	srvDesc.Buffer.NumElements = elementCount;
 
-	hr = device->CreateShaderResourceView(structuredBuffer.Get(), &srvDesc, &srv);
+	hr = device->CreateShaderResourceView(structuredBuffer.Get(), &srvDesc, &structuredSRV);
 	if (FAILED(hr))
 	{
-		MessageBox(NULL, L"Failed to create shader resource view for spotlight!", L"Error", MB_OK);
+		MessageBox(NULL, L"Failed to create shader resource view for spotlight structured buffer!", L"Error", MB_OK);
 		return;
 	}
 }
@@ -109,7 +109,7 @@ void SpotLights::InitDepthBuffer(ID3D11Device* device, UINT resolution, UINT arr
 	hr = device->CreateTexture2D(&desc, NULL, &DST);
 	if (FAILED(hr))
 	{
-		MessageBox(NULL, L"Failed to create depth stencil texture for light depth buffer!", L"Error", MB_OK);
+		MessageBox(NULL, L"Failed to create depth stencil texture for spotlightlight depth buffer!", L"Error", MB_OK);
 		return;
 	}
 
@@ -124,10 +124,25 @@ void SpotLights::InitDepthBuffer(ID3D11Device* device, UINT resolution, UINT arr
 		hr = device->CreateDepthStencilView(DST.Get(), &dsvd, &DSV);
 		if (FAILED(hr))
 		{
-			MessageBox(NULL, L"Failed to create depth stencil view for light depth buffer!", L"Error", MB_OK);
+			MessageBox(NULL, L"Failed to create depth stencil view for spotlight depth buffer!", L"Error", MB_OK);
 			return;
 		}
 	}
 
-	//Do I need a depth buffer srv too?
+	//Do I need a depth buffer srv too? Edit: Yes. Note the descriptor differences, since this works more like a cubemap rtv
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+	ZeroMemory(&srvDesc, sizeof(srvDesc));
+	srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+	srvDesc.Texture2DArray.MipLevels = 1;
+	srvDesc.Texture2DArray.MostDetailedMip = 0;
+	srvDesc.Texture2DArray.ArraySize = arraySize;
+	srvDesc.Texture2DArray.FirstArraySlice = 0;
+
+	hr = device->CreateShaderResourceView(structuredBuffer.Get(), &srvDesc, &depthSRV);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create shader resource view for spotlight depth buffer!", L"Error", MB_OK);
+		return;
+	}
 }

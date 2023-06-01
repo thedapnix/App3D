@@ -49,9 +49,10 @@ private:
 	//Moved from shadowmap class
 	void InitStructuredBuffer(ID3D11Device* device, bool isDynamic, bool hasUAV, UINT elementSize, UINT elementCount, void* bufferData);
 	Microsoft::WRL::ComPtr<ID3D11Buffer> structuredBuffer;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> structuredSRV;
 
 	void InitDepthBuffer(ID3D11Device* device, UINT resolution, UINT arraySize);
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> DST;
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> DSV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> depthSRV;
 };
