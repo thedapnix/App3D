@@ -6,7 +6,7 @@
 
 struct LightData
 {
-	DirectX::XMFLOAT3 col{ 1.0f, 1.0f, 1.0f };	//Default white light color
+	DirectX::XMFLOAT3 col{ 1.0f, 1.0f, 1.0f };
 
 	//Think camera view
 	DirectX::XMFLOAT3 pos{ 0.0f, 0.0f, 0.0f };
@@ -34,11 +34,23 @@ class SpotLights
 {
 public:
 	SpotLights() = default;
-	SpotLights(ID3D11Device* device, const LightData& lightData);
+	SpotLights(ID3D11Device* device, const std::vector<LightData>& lights);
 	~SpotLights() = default;
 
-	const ConstantBuffer& GetCameraConstantBuffer() const;
+	const ConstantBuffer& GetCameraConstantBufferAt(UINT index) const;
 
 private:
-	Camera m_camera;
+	std::vector<LightData> m_lights;
+	std::vector<LightBuffer> m_lightBuffers;
+	std::vector<Camera> m_cameras; //Previously, one camera. Now a camera for each light
+
+	//Moved from shadowmap class
+	void InitStructuredBuffer(ID3D11Device* device, bool isDynamic, bool hasUAV, UINT elementSize, UINT elementCount, void* bufferData);
+	Microsoft::WRL::ComPtr<ID3D11Buffer> structuredBuffer;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv;
+
+	void InitDepthBuffer(ID3D11Device* device, UINT resolution, UINT arraySize);
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> DST;
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> DSV;
+	D3D11_VIEWPORT viewport = {};
 };
