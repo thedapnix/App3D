@@ -141,7 +141,10 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		context->VSSetShader(vertexShader.Get(), NULL, 0);
 		context->PSSetShader(pixelShader.Get(), NULL, 0);
 		//context->PSSetSamplers(0, 1, samplerState.GetAddressOf()); //temp? shadowstuff
-		//context->PSSetShaderResources(0, )
+		ID3D11ShaderResourceView* shadowViews[2] = {};
+		shadowViews[0] = m_shadowMap.GetLightSRV();
+		shadowViews[1] = m_shadowMap.GetSRV();
+		context->PSSetShaderResources(1, 2, shadowViews);
 
 		//Tessellation
 		if(lodIsEnabled)context->RSSetState(wireframeRS.Get());

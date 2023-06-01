@@ -19,6 +19,14 @@ SpotLight::SpotLight(ID3D11Device* device, const LightData& lightData)
 	m_camera.SetLens(fovY, aspect, zn, zf);
 	m_camera.UpdateViewMatrix();
 	m_camera.InitConstantBufferAndFrustum(device);
+
+	//Init buffer passed to shader
+	LightBuffer buf = {};
+	buf.col = lightData.col;
+	buf.origin = m_camera.GetPosition();
+	buf.direction = m_camera.GetLook();
+	DirectX::XMStoreFloat4x4(&buf.view, m_camera.View()); //Alternatively I make other getters for view- and projection-matrices in camera class
+	DirectX::XMStoreFloat4x4(&buf.proj, m_camera.Proj());
 }
 
 const ConstantBuffer& SpotLight::GetCameraConstantBuffer() const
