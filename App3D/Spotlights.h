@@ -38,9 +38,9 @@ public:
 	~SpotLights() = default;
 
 	const ConstantBuffer& GetCameraConstantBufferAt(UINT index) const;
+	const UINT& GetLightCount() const;
 
 private:
-	std::vector<LightData> m_lights;
 	std::vector<LightBuffer> m_lightBuffers;
 	std::vector<Camera> m_cameras; //Previously, one camera. Now a camera for each light
 
@@ -52,5 +52,4 @@ private:
 	void InitDepthBuffer(ID3D11Device* device, UINT resolution, UINT arraySize);
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> DST;
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> DSV;
-	D3D11_VIEWPORT viewport = {};
 };

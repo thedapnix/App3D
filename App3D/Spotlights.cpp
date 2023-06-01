@@ -43,6 +43,11 @@ const ConstantBuffer& SpotLights::GetCameraConstantBufferAt(UINT index) const
 	return m_cameras.at(index).GetConstantBuffer();
 }
 
+const UINT& SpotLights::GetLightCount() const
+{
+	return m_lightBuffers.size(); //Little hack. We're not returning the size of some lights-vector, but we know that we have as many buffers as we do lights (even cameras could work here)
+}
+
 void SpotLights::InitStructuredBuffer(ID3D11Device* device, bool isDynamic, bool hasUAV, UINT elementSize, UINT elementCount, void* bufferData)
 {
 	D3D11_BUFFER_DESC desc;
