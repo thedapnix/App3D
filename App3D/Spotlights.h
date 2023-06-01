@@ -40,6 +40,8 @@ public:
 	const ConstantBuffer& GetCameraConstantBufferAt(UINT index) const;
 	void AddLight(LightData data);
 	const UINT& GetLightCount() const;
+	ID3D11ShaderResourceView* GetStructuredBufferSRV() const;
+	ID3D11ShaderResourceView* GetDepthBufferSRV() const;
 
 private:
 	std::vector<LightData> m_lights;

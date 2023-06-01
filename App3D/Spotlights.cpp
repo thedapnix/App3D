@@ -53,6 +53,16 @@ const UINT& SpotLights::GetLightCount() const
 	return m_lights.size();
 }
 
+ID3D11ShaderResourceView* SpotLights::GetStructuredBufferSRV() const
+{
+	return structuredSRV.Get()
+}
+
+ID3D11ShaderResourceView* SpotLights::GetDepthBufferSRV() const
+{
+	return depthSRV.Get();
+}
+
 void SpotLights::InitStructuredBuffer(ID3D11Device* device, bool isDynamic, bool hasUAV, UINT elementSize, UINT elementCount, void* bufferData)
 {
 	D3D11_BUFFER_DESC desc;
