@@ -42,6 +42,7 @@ public:
 	const UINT& GetLightCount() const;
 	ID3D11ShaderResourceView* GetStructuredBufferSRV() const;
 	ID3D11ShaderResourceView* GetDepthBufferSRV() const;
+	ID3D11DepthStencilView* GetDepthStencilViewAt(UINT index) const;
 
 private:
 	std::vector<LightData> m_lights;
@@ -55,6 +56,6 @@ private:
 
 	void InitDepthBuffer(ID3D11Device* device, UINT resolution, UINT arraySize);
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> DST;
-	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> DSV;
+	std::vector<Microsoft::WRL::ComPtr<ID3D11DepthStencilView>> DSVs;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> depthSRV;
 };

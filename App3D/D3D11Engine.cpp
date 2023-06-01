@@ -310,7 +310,7 @@ void D3D11Engine::RenderDepth(float dt)
 	/*Render depth from the perspective of every light*/
 	for (UINT i = 0; i < m_spotlights.GetLightCount(); i++)
 	{
-		ID3D11DepthStencilView* dsView = m_shadowMap.GetDepthStencilViewAt(i);
+		ID3D11DepthStencilView* dsView = m_spotlights.GetDepthStencilViewAt(i);
 		context->ClearDepthStencilView(dsView, D3D11_CLEAR_DEPTH, 1, 0);
 		context->OMSetRenderTargets(0, NULL, dsView); //no rtv, only dsv
 

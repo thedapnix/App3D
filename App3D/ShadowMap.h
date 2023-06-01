@@ -12,7 +12,6 @@ public:
 
 	ID3D11VertexShader* GetVertexShader();
 	const D3D11_VIEWPORT* GetViewport() const;
-	ID3D11DepthStencilView* GetDepthStencilViewAt(UINT index);
 private:
 	std::vector<Drawable>* m_drawables = NULL;
 	SpotLights* m_spotlights = NULL;

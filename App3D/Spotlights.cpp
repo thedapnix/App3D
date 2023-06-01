@@ -55,12 +55,17 @@ const UINT& SpotLights::GetLightCount() const
 
 ID3D11ShaderResourceView* SpotLights::GetStructuredBufferSRV() const
 {
-	return structuredSRV.Get()
+	return structuredSRV.Get();
 }
 
 ID3D11ShaderResourceView* SpotLights::GetDepthBufferSRV() const
 {
 	return depthSRV.Get();
+}
+
+ID3D11DepthStencilView* SpotLights::GetDepthStencilViewAt(UINT index) const
+{
+	return DSVs.at(index).Get();
 }
 
 void SpotLights::InitStructuredBuffer(ID3D11Device* device, bool isDynamic, bool hasUAV, UINT elementSize, UINT elementCount, void* bufferData)
@@ -131,12 +136,14 @@ void SpotLights::InitDepthBuffer(ID3D11Device* device, UINT resolution, UINT arr
 	for (UINT i = 0; i < arraySize; i++)
 	{
 		dsvd.Texture2DArray.FirstArraySlice = i;
-		hr = device->CreateDepthStencilView(DST.Get(), &dsvd, &DSV);
+		ID3D11DepthStencilView* dsv = NULL; //ComPtr?
+		hr = device->CreateDepthStencilView(DST.Get(), &dsvd, &dsv);
 		if (FAILED(hr))
 		{
 			MessageBox(NULL, L"Failed to create depth stencil view for spotlight depth buffer!", L"Error", MB_OK);
 			return;
 		}
+		DSVs.push_back(dsv);
 	}
 
 	//Do I need a depth buffer srv too? Edit: Yes. Note the descriptor differences, since this works more like a cubemap rtv

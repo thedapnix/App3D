@@ -33,11 +33,6 @@ const D3D11_VIEWPORT* ShadowMap::GetViewport() const
 	return &viewport;
 }
 
-ID3D11DepthStencilView* ShadowMap::GetDepthStencilViewAt(UINT index)
-{
-	//return DSVs.at(index).Get();
-}
-
 void ShadowMap::InitShaderAndInputLayout(ID3D11Device* device)
 {
 	HRESULT hr;
