@@ -33,12 +33,18 @@ struct SpotLight
 
 StructuredBuffer<SpotLight> spotlights : register(t1);
 
+Texture2DArray<float> shadowMaps : register(t2);
+sampler shadowMapSampler : register(s1);
+
+
+
+
 float4 main(PixelShaderInput input) : SV_TARGET
 {
     float3 ambient = 0.25f;
     float4 base = tex2D.Sample(samplerState, input.uv);
-    float3 specularAlbedo = 0.5f;  //Hardcoding these because uhh
-    float specularPower = 0.5f;     //Pretty sure this would need me to rewrite hundreds of lines to do materials with different levels of specularity
+    float3 specularAlbedo = 1.0f;  //Hardcoding these because uhh
+    float specularPower = 1.0f;     //Pretty sure this would need me to rewrite hundreds of lines to do materials with different levels of specularity
     
     float3 lighting = 0.0f;
     float3 specular = 0.0f;
@@ -50,6 +56,25 @@ float4 main(PixelShaderInput input) : SV_TARGET
     spotlights.GetDimensions(count, stride);
     for (int i = 0; i < 1; i++)
     {
+        //Shadow stuff
+        //So the cookbook gives us the formula: float3 shadowMapUV = float3(ndcSpace.x * 0.5f + 0.5f, ndcSpace.y * -0.5f + 0.5f, lightIndex);
+        //To get coordinates in ndc space, we divide by the w-component
+        bool isInShadow = false;
+        float4 ndcPos = mul(input.worldPosition, spotlights[i].view);
+        ndcPos = mul(ndcPos, spotlights[i].proj);
+        ndcPos.xyz /= ndcPos.w;
+        
+        float3 shadowMapUV = float3(ndcPos.x * 0.5f + 0.5f, ndcPos.y * -0.5f + 0.5f, i); //So this should be correct yes?
+        float3 shadowMapSample = shadowMaps.SampleLevel(shadowMapSampler, shadowMapUV, 0.0f); //MSDN: First argument is the sampler state, second is the texture coordinates, third is lod (if the value is = 0, the biggest mipmap is used)
+        
+        //"If the sampled value is lesser than the calculated value then this means that some other object lies in the path, and thus the fragment should be considered to be in shadow"
+        //"As several of the fragments we are currently viewing might share a texel in the shadow map (as it does not have infinite precision) 
+        //you may want to add a very small value to the sampled depth to try and avoid self shadowing issues"
+        if(shadowMapSample.x + 0.00001f < ndcPos.z)
+        {
+            isInShadow = true;
+        }
+        
         //Page 504 of the book "Practical Rendering and Computation with Direct3D11"
         //Calculate the diffuse term
         float3 L = 0;
@@ -79,7 +104,14 @@ float4 main(PixelShaderInput input) : SV_TARGET
         float3 H = normalize(L + V);
         specular = pow(saturate(dot(input.nor.xyz, H)), specularPower) * spotlights[i].colour * specularAlbedo * nDotL; //previously float3 specular, now gets defined higher up so we can access outside of scope
         
-        lighting += (diffuse + specular) * attenuation;
+        if(isInShadow)
+        {
+            lighting += (diffuse + specular) * attenuation * 0.0f;
+        }
+        else
+        {
+            lighting += (diffuse + specular) * attenuation;
+        }
         //lighting = (ambient + diffuse) * base.xyz;
     }
     //result += ambient; //Apply ambient lighting to the scene
