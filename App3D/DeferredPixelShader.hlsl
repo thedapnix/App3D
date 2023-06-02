@@ -25,6 +25,8 @@ PixelShaderOutput main(PixelShaderInput input) //: SV_TARGET //previously float4
     //return (tex, 1.0f);
     PixelShaderOutput output;
     output.position = input.worldPosition;
+    
+    float3 diffuse = tex2D.Sample(samplerState, input.uv);
     output.colour = tex2D.Sample(samplerState, input.uv); //input.col; //sample from texture here if you want
     output.normal = input.nor;
     
