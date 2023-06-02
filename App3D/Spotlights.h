@@ -26,8 +26,11 @@ __declspec(align(16)) struct LightBuffer
 	DirectX::XMFLOAT4X4 view; 
 	DirectX::XMFLOAT4X4 proj;
 	DirectX::XMFLOAT3 col;
+	float pad1;
 	DirectX::XMFLOAT3 origin;
+	float pad2;
 	DirectX::XMFLOAT3 direction;
+	float pad3;
 	DirectX::XMFLOAT2 rotation;
 	float angle;
 };

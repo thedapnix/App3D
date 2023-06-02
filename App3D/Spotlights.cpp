@@ -38,7 +38,7 @@ SpotLights::SpotLights(ID3D11Device* device, const std::vector<LightData>& light
 	
 
 	//Create buffers in here (previously things went the other way around)
-	InitStructuredBuffer(device, false, false, sizeof(LightBuffer), m_lightBuffers.size(), m_lightBuffers.data());
+	InitStructuredBuffer(device, true, false, sizeof(LightBuffer), m_lightBuffers.size(), m_lightBuffers.data());
 	InitDepthBuffer(device, 512, lights.size());
 }
 
@@ -119,7 +119,8 @@ void SpotLights::InitDepthBuffer(ID3D11Device* device, UINT resolution, UINT arr
 	desc.SampleDesc.Count = 1;
 	desc.SampleDesc.Quality = 0;
 	desc.Usage = D3D11_USAGE_DEFAULT;
-	desc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+	desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	desc.BindFlags |= D3D11_BIND_SHADER_RESOURCE;
 	hr = device->CreateTexture2D(&desc, NULL, &DST);
 	if (FAILED(hr))
 	{
@@ -131,6 +132,7 @@ void SpotLights::InitDepthBuffer(ID3D11Device* device, UINT resolution, UINT arr
 	dsvd.Format = DXGI_FORMAT_D32_FLOAT;
 	dsvd.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
 	dsvd.Texture2DArray.MipSlice = 0;
+	dsvd.Flags = 0;
 	dsvd.Texture2DArray.ArraySize = 1;
 	for (UINT i = 0; i < arraySize; i++)
 	{

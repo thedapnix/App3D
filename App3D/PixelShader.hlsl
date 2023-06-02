@@ -24,11 +24,27 @@ struct SpotLight
     matrix view;
     matrix proj;
     float3 colour;
+    float pad1;
     float3 origin;
+    float pad2;
     float3 direction;
+    float pad3;
     float2 rotation;
-    
     float angle; //hlsl pain (functions as padding)
+    float pad4;
+    
+    /*
+    DirectX::XMFLOAT4X4 view; 
+	DirectX::XMFLOAT4X4 proj;
+	DirectX::XMFLOAT3 col;
+	float pad1;
+	DirectX::XMFLOAT3 origin;
+	float pad2;
+	DirectX::XMFLOAT3 direction;
+	float pad3;
+	DirectX::XMFLOAT2 rotation;
+	float angle;
+    */
 };
 
 StructuredBuffer<SpotLight> spotlights : register(t1);
@@ -56,11 +72,17 @@ float4 main(PixelShaderInput input) : SV_TARGET
     {
         //Shadow stuff
         //So the cookbook gives us the formula: float3 shadowMapUV = float3(ndcSpace.x * 0.5f + 0.5f, ndcSpace.y * -0.5f + 0.5f, lightIndex);
-        //To get coordinates in ndc space, we divide by the w-component
+        //To get coordinates in ndc space, we do the perspective divide (w-component) on the transformed position
         bool isInShadow = false;
-        float4 ndcPos = mul(input.worldPosition, spotlights[i].view);
-        ndcPos = mul(ndcPos, spotlights[i].proj);
+        float4x4 vp = mul(spotlights[i].view, spotlights[i].proj);
+        float4 ndcPos = mul(input.worldPosition, vp);
+        //ndcPos = mul(ndcPos, spotlights[i].proj);
         ndcPos.xyz /= ndcPos.w;
+        
+        //float posDiv = 1 / ndcPos.w;
+        //ndcPos.x * posDiv;
+        //ndcPos.y * posDiv;
+        //ndcPos.z * posDiv;
         
         float3 shadowMapUV = float3(ndcPos.x * 0.5f + 0.5f, ndcPos.y * -0.5f + 0.5f, i); //So this should be correct yes?
         float3 shadowMapSample = shadowMaps.SampleLevel(shadowMapSampler, shadowMapUV, 0.0f); //MSDN: First argument is the sampler state, second is the texture coordinates, third is lod (if the value is = 0, the biggest mipmap is used)

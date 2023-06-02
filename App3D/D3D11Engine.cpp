@@ -84,7 +84,8 @@ void D3D11Engine::Update(float dt)
 
 
 	/*Render*/
-	if (shadowmapIsEnabled)RenderDepth(dt);
+	//if (shadowmapIsEnabled)RenderDepth(dt);
+	RenderDepth(dt);
 	Render(dt, rtv.Get(), dsv.Get(), &viewport, m_camera.get(), CLEAR_COLOR);
 	if (billboardingIsEnabled) RenderParticles(m_camera.get());
 	if (cubemapIsEnabled)RenderReflectiveObject(dt);
@@ -147,7 +148,10 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		context->PSSetShader(pixelShader.Get(), NULL, 0);
 		
 		/*SHADOWS AND LIGHTING STUFF*/
-		ID3D11ShaderResourceView* shadowViews[] = { m_spotlights.GetStructuredBufferSRV() , m_spotlights.GetDepthBufferSRV() };
+		//ID3D11ShaderResourceView* shadowViews[2] = { m_spotlights.GetStructuredBufferSRV() , m_spotlights.GetDepthBufferSRV() };
+		ID3D11ShaderResourceView* shadowViews[2] = {};
+		shadowViews[0] = m_spotlights.GetStructuredBufferSRV();
+		shadowViews[1] = m_spotlights.GetDepthBufferSRV();
 		context->PSSetShaderResources(1, 2, shadowViews);
 		context->PSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
 		ID3D11SamplerState* shadowSampler = m_shadowMap.GetSampler();
@@ -782,7 +786,8 @@ void D3D11Engine::InitSpotlights()
 	//So this spotlight is in the far left corner of the room (and angled further in that direction), shining a light onto the boxes i put there
 	std::vector<LightData> dataVec;
 	LightData data;
-	data.pos = XMFLOAT3(-3.0f, -4.0f, 7.0f);
+	data.pos = XMFLOAT3(-2.0f, -6.0f, 5.0f);
+	//data.pos = XMFLOAT3(5.0f, -4.0f, 0.0f);
 	//data.pos = XMFLOAT3(-5.0f, 0.0f, 8.0f);
 	data.fovY = XM_PI / 8.0f;	//Smaller numbers mean a more narrow field of view
 	data.rotX = -XM_PIDIV4;		//Angle the light left with negative values, right with positive
