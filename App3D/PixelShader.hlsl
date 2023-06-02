@@ -58,7 +58,7 @@ float4 main(PixelShaderInput input) : SV_TARGET
         
         //Calculate attenuation based on distance from the light source
         float dist = length(L);
-        attenuation = max(0.0f, 1.0f - (dist / 100.0f)); //What I write as "20.0f" here is what the book refers to as LightRange.x, so some arbitrary value representing how far the light reaches
+        attenuation = max(0.0f, 1.0f - (dist / 20.0f)); //What I write as "20.0f" here is what the book refers to as LightRange.x, so some arbitrary value representing how far the light reaches
         L /= dist;
         
         //Also add in the spotlight attenuation factor

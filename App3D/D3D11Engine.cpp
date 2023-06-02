@@ -780,7 +780,7 @@ void D3D11Engine::InitSpotlights()
 	//Going to write a bunch of comments here because I'm awful at visualizing 3D by just looking at numbers and pi angles
 	std::vector<LightData> dataVec;
 	LightData data;
-	data.pos = XMFLOAT3(5.0f, -4.0f, -3.0f);
+	data.pos = XMFLOAT3(-3.0f, -4.0f, 7.0f);
 	//data.pos = XMFLOAT3(-5.0f, 0.0f, 8.0f);
 	data.fovY = XM_PI / 8.0f;	//Smaller numbers mean a more narrow field of view
 	data.rotX = -XM_PIDIV4;		//Angle the light left with negative values, right with positive
