@@ -30,8 +30,9 @@ SpotLights::SpotLights(ID3D11Device* device, const std::vector<LightData>& light
 		buf.direction = m_cameras.at(i).GetLook();
 		DirectX::XMStoreFloat4x4(&buf.view, m_cameras.at(i).View()); //Alternatively I make other getters for view- and projection-matrices in camera class
 		DirectX::XMStoreFloat4x4(&buf.proj, m_cameras.at(i).Proj());
-		buf.angle.x = lights.at(i).rotX;
-		buf.angle.y = lights.at(i).rotY;
+		buf.rotation.x = lights.at(i).rotX;
+		buf.rotation.y = lights.at(i).rotY;
+		buf.angle = fovY;
 		m_lightBuffers.push_back(buf);
 	}
 	

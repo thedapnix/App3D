@@ -140,8 +140,8 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		/*Shader Stage*/
 		context->VSSetShader(vertexShader.Get(), NULL, 0);
 		context->PSSetShader(pixelShader.Get(), NULL, 0);
-		//context->PSSetSamplers(0, 1, samplerState.GetAddressOf()); //temp? shadowstuff
 		
+		/*SHADOWS AND LIGHTING STUFF*/
 		ID3D11ShaderResourceView* shadowView1 = m_spotlights.GetStructuredBufferSRV();
 		context->PSSetShaderResources(1, 1, &shadowView1);
 		if (shadowmapIsEnabled)
@@ -149,6 +149,7 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 			ID3D11ShaderResourceView* shadowView2 = m_spotlights.GetDepthBufferSRV();
 			context->PSSetShaderResources(2, 1, &shadowView2);
 		}
+		context->PSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
 
 		//Tessellation
 		if(lodIsEnabled)context->RSSetState(wireframeRS.Get());
@@ -774,9 +775,9 @@ void D3D11Engine::InitSpotlights()
 	std::vector<LightData> dataVec;
 	LightData data;
 	data.pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	data.fovY = XM_PI / 4.0f;
+	data.fovY = XM_PIDIV4;
 	data.rotX = 0.0f;
-	data.rotY = 0.0f;
+	data.rotY = -XM_PIDIV4;
 	data.col = XMFLOAT3(1.0f, 1.0f, 1.0f);
 	dataVec.push_back(data);
 

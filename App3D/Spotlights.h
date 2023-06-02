@@ -28,7 +28,8 @@ __declspec(align(16)) struct LightBuffer
 	DirectX::XMFLOAT3 col;
 	DirectX::XMFLOAT3 origin;
 	DirectX::XMFLOAT3 direction;
-	DirectX::XMFLOAT2 angle;
+	DirectX::XMFLOAT2 rotation;
+	float angle;
 };
 
 class SpotLights
