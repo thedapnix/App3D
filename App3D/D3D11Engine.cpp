@@ -778,6 +778,7 @@ void D3D11Engine::InitGraphicsBuffer(GBuffer(&gbuf)[3])
 void D3D11Engine::InitSpotlights()
 {
 	//Going to write a bunch of comments here because I'm awful at visualizing 3D by just looking at numbers and pi angles
+	//So this spotlight is in the far left corner of the room (and angled further in that direction), shining a light onto the boxes i put there
 	std::vector<LightData> dataVec;
 	LightData data;
 	data.pos = XMFLOAT3(-3.0f, -4.0f, 7.0f);

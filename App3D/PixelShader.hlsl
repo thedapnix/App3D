@@ -63,7 +63,7 @@ float4 main(PixelShaderInput input) : SV_TARGET
         
         //Also add in the spotlight attenuation factor
         float3 L2 = spotlights[i].direction;
-        float rho = dot(L, L2);
+        float rho = dot(L, L2); //Book shows this as "-L", but that makes the light go in the wrong direction for me (maybe I should fix the light implementation in D3D11Engine instead?)
         float rotXY = spotlights[i].rotation.x - spotlights[i].rotation.y;
         if (rotXY == 0.0f)
             rotXY = 1.0f; //Please don't divide by 0
