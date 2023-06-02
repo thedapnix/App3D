@@ -44,7 +44,12 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, 19.0f }); //Back wall
 	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 1.0f, 5.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, { -14.0f, -4.0f, 4.0f }); //Left wall
 	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 1.0f, 5.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, {  14.0f, -4.0f, 4.0f }); //Right wall
+
 	InitDrawableFromFile("Meshes/cube.obj", "Textures/dog.png", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, 5.0f }); //Mirror cube
+
+	InitDrawableFromFile("Meshes/cube.obj", "Textures/wood_crate.png", m_drawables, { 2.0f, 2.0f, 2.0f }, { 0.0f, 0.0f, 0.0f }, { -10.0f, -7.0f, 15.0f }); //Corner cubes for shadow testing
+	InitDrawableFromFile("Meshes/cube.obj", "Textures/wood_crate.png", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f }, { -10.0f, -4.0f, 15.0f }); //
+	InitDrawableFromFile("Meshes/cube.obj", "Textures/wood_crate.png", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f }, { -10.0f, -8.0f, 11.0f });
 
 	//Sampler setup for texture access in shaders
 	InitSampler();
@@ -772,12 +777,14 @@ void D3D11Engine::InitGraphicsBuffer(GBuffer(&gbuf)[3])
 
 void D3D11Engine::InitSpotlights()
 {
+	//Going to write a bunch of comments here because I'm awful at visualizing 3D by just looking at numbers and pi angles
 	std::vector<LightData> dataVec;
 	LightData data;
-	data.pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	data.fovY = XM_PIDIV4;
-	data.rotX = 0.0f;
-	data.rotY = -XM_PIDIV4;
+	data.pos = XMFLOAT3(5.0f, -4.0f, -3.0f);
+	//data.pos = XMFLOAT3(-5.0f, 0.0f, 8.0f);
+	data.fovY = XM_PI / 8.0f;	//Smaller numbers mean a more narrow field of view
+	data.rotX = -XM_PIDIV4;		//Angle the light left with negative values, right with positive
+	data.rotY = 0.0f;		//Angle the light up with negative values, down with positive
 	data.col = XMFLOAT3(1.0f, 1.0f, 1.0f);
 	dataVec.push_back(data);
 

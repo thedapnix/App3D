@@ -35,7 +35,7 @@ StructuredBuffer<SpotLight> spotlights : register(t1);
 
 float4 main(PixelShaderInput input) : SV_TARGET
 {
-    float3 ambient = 0.1f;
+    float3 ambient = 0.25f;
     float4 base = tex2D.Sample(samplerState, input.uv);
     float3 specularAlbedo = 0.5f;  //Hardcoding these because uhh
     float specularPower = 0.5f;     //Pretty sure this would need me to rewrite hundreds of lines to do materials with different levels of specularity
@@ -58,33 +58,34 @@ float4 main(PixelShaderInput input) : SV_TARGET
         
         //Calculate attenuation based on distance from the light source
         float dist = length(L);
-        attenuation = max(0.0f, 1.0f - (dist / 10.0f)); //What I write as "20.0f" here is what the book refers to as LightRange.x, so some arbitrary value representing how far the light reaches
+        attenuation = max(0.0f, 1.0f - (dist / 100.0f)); //What I write as "20.0f" here is what the book refers to as LightRange.x, so some arbitrary value representing how far the light reaches
         L /= dist;
         
         //Also add in the spotlight attenuation factor
         float3 L2 = spotlights[i].direction;
-        float rho = dot(-L, L2);
+        float rho = dot(L, L2);
         float rotXY = spotlights[i].rotation.x - spotlights[i].rotation.y;
-        if(rotXY == 0.0f) rotXY = 1.0f; //Please don't divide by 0
+        if (rotXY == 0.0f)
+            rotXY = 1.0f; //Please don't divide by 0
         attenuation *= saturate(
         (rho - spotlights[i].rotation.y) /
         rotXY);
 
         float nDotL = saturate(dot(input.nor.xyz, L));
-        float3 diffuse = nDotL * spotlights[i].colour;
+        float3 diffuse = nDotL * spotlights[i].colour * base.xyz;
         
         //Calculate the specular term
         float3 V = cameraPosition - input.worldPosition.xyz;
         float3 H = normalize(L + V);
         specular = pow(saturate(dot(input.nor.xyz, H)), specularPower) * spotlights[i].colour * specularAlbedo * nDotL; //previously float3 specular, now gets defined higher up so we can access outside of scope
         
-        //lighting += (diffuse + specular) * attenuation;
-        lighting = (ambient + diffuse) * base.xyz;
+        lighting += (diffuse + specular) * attenuation;
+        //lighting = (ambient + diffuse) * base.xyz;
     }
     //result += ambient; //Apply ambient lighting to the scene
     //float3 finalColor = (lighting * base.xyz) + specular;
-    float3 finalColor = base.xyz;
-    finalColor += specular;
+    float3 finalColor = base.xyz * ambient;
+    finalColor += lighting;
     
     return float4(finalColor, 1.0f);
     //return float4(result, 1.0f);

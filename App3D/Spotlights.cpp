@@ -8,7 +8,7 @@ SpotLights::SpotLights(ID3D11Device* device, const std::vector<LightData>& light
 		float fovY = lights.at(i).fovY;
 		float aspect = 1.0f;
 		float zn = 0.1f;
-		float zf = 1000.0f;
+		float zf = 100.0f;
 
 		//Local rotations to align the cameras to look in the proper direction
 		float upRotation = lights.at(i).rotY;
