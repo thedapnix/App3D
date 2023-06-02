@@ -37,8 +37,6 @@ Texture2DArray<float> shadowMaps : register(t2);
 sampler shadowMapSampler : register(s1);
 
 
-
-
 float4 main(PixelShaderInput input) : SV_TARGET
 {
     float3 ambient = 0.25f;
@@ -104,7 +102,7 @@ float4 main(PixelShaderInput input) : SV_TARGET
         float3 H = normalize(L + V);
         specular = pow(saturate(dot(input.nor.xyz, H)), specularPower) * spotlights[i].colour * specularAlbedo * nDotL; //previously float3 specular, now gets defined higher up so we can access outside of scope
         
-        if(isInShadow)
+        if(!isInShadow)
         {
             lighting += (diffuse + specular) * attenuation * 0.0f;
         }

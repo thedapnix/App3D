@@ -21,6 +21,8 @@ ShadowMap::ShadowMap(ID3D11Device* device, std::vector<Drawable>* drawables, Spo
 	viewport.MaxDepth = 1;
 	viewport.TopLeftX = 0;
 	viewport.TopLeftY = 0;
+
+	InitSampler(device);
 }
 
 ID3D11VertexShader* ShadowMap::GetVertexShader()
@@ -31,6 +33,11 @@ ID3D11VertexShader* ShadowMap::GetVertexShader()
 const D3D11_VIEWPORT* ShadowMap::GetViewport() const
 {
 	return &viewport;
+}
+
+ID3D11SamplerState* ShadowMap::GetSampler()
+{
+	return shadowSampler.Get();
 }
 
 void ShadowMap::InitShaderAndInputLayout(ID3D11Device* device)
@@ -66,4 +73,25 @@ void ShadowMap::InitShaderAndInputLayout(ID3D11Device* device)
 	//	MessageBox(NULL, L"Failed to create input layout for shadowmap!", L"Error", MB_OK);
 	//	return;
 	//}
+}
+
+void ShadowMap::InitSampler(ID3D11Device* device)
+{
+	D3D11_SAMPLER_DESC desc;
+	ZeroMemory(&desc, sizeof(desc));
+	desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP; //Border?
+	desc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	desc.MinLOD = 0.0f;
+	desc.MaxLOD = D3D11_FLOAT32_MAX;
+	desc.MipLODBias = 0.0f;
+	desc.MaxAnisotropy = 1;
+	desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+
+	HRESULT hr = device->CreateSamplerState(&desc, shadowSampler.GetAddressOf());
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create sampler for shadowmap!", L"Error", MB_OK);
+	}
 }

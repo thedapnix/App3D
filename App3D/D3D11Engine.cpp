@@ -84,10 +84,10 @@ void D3D11Engine::Update(float dt)
 
 
 	/*Render*/
+	if (shadowmapIsEnabled)RenderDepth(dt);
 	Render(dt, rtv.Get(), dsv.Get(), &viewport, m_camera.get(), CLEAR_COLOR);
 	if (billboardingIsEnabled) RenderParticles(m_camera.get());
 	if (cubemapIsEnabled)RenderReflectiveObject(dt);
-	if (shadowmapIsEnabled)RenderDepth(dt);
 
 	/*Present the final scene*/
 	swapChain->Present(1, 0); //vSync enabled
@@ -147,14 +147,11 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		context->PSSetShader(pixelShader.Get(), NULL, 0);
 		
 		/*SHADOWS AND LIGHTING STUFF*/
-		ID3D11ShaderResourceView* shadowView1 = m_spotlights.GetStructuredBufferSRV();
-		context->PSSetShaderResources(1, 1, &shadowView1);
-		if (shadowmapIsEnabled)
-		{
-			ID3D11ShaderResourceView* shadowView2 = m_spotlights.GetDepthBufferSRV();
-			context->PSSetShaderResources(2, 1, &shadowView2);
-		}
+		ID3D11ShaderResourceView* shadowViews[] = { m_spotlights.GetStructuredBufferSRV() , m_spotlights.GetDepthBufferSRV() };
+		context->PSSetShaderResources(1, 2, shadowViews);
 		context->PSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
+		ID3D11SamplerState* shadowSampler = m_shadowMap.GetSampler();
+		context->PSSetSamplers(1, 1, &shadowSampler);
 
 		//Tessellation
 		if(lodIsEnabled)context->RSSetState(wireframeRS.Get());
@@ -203,10 +200,14 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		/*Aaaand shader resource stuff*/
 		ID3D11RenderTargetView* nullRTV = NULL;
 		context->OMSetRenderTargets(1, &nullRTV, NULL);
-		ID3D11ShaderResourceView* nullSRV = NULL;
-		context->PSSetShaderResources(0, 0, &nullSRV);
-		ID3D11SamplerState* nullSampler = NULL;
-		context->PSSetSamplers(0, 0, &nullSampler);
+
+		ID3D11ShaderResourceView* nullSRVs[3] = {NULL, NULL, NULL};
+		//ID3D11ShaderResourceView* nullSRV = NULL;
+		context->PSSetShaderResources(0, 3, nullSRVs);
+
+		ID3D11SamplerState* nullSamplers[2] = {NULL, NULL};
+		//ID3D11ShaderResourceView* nullSampler = NULL;
+		context->PSSetSamplers(0, 2, nullSamplers);
 	}
 
 	if (deferredIsEnabled)
