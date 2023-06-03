@@ -23,28 +23,14 @@ struct SpotLight
 {
     matrix view;
     matrix proj;
-    float3 colour;
-    float pad1;
-    float3 origin;
-    float pad2;
-    float3 direction;
-    float pad3;
-    float2 rotation;
-    float angle; //hlsl pain (functions as padding)
-    float pad4;
     
-    /*
-    DirectX::XMFLOAT4X4 view; 
-	DirectX::XMFLOAT4X4 proj;
-	DirectX::XMFLOAT3 col;
-	float pad1;
-	DirectX::XMFLOAT3 origin;
-	float pad2;
-	DirectX::XMFLOAT3 direction;
-	float pad3;
-	DirectX::XMFLOAT2 rotation;
-	float angle;
-    */
+    float3 colour;
+    float3 origin;
+    float3 direction;
+    
+    float2 rotation;
+    
+    float angle;
 };
 
 StructuredBuffer<SpotLight> spotlights : register(t1);
@@ -84,7 +70,7 @@ float4 main(PixelShaderInput input) : SV_TARGET
         //"If the sampled value is lesser than the calculated value then this means that some other object lies in the path, and thus the fragment should be considered to be in shadow"
         //"As several of the fragments we are currently viewing might share a texel in the shadow map (as it does not have infinite precision) 
         //you may want to add a very small value to the sampled depth to try and avoid self shadowing issues"
-        if(shadowMapSample.x + 0.0001f < ndcPos.z)
+        if(shadowMapSample.x + 0.00001f < ndcPos.z)
         {
             isInShadow = true;
         }

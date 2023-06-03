@@ -7,17 +7,10 @@
 struct LightData
 {
 	DirectX::XMFLOAT3 col{ 1.0f, 1.0f, 1.0f };
-
-	//Think camera view
 	DirectX::XMFLOAT3 pos{ 0.0f, 0.0f, 0.0f };
 	float rotX = 0.0f;
 	float rotY = 0.0f;
-
-	//Think camera proj
 	float fovY = 0.0f;
-	//float aspect = 0.0f;
-	//float zn = 0.1f;
-	//float zf = 100.0f;
 };
 
 __declspec(align(16)) struct LightBuffer
@@ -25,13 +18,13 @@ __declspec(align(16)) struct LightBuffer
 	//Passing data to shaders
 	DirectX::XMFLOAT4X4 view; 
 	DirectX::XMFLOAT4X4 proj;
+
 	DirectX::XMFLOAT3 col;
-	float pad1;
 	DirectX::XMFLOAT3 origin;
-	float pad2;
 	DirectX::XMFLOAT3 direction;
-	float pad3;
+
 	DirectX::XMFLOAT2 rotation;
+
 	float angle;
 };
 

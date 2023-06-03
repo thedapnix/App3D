@@ -19,13 +19,11 @@ struct PixelShaderOutput
     float4 normal : SV_Target2;
 };
 
-PixelShaderOutput main(PixelShaderInput input) //: SV_TARGET //previously float4 main
+PixelShaderOutput main(PixelShaderInput input)
 {
-    //float3 tex = tex2D.Sample(samplerState, input.uv).rgb;
-    //return (tex, 1.0f);
     PixelShaderOutput output;
     output.position = input.worldPosition;
-    output.colour = tex2D.Sample(samplerState, input.uv); //input.col; //sample from texture here if you want
+    output.colour = tex2D.Sample(samplerState, input.uv);
     output.normal = input.nor;
     
     return output;

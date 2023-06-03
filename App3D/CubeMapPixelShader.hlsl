@@ -8,7 +8,6 @@ struct PixelShaderInput
 };
 
 TextureCube reflectionTexture : register(t0);
-//sampler standardSampler : register(s0); //not SamplerState?
 SamplerState standardSampler : register(s0);
 
 cbuffer CAMERA_CONSTANT_BUFFER : register(b0)
