@@ -36,6 +36,17 @@ HS_CONSTANT_DATA_OUTPUT CalcHSPatchConstants(InputPatch<VertexShaderOutput, NUM_
     float minDist = 2.0f;
     float maxTess = 16.0f;
     float minTess = 1.0f;
+	
+    //Linear interpolation attempt (trash)
+    //for (int i = 0; i < 3; i++)
+    //{
+    //    //lerp as defined by msdn: lerp(x,y,s) --> x = first float, y = second float, s = value that linearly interpolates between x and y
+    //    //so in this case, x is maxTess, y is minTess, and s is some function detailing distance
+    //    float dist = distance(float3(ip[i].worldPosition.x, ip[i].worldPosition.y, ip[i].worldPosition.z), cameraPosition);
+    //    float s = (dist - minDist) / (maxDist - minDist);
+    //    s = saturate(s); //clamp
+    //    output.EdgeTessFactor[i] = pow(2, lerp(maxTess, minTess, s));
+    //}
     
     //Store triangle centerpoint as well as distance from camera
     float3 center = (ip[0].worldPosition + ip[1].worldPosition + ip[2].worldPosition) / 3.0f; //Triangle centerpoint formula: (Ax + Bx + Cx)/3
