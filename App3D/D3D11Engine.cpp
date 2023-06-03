@@ -786,12 +786,14 @@ void D3D11Engine::InitSpotlights()
 	//So this spotlight is in the far left corner of the room (and angled further in that direction), shining a light onto the boxes i put there
 	std::vector<LightData> dataVec;
 	LightData data;
-	data.pos = XMFLOAT3(-2.0f, -6.0f, 5.0f);
+	//data.pos = XMFLOAT3(-2.0f, -6.0f, 5.0f);
+	data.pos = XMFLOAT3(0.0f, 0.0f, 5.0f);
 	//data.pos = XMFLOAT3(5.0f, -4.0f, 0.0f);
 	//data.pos = XMFLOAT3(-5.0f, 0.0f, 8.0f);
-	data.fovY = XM_PI / 8.0f;	//Smaller numbers mean a more narrow field of view
+	data.fovY = XM_PI / 4.0f;	//Smaller numbers mean a more narrow field of view
 	data.rotX = -XM_PIDIV4;		//Angle the light left with negative values, right with positive
-	data.rotY = 0.0f;		//Angle the light up with negative values, down with positive
+	data.rotY = XM_PI / 8.0f;
+	//data.rotY = 0.0f;		//Angle the light up with negative values, down with positive
 	data.col = XMFLOAT3(1.0f, 1.0f, 1.0f);
 	dataVec.push_back(data);
 

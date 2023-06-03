@@ -25,11 +25,11 @@ SpotLights::SpotLights(ID3D11Device* device, const std::vector<LightData>& light
 
 		//Setup buffer passed to shader (structured buffer, not constant buffer)
 		LightBuffer buf = {};
+		DirectX::XMStoreFloat4x4(&buf.view, XMMatrixTranspose(m_cameras.at(i).View())); //Alternatively I make other getters for view- and projection-matrices in camera class
+		DirectX::XMStoreFloat4x4(&buf.proj, XMMatrixTranspose(m_cameras.at(i).Proj())); //I am so angry at myself for forgetting to transpose these
 		buf.col = lights.at(i).col;
 		buf.origin = m_cameras.at(i).GetPosition();
 		buf.direction = m_cameras.at(i).GetLook();
-		DirectX::XMStoreFloat4x4(&buf.view, m_cameras.at(i).View()); //Alternatively I make other getters for view- and projection-matrices in camera class
-		DirectX::XMStoreFloat4x4(&buf.proj, m_cameras.at(i).Proj());
 		buf.rotation.x = lights.at(i).rotX;
 		buf.rotation.y = lights.at(i).rotY;
 		buf.angle = fovY;
