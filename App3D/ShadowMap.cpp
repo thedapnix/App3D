@@ -13,7 +13,7 @@ ShadowMap::ShadowMap(ID3D11Device* device, std::vector<Drawable>* drawables, Spo
 
 	InitShaderAndInputLayout(device);
 
-	UINT shadowResolution = 512;
+	UINT shadowResolution = 1024;
 
 	viewport.Width = shadowResolution;
 	viewport.Height = shadowResolution;

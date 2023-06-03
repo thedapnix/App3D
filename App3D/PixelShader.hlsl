@@ -30,7 +30,7 @@ struct SpotLight
     
     float2 rotation;
     
-    float angle;
+    float fov;
 };
 
 StructuredBuffer<SpotLight> spotlights : register(t1);
@@ -46,15 +46,15 @@ float4 main(PixelShaderInput input) : SV_TARGET
     float3 specularAlbedo = 1.0f;   //Hardcoding these because uhh
     float specularPower = 1.0f;     //Pretty sure this would need me to rewrite hundreds of lines to do materials with different levels of specularity
     
+    float3 finalColor = base.xyz * ambient;
     float3 lighting = 0.0f;
-    float3 specular = 0.0f;
     
     //Allow for multiple spotlights
     //https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/sm5-object-structuredbuffer-getdimensions
     uint count;
     uint stride; //I don't really care about the stride but I need to pass in two values to the GetDimensions() function in order to get the element count
     spotlights.GetDimensions(count, stride);
-    for (int i = 0; i < 1; i++)
+    for (int i = 0; i < count; i++)
     {
         //Shadow stuff
         //So the cookbook gives us the formula: float3 shadowMapUV = float3(ndcSpace.x * 0.5f + 0.5f, ndcSpace.y * -0.5f + 0.5f, lightIndex);
@@ -79,12 +79,25 @@ float4 main(PixelShaderInput input) : SV_TARGET
         //Calculate the diffuse term
         float3 L = 0;
         float attenuation = 1.0f;
-        L = spotlights[i].origin - input.worldPosition.xyz; //Base the light vector on the light position
         
-        //Calculate attenuation based on distance from the light source
-        float dist = length(L);
-        attenuation = max(0.0f, 1.0f - (dist / 20.0f)); //What I write as "20.0f" here is what the book refers to as LightRange.x, so some arbitrary value representing how far the light reaches
-        L /= dist;
+        if(spotlights[i].fov != 0.0f) //If it doesn't have an fov, I'll treat it as a directional light
+        {
+            L = spotlights[i].origin - input.worldPosition.xyz; //Base the light vector on the light position
+        
+            //Calculate attenuation based on distance from the light source
+            float dist = length(L);
+            attenuation = max(0.0f, 1.0f - (dist / 20.0f)); //What I write as "20.0f" here is what the book refers to as LightRange.x, so some arbitrary value representing how far the light reaches
+            L /= dist;
+            
+            float minCos = cos(spotlights[i].fov);
+            float maxCos = (minCos + 1.0f) / 2.0f;
+            float cosAngle = dot(spotlights[i].direction, -L);
+            attenuation *= smoothstep(minCos, maxCos, cosAngle);
+        }
+        else
+        {
+            L = -spotlights[i].direction;
+        }
         
         //Also add in the spotlight attenuation factor
         //float3 L2 = spotlights[i].direction;
@@ -95,11 +108,6 @@ float4 main(PixelShaderInput input) : SV_TARGET
         //attenuation *= saturate(
         //(rho - spotlights[i].rotation.y) /
         //rotXY);
-        
-        float minCos = cos(spotlights[i].angle);
-        float maxCos = (minCos + 1.0f) / 2.0f;
-        float cosAngle = dot(spotlights[i].direction, -L);
-        attenuation *= smoothstep(minCos, maxCos, cosAngle);
 
         float nDotL = saturate(dot(input.nor.xyz, L));
         float3 diffuse = nDotL * spotlights[i].colour * base.xyz;
@@ -107,7 +115,7 @@ float4 main(PixelShaderInput input) : SV_TARGET
         //Calculate the specular term
         float3 V = cameraPosition - input.worldPosition.xyz;
         float3 H = normalize(L + V);
-        specular = pow(saturate(dot(input.nor.xyz, H)), specularPower) * spotlights[i].colour * specularAlbedo * nDotL; //previously float3 specular, now gets defined higher up so we can access outside of scope
+        float3 specular = pow(saturate(dot(input.nor.xyz, H)), specularPower) * spotlights[i].colour * specularAlbedo * nDotL; //previously float3 specular, now gets defined higher up so we can access outside of scope
         
         if(isInShadow)
         {
@@ -117,11 +125,7 @@ float4 main(PixelShaderInput input) : SV_TARGET
         {
             lighting += (diffuse + specular) * attenuation;
         }
-        //lighting = (ambient + diffuse) * base.xyz;
     }
-    //result += ambient; //Apply ambient lighting to the scene
-    //float3 finalColor = (lighting * base.xyz) + specular;
-    float3 finalColor = base.xyz * ambient;
     finalColor += lighting;
     
     return float4(finalColor, 1.0f);

@@ -32,14 +32,14 @@ SpotLights::SpotLights(ID3D11Device* device, const std::vector<LightData>& light
 		buf.direction = m_cameras.at(i).GetLook();
 		buf.rotation.x = lights.at(i).rotX;
 		buf.rotation.y = lights.at(i).rotY;
-		buf.angle = fovY;
+		buf.fov = fovY;
 		m_lightBuffers.push_back(buf);
 	}
 	
 
 	//Create buffers in here (previously things went the other way around)
 	InitStructuredBuffer(device, true, false, sizeof(LightBuffer), m_lightBuffers.size(), m_lightBuffers.data());
-	InitDepthBuffer(device, 512, lights.size());
+	InitDepthBuffer(device, 1024, lights.size());
 }
 
 const ConstantBuffer& SpotLights::GetCameraConstantBufferAt(UINT index) const

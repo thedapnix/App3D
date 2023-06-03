@@ -142,7 +142,11 @@ void Camera::LookAt(const XMFLOAT3& pos, const XMFLOAT3& target, const XMFLOAT3&
 
 void Camera::SetLens(float fovY, float aspect, float zn, float zf)
 {
-    m_fovY = fovY;
+    if (fovY != 0.0f) //Workaround
+    {
+        m_fovY = fovY;
+    }
+    //m_fovY = fovY;
     m_aspect = aspect;
 
     m_nearZ = zn;

@@ -40,16 +40,22 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	m_shadowMap = ShadowMap(device.Get(), &m_drawables, &m_spotlights);
 	
 	//Drawable setup
-	InitDrawableFromFile("Meshes/cube.obj", "Textures/gravel.png", m_drawables, {14.0f, 1.0f, 14.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, -10.0f, 5.0f}); //Ground
+	InitDrawableFromFile("Meshes/cube.obj", "Textures/gravel.png", m_drawables, { 14.0f, 1.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -10.0f, 5.0f }); //Ground
+	InitDrawableFromFile("Meshes/cube.obj", "Textures/gravel.png", m_drawables, { 14.0f, 1.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -10.0f, -23.0f }); //Ground2
 	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, 19.0f }); //Back wall
-	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 1.0f, 5.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, { -14.0f, -4.0f, 4.0f }); //Left wall
+	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, -37.0f }); //Front wall
+	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 1.0f, 5.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { -14.0f, -4.0f, 8.0f }); //Left wall
+	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 1.0f, 5.0f, 13.0f }, { 0.0f, 0.0f, 0.0f }, { -14.0f, -4.0f, -23.0f }); //Left wall2
 	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 1.0f, 5.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, {  14.0f, -4.0f, 4.0f }); //Right wall
+	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 1.0f, 5.0f, 13.0f }, { 0.0f, 0.0f, 0.0f }, { 14.0f, -4.0f, -23.0f }); //Right wall2
 
 	InitDrawableFromFile("Meshes/cube.obj", "Textures/dog.png", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, 5.0f }); //Mirror cube
 
 	InitDrawableFromFile("Meshes/cube.obj", "Textures/wood_crate.png", m_drawables, { 2.0f, 2.0f, 2.0f }, { 0.0f, 0.0f, 0.0f }, { -10.0f, -7.0f, 15.0f }); //Corner cubes for shadow testing
 	InitDrawableFromFile("Meshes/cube.obj", "Textures/wood_crate.png", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f }, { -10.0f, -4.0f, 15.0f }); //
 	InitDrawableFromFile("Meshes/cube.obj", "Textures/wood_crate.png", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f }, { -10.0f, -8.0f, 11.0f });
+
+	InitDrawableFromFile("Meshes/cube.obj", "Textures/wood_crate.png", m_drawables, { 2.0f, 2.0f, 2.0f }, { 0.0f, 0.0f, 0.0f }, { 5.0f, -7.0f, -15.0f });
 
 	//Sampler setup for texture access in shaders
 	InitSampler();
@@ -65,12 +71,11 @@ D3D11Engine::~D3D11Engine()
 
 void D3D11Engine::Update(float dt)
 {
-	/*Update constant buffers*/
+	//UPDATE CONSTANT BUFFERS
 	m_camera->UpdateConstantBuffer(context.Get());
 
 	for (auto& drawable : m_drawables)
 	{
-		//apply whatever changes should happen per tick
 		drawable.UpdateConstantBuffer(context.Get());
 	}
 
@@ -80,17 +85,13 @@ void D3D11Engine::Update(float dt)
 		mirror.UpdateConstantBuffer(context.Get());
 	}
 
-	/*Update structured buffers*/
-
-
-	/*Render*/
-	//if (shadowmapIsEnabled)RenderDepth(dt);
+	//RENDER
 	RenderDepth(dt);
 	Render(dt, rtv.Get(), dsv.Get(), &viewport, m_camera.get(), CLEAR_COLOR);
 	if (billboardingIsEnabled) RenderParticles(m_camera.get());
 	if (cubemapIsEnabled)RenderReflectiveObject(dt);
 
-	/*Present the final scene*/
+	//PRESENT
 	swapChain->Present(1, 0); //vSync enabled
 }
 
@@ -138,34 +139,30 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		context->RSSetViewports(1, viewport);
 		context->OMSetRenderTargets(1, &rtv, dsv);
 
-		/*Input Assembler Stage*/
-		//Set primitive topology and input layout
+		//INPUT ASSEMBLER STAGE
 		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST); //farewell D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST
 		context->IASetInputLayout(inputLayout.Get());
 
-		/*Shader Stage*/
+		//SHADER STAGE
 		context->VSSetShader(vertexShader.Get(), NULL, 0);
 		context->PSSetShader(pixelShader.Get(), NULL, 0);
 		
-		/*SHADOWS AND LIGHTING STUFF*/
-		//ID3D11ShaderResourceView* shadowViews[2] = { m_spotlights.GetStructuredBufferSRV() , m_spotlights.GetDepthBufferSRV() };
-		ID3D11ShaderResourceView* shadowViews[2] = {};
-		shadowViews[0] = m_spotlights.GetStructuredBufferSRV();
-		shadowViews[1] = m_spotlights.GetDepthBufferSRV();
+		//SHADOWS AND LIGHTING STUFF
+		ID3D11ShaderResourceView* shadowViews[] = { m_spotlights.GetStructuredBufferSRV() , m_spotlights.GetDepthBufferSRV() };
 		context->PSSetShaderResources(1, 2, shadowViews);
 		context->PSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
 		ID3D11SamplerState* shadowSampler = m_shadowMap.GetSampler();
 		context->PSSetSamplers(1, 1, &shadowSampler);
 
-		//Tessellation
+		//TESSELLATION
 		if(lodIsEnabled)context->RSSetState(wireframeRS.Get());
 		else			context->RSSetState(regularRS.Get());
 		context->HSSetShader(hullShader.Get(), NULL, 0);
 		context->DSSetShader(domainShader.Get(), NULL, 0);
-		context->DSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress()); //m_cameraCB.GetBufferAddress()
+		context->DSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
 		context->HSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
 
-		/*Culling*/
+		//DRAW (AND CULL IF ENABLED)
 		if (cullingIsEnabled)
 		{
 			int visibleDrawables = 0;
@@ -182,7 +179,6 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		}
 		else
 		{
-			//Per drawable: bind vertex and index buffers, then draw them
 			for (auto& drawable : m_drawables)
 			{
 				drawable.Bind(context.Get(), NULL);
@@ -191,26 +187,22 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 			m_drawablesBeingRendered = (int)m_drawables.size();
 		}
 
-		/*Unbind shaders before we move on to particle drawing*/
+		//UNBIND THINGS FOR SANITY REASONS
 		context->VSSetShader(NULL, NULL, 0);
 		context->PSSetShader(NULL, NULL, 0);
 		context->HSSetShader(NULL, NULL, 0);
 		context->DSSetShader(NULL, NULL, 0);
 
-		/*Unbind constant buffers too*/
 		context->HSSetConstantBuffers(0, 0, NULL);
 		context->DSSetConstantBuffers(0, 0, NULL);
 
-		/*Aaaand shader resource stuff*/
 		ID3D11RenderTargetView* nullRTV = NULL;
 		context->OMSetRenderTargets(1, &nullRTV, NULL);
 
-		ID3D11ShaderResourceView* nullSRVs[3] = {NULL, NULL, NULL};
-		//ID3D11ShaderResourceView* nullSRV = NULL;
+		ID3D11ShaderResourceView* nullSRVs[] = {NULL, NULL, NULL};
 		context->PSSetShaderResources(0, 3, nullSRVs);
 
-		ID3D11SamplerState* nullSamplers[2] = {NULL, NULL};
-		//ID3D11ShaderResourceView* nullSampler = NULL;
+		ID3D11SamplerState* nullSamplers[] = {NULL, NULL};
 		context->PSSetSamplers(0, 2, nullSamplers);
 	}
 
@@ -370,15 +362,13 @@ void D3D11Engine::DefPassOne(Camera* cam)
 	context->PSSetShader(deferredPixelShader.Get(), NULL, 0);
 	context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
 
-	/*Tessellation ting*/
+	//Tessellation
 	if (lodIsEnabled)context->RSSetState(wireframeRS.Get());
 	else			context->RSSetState(regularRS.Get());
 	context->HSSetShader(hullShader.Get(), NULL, 0);
 	context->DSSetShader(domainShader.Get(), NULL, 0);
-	context->DSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress()); //Moved from vertex shader to domain shader (move to hull shader? that's where patching happens so makes sense?)
-
-	//context->PSSetShaderResources(0, 1, &srv);
-	//context->PSSetSamplers(0, 1, &samplerState);
+	context->DSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
+	context->HSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
 
 	//This right here is why deferred rendering is better with multiple lights, but worse with multiple drawables
 	//We're drawing all our drawables onto all 3 render targets
@@ -638,8 +628,7 @@ void D3D11Engine::InitShadersAndInputLayout()
 		MessageBox(NULL, L"Failed to read deferred pixel shader!", L"Error", MB_OK);
 	}
 
-	hr = D3DCompileFromFile(L"ComputeShader.hlsl", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "cs_5_0", D3DCOMPILE_DEBUG, 0, &csBlob, &errorBlob); //This works but D3DReadFileToBlob doesn't. oof ig
-	//hr = D3DReadFileToBlob(L"../64/Debug/ComputeShader.cso", &csBlob);
+	hr = D3DCompileFromFile(L"ComputeShader.hlsl", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "cs_5_0", D3DCOMPILE_DEBUG, 0, &csBlob, &errorBlob);
 
 	if (FAILED(hr))
 	{
@@ -783,19 +772,47 @@ void D3D11Engine::InitGraphicsBuffer(GBuffer(&gbuf)[3])
 void D3D11Engine::InitSpotlights()
 {
 	//Going to write a bunch of comments here because I'm awful at visualizing 3D by just looking at numbers and pi angles
-	//So this spotlight is in the far left corner of the room (and angled further in that direction), shining a light onto the boxes i put there
 	std::vector<LightData> dataVec;
+
+	//fovY: Smaller numbers mean a more narrow field of view
+	//rotX: Angle the light left with negative values, right with positive
+	//rotY: Angle the light up with negative values, down with positive
+
+	//Spotlight in the far left corner angled further in that direction shining light onto boxes
 	LightData data;
-	//data.pos = XMFLOAT3(-2.0f, -6.0f, 5.0f);
 	data.pos = XMFLOAT3(0.0f, 0.0f, 5.0f);
-	//data.pos = XMFLOAT3(5.0f, -4.0f, 0.0f);
-	//data.pos = XMFLOAT3(-5.0f, 0.0f, 8.0f);
-	data.fovY = XM_PI / 4.0f;	//Smaller numbers mean a more narrow field of view
-	data.rotX = -XM_PIDIV4;		//Angle the light left with negative values, right with positive
+	data.fovY = XM_PI / 4.0f;
+	data.rotX = -XM_PIDIV4;
 	data.rotY = XM_PI / 8.0f;
-	//data.rotY = 0.0f;		//Angle the light up with negative values, down with positive
 	data.col = XMFLOAT3(1.0f, 1.0f, 1.0f);
 	dataVec.push_back(data);
+
+	//Spotlight angled out into the room from the near right corner of the room
+	LightData data2;
+	data2.pos = XMFLOAT3(5.0f, -4.0f, -25.0f);
+	data2.fovY = XM_PI / 4.0f;
+	data2.rotX = 0.0f;
+	data2.rotY = XM_PI / 12.0f;
+	data2.col = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	dataVec.push_back(data2);
+
+	//Spotlight angled straight down in the near left corner of the room
+	LightData data3;
+	data3.pos = XMFLOAT3(-10.0f, 0.0f, -30.0f);
+	data3.fovY = XM_PI / 4.0f;
+	data3.rotX = 0.0f;
+	data3.rotY = XM_PIDIV2;
+	data3.col = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	dataVec.push_back(data3);
+
+	//Directional light
+	LightData data4;
+	data4.pos = XMFLOAT3(-80.0f, 1.0f, -6.0f);
+	data4.fovY = 0.0f; //Directional light
+	data4.rotX = XM_PIDIV2;
+	data4.rotY = XM_PI / 8.0f;
+	data4.col = XMFLOAT3(0.25f, 0.25f, 0.25f); //Since directional lights don't fall off with distance, we manually lower the strength of the light here (got bright white walls earlier)
+	dataVec.push_back(data4);
 
 	m_spotlights = SpotLights(device.Get(), dataVec);
 }
