@@ -38,12 +38,13 @@ void main(uint3 DTid : SV_DispatchThreadID) //So the DTid is the index of the sp
     float3 colour = colourGBuffer[DTid.xy].xyz;
     float3 normal = normalize(normalGBuffer[DTid.xy].xyz);
     
-    float3 ambient = float3(normalGBuffer[DTid.xy].w, colourGBuffer[DTid.xy].w, 1.0f); //WHERE DOES THIS COME FROM
+    float3 ambient = float3(normalGBuffer[DTid.xy].w, colourGBuffer[DTid.xy].w, 0.0f); //WHERE DOES THIS COME FROM
+    float3 ambientStrength = float3(0.25f, 0.25f, 0.25f);
     //NEW///////////////////////////////////////////////////////////////////////
     float3 specularAlbedo = 1.0f;
     float specularPower = 1.0f;
     
-    float3 finalColour = colour;
+    float3 finalColour = colour * ambientStrength;
     float3 specular = 0.0f;
     
     //Allow for multiple spotlights
@@ -58,15 +59,9 @@ void main(uint3 DTid : SV_DispatchThreadID) //So the DTid is the index of the sp
         //To get coordinates in ndc space, we do the perspective divide (w-component) on the transformed position
         bool isInShadow = false;
         float shadowFactor = 1.0f;
-        float4x4 vp = mul(spotlights[i].view, spotlights[i].proj);
-        float4 ndcPos = mul(position, vp);
-        //ndcPos = mul(ndcPos, spotlights[i].proj);
+        float4 ndcPos = mul(position, spotlights[i].view);
+        ndcPos = mul(ndcPos, spotlights[i].proj);
         ndcPos.xyz /= ndcPos.w;
-        
-        //float posDiv = 1 / ndcPos.w;
-        //ndcPos.x * posDiv;
-        //ndcPos.y * posDiv;
-        //ndcPos.z * posDiv;
         
         float3 shadowMapUV = float3(ndcPos.x * 0.5f + 0.5f, ndcPos.y * -0.5f + 0.5f, i); //So this should be correct yes?
         float3 shadowMapSample = shadowMaps.SampleLevel(shadowMapSampler, shadowMapUV, 0.0f); //MSDN: First argument is the sampler state, second is the texture coordinates, third is lod (if the value is = 0, the biggest mipmap is used)
@@ -74,7 +69,7 @@ void main(uint3 DTid : SV_DispatchThreadID) //So the DTid is the index of the sp
         //"If the sampled value is lesser than the calculated value then this means that some other object lies in the path, and thus the fragment should be considered to be in shadow"
         //"As several of the fragments we are currently viewing might share a texel in the shadow map (as it does not have infinite precision) 
         //you may want to add a very small value to the sampled depth to try and avoid self shadowing issues"
-        if (shadowMapSample.x + 0.00001f < ndcPos.z)
+        if (shadowMapSample.x + 0.0001f < ndcPos.z)
         {
             isInShadow = true;
             shadowFactor = 0.0f;
@@ -82,13 +77,15 @@ void main(uint3 DTid : SV_DispatchThreadID) //So the DTid is the index of the sp
         
         //Page 504 of the book "Practical Rendering and Computation with Direct3D11"
         //Calculate the diffuse term
+        float4 spotlightPos = float4(spotlights[i].origin, 1.0f);
         float3 L = 0;
         float attenuation = 1.0f;
-        L = spotlights[i].origin - position.xyz; //Base the light vector on the light position
+        L = spotlightPos - position;
+        //L = spotlights[i].origin - position.xyz; //Base the light vector on the light position
         
         //Calculate attenuation based on distance from the light source
         float dist = length(L);
-        attenuation *= max(0.0f, 1.0f - (dist / 20.0f)); //What I write as "20.0f" here is what the book refers to as LightRange.x, so some arbitrary value representing how far the light reaches
+        attenuation = max(0.0f, 1.0f - (dist / 20.0f)); //What I write as "20.0f" here is what the book refers to as LightRange.x, so some arbitrary value representing how far the light reaches
         L /= dist;
         
         //Also add in the spotlight attenuation factor
@@ -115,21 +112,22 @@ void main(uint3 DTid : SV_DispatchThreadID) //So the DTid is the index of the sp
         float3 specular = pow(saturate(dot(normal, H)), specularPower) * spotlights[i].colour * specularAlbedo * nDotL;
         
         
-        //lighting += (diffuse + specular) * attenuation * shadowFactor;
-        if (!isInShadow)
-        {
-            finalColour += (diffuse + specular) * attenuation * 1.0f;
-        }
-        else
-        {
-            finalColour += (diffuse + specular) * attenuation;
-        }
+        finalColour += (diffuse + specular) * attenuation * shadowFactor;
+        //if (isInShadow)
+        //{
+        //    finalColour += (diffuse + specular) * attenuation * 0.0f;
+        //}
+        //else
+        //{
+        //    finalColour += (diffuse + specular) * attenuation;
+        //}
         //lighting = (ambient + diffuse) * base.xyz;
     }
     
     ////////////////////////////////////////////////////////////////////////////
-    finalColour += ambient;
+    //finalColour += colour;
     //finalColour += specular;
+    //finalColour *= ambientStrength;
     backBufferUAV[DTid.xy] += float4(finalColour, 1.0f);
     //int mode = 0;
     

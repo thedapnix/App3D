@@ -89,6 +89,7 @@ void D3D11Engine::Update(float dt)
 	//Deferred rendering right off the bat
 
 	//RenderDepth(dt);
+	DepthPass(dt);
 	Render(dt, rtv.Get(), dsv.Get(), &viewport, m_camera.get(), CLEAR_COLOR);
 	if (billboardingIsEnabled) RenderParticles(m_camera.get());
 	if (cubemapIsEnabled)RenderReflectiveObject(dt);
