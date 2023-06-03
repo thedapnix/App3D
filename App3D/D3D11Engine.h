@@ -51,9 +51,9 @@ private:
 	void Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, Camera* cam, const float clear[4]);
 	void RenderParticles(Camera* cam);
 	void RenderReflectiveObject(float dt);
-	void DepthPass(float dt);
-	void GeometryPass(ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, Camera* cam);
-	void LightingPass(Camera* cam);
+	void RenderDepth(float dt);
+	void DefPassOne(Camera* cam);
+	void DefPassTwo();
 
 	/*Initializers because this constructor would be HUGE otherwise*/
 	//"Regular" stuff
