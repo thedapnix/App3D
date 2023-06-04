@@ -57,6 +57,11 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 
 	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 5.0f, -3.0f, -33.0f }); //index 11, the spinny boy
 
+	for (const auto& drawable : m_drawables)
+	{
+		m_quadTree.AddElement(&drawable, drawable.GetBoundingBox());
+	}
+
 	//Sampler setup for texture access in shaders
 	InitSampler();
 
@@ -107,7 +112,7 @@ void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps,
 	}
 	ImGuiEngineWindow(
 		m_camera.get(), m_fpsString, state,
-		objIsEnabled, deferredIsEnabled, cullingIsEnabled, billboardingIsEnabled, lodIsEnabled, cubemapIsEnabled, shadowmapIsEnabled,
+		deferredIsEnabled, cullingIsEnabled, billboardingIsEnabled, lodIsEnabled, cubemapIsEnabled, shadowmapIsEnabled,
 		m_drawablesBeingRendered
 	);
 	EndImGuiFrame();
@@ -167,16 +172,13 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		if (cullingIsEnabled)
 		{
 			int visibleDrawables = 0;
-			for (auto& drawable : m_drawables)
+			for (const auto& drawable : m_quadTree.CheckTree(cam->GetFrustum()))
 			{
-				if (DrawableIsVisible(cam->GetFrustum(), drawable.GetBoundingBox(), m_camera->View(), drawable.World()))
-				{
-					drawable.Bind(context.Get(), NULL);
-					drawable.Draw(context.Get());
-					visibleDrawables++;
-				}
-				m_drawablesBeingRendered = visibleDrawables;
+				drawable->Bind(context.Get(), NULL);
+				drawable->Draw(context.Get());
+				visibleDrawables++;
 			}
+			m_drawablesBeingRendered = visibleDrawables;
 		}
 		else
 		{

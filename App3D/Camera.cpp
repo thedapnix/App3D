@@ -254,6 +254,11 @@ void Camera::UpdateViewMatrix()
         m_view(3, 3) = 1.0f;
 
         m_viewDirty = false;
+
+        //Recreate the bounding frustum
+        DirectX::BoundingFrustum::CreateFromMatrix(m_frustum, Proj());
+        DirectX::XMMATRIX invView = DirectX::XMMatrixInverse(NULL, View());
+        m_frustum.Transform(m_frustum, invView);
     }
 }
 
@@ -285,5 +290,8 @@ void Camera::InitConstantBufferAndFrustum(ID3D11Device* device)
     XMStoreFloat4x4(&m_cameraData.proj, XMMatrixTranspose(Proj()));
     DirectX::XMStoreFloat3(&m_cameraData.pos, GetPositionVec());
     m_cameraCB.Init(device, &m_cameraData, sizeof(m_cameraData));
+
     DirectX::BoundingFrustum::CreateFromMatrix(m_frustum, Proj());
+    DirectX::XMMATRIX invView = DirectX::XMMatrixInverse(NULL, View());
+    m_frustum.Transform(m_frustum, invView);
 }

@@ -126,7 +126,7 @@ void Drawable::InitTexture(ID3D11Device* device, const char* textureFileName)
 	}
 }
 
-void Drawable::Bind(ID3D11DeviceContext* context, ID3D11ShaderResourceView* inputSRV)
+void Drawable::Bind(ID3D11DeviceContext* context, ID3D11ShaderResourceView* inputSRV) const
 {
 	//Vertex Buffer
 	ID3D11Buffer* buffer[] = { m_vertexBuffer.GetBuffer() };
@@ -193,7 +193,7 @@ void Drawable::Rotate(float angleX, float angleY, float angleZ)
 	));
 }
 
-DirectX::XMMATRIX Drawable::World()
+DirectX::XMMATRIX Drawable::World() const
 {
 	//This feels like a horribly expensive function. I might be wrong though. But if I'm not, consider storing a XMFLOAT4X4 m_world
 	return DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z) * 
@@ -201,7 +201,7 @@ DirectX::XMMATRIX Drawable::World()
 		DirectX::XMMatrixTranslation(m_translate.x, m_translate.y, m_translate.z);
 }
 
-DirectX::BoundingBox Drawable::GetBoundingBox()
+const DirectX::BoundingBox Drawable::GetBoundingBox() const
 {
 	return m_aabb;
 }

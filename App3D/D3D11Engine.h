@@ -98,7 +98,6 @@ private:
 	/*ImGui variables*/
 	int m_fpsCounter = 0;
 	std::string m_fpsString = "";
-	bool objIsEnabled = true;
 	bool deferredIsEnabled = false;
 	bool cullingIsEnabled = false;
 	bool billboardingIsEnabled = false;
@@ -147,4 +146,5 @@ private:
 	ParticleSystem m_particles;
 	CubeMap m_cubeMap;
 	ShadowMap m_shadowMap;
+	QuadTree<Drawable> m_quadTree;
 };

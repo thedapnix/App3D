@@ -55,7 +55,7 @@ public:
 
 	void InitTexture(ID3D11Device* device, const char* textureFileName);
 
-	void Bind(ID3D11DeviceContext* context, ID3D11ShaderResourceView* inputSRV);
+	void Bind(ID3D11DeviceContext* context, ID3D11ShaderResourceView* inputSRV) const;
 	void Draw(ID3D11DeviceContext* context) const;
 	void Unbind(ID3D11DeviceContext* context);
 	void UpdateConstantBuffer(ID3D11DeviceContext* context);
@@ -66,8 +66,8 @@ public:
 	void Rotate(float angleX, float angleY, float angleZ);
 
 	/*Getters*/
-	DirectX::XMMATRIX World();
-	DirectX::BoundingBox GetBoundingBox();
+	DirectX::XMMATRIX World() const;
+	const DirectX::BoundingBox GetBoundingBox() const;
 	const VertexBuffer& GetVertexBuffer() const;
 	void* GetVertexVectorData();
 
