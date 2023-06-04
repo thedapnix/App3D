@@ -31,7 +31,7 @@ private:
 	int m_depth = 0;
 
 	static constexpr int maxElements = 8;
-	static constexpr int maxDepth = 4;
+	static constexpr int maxDepth = 4; //For sanity reasons, don't let the tree subdivide forever
 	static constexpr int maxHeight = 80;
 	static constexpr int minHeight = -80;
 };
@@ -90,44 +90,38 @@ void QuadTree<T>::AddToNode(const T* element, const DirectX::BoundingBox& aabb, 
 
 			//"For a quadtree, one of the axes(often the Y-axis if it represents the "height" in a scene) covers the whole scene and no partitioning is done for it"
 			//So we subdivide space into 4 quadrants along x- and z-axes (this part hurts my brain)
-			float minX = center.x - extents.x;
-			float maxX = center.x + extents.x;
-			float minZ = center.z - extents.z;
-			float maxZ = center.z + extents.z;
+			std::vector<DirectX::BoundingBox> childBoxes;
 			DirectX::BoundingBox nearLeft;
 			nearLeft.CreateFromPoints(nearLeft,
 				{ center.x, maxHeight, center.z },
-				{ minX, minHeight, minZ });
+				{ center.x - extents.x , minHeight, center.z - extents.z });
+			childBoxes.push_back(nearLeft);
 
 			DirectX::BoundingBox nearRight;
 			nearRight.CreateFromPoints(nearRight,
 				{ center.x, maxHeight, center.z },
-				{ maxX, minHeight, minZ });
+				{ center.x + extents.x, minHeight, center.z - extents.z });
+			childBoxes.push_back(nearRight);
 
 			DirectX::BoundingBox farLeft;
 			farLeft.CreateFromPoints(farLeft,
 				{ center.x, maxHeight, center.z },
-				{ minX, minHeight, maxZ });
+				{ center.x - extents.x, minHeight, center.z + extents.z });
+			childBoxes.push_back(farLeft);
 
 			DirectX::BoundingBox farRight;
 			farRight.CreateFromPoints(farRight,
 				{ center.x, maxHeight, center.z },
-				{ maxX, minHeight, maxZ });
-
-			node->children[0] = std::make_unique<Node>();
-			node->children[0]->aabb = nearLeft;
-			node->children[1] = std::make_unique<Node>();
-			node->children[1]->aabb = nearRight;
-			node->children[2] = std::make_unique<Node>();
-			node->children[2]->aabb = farLeft;
-			node->children[3] = std::make_unique<Node>();
-			node->children[3]->aabb = farRight;
+				{ center.x + extents.x, minHeight, center.z + extents.z });
+			childBoxes.push_back(farLeft);
 
 			//"For each of the currently stored elements in this node, attempt to add them to the new child nodes"
 			for (const auto& element : node->elements)
 			{
 				for (int i = 0; i < 4; i++)
 				{
+					node->children[i] = std::make_unique<Node>();
+					node->children[i]->aabb = childBoxes.at(i);
 					if (node->children[i]->aabb.Intersects(element->GetBoundingBox()))
 					{
 						node->children[i]->elements.push_back(element);
