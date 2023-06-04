@@ -120,6 +120,9 @@
     <ClCompile Include="Spotlights.cpp">
       <Filter>Graphics\Shadowmap</Filter>
     </ClCompile>
+    <ClCompile Include="QuadTree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h">
@@ -196,6 +199,9 @@
     </ClInclude>
     <ClInclude Include="Spotlights.h">
       <Filter>Graphics\Shadowmap</Filter>
+    </ClInclude>
+    <ClInclude Include="QuadTree.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

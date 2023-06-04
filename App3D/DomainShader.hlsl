@@ -35,7 +35,7 @@ struct DomainShaderOutput
 
 float3 ProjectPointOntoPlane(float3 toProject, float3 planePoint, float3 planeNor)
 {
-    //Cheers to stackoverflow person: p' = p - (n dot (p - o)) * n
+    //https://stackoverflow.com/questions/9605556/how-to-project-a-point-onto-a-plane-in-3d giving the formula: p' = p - (n dot (p - o)) * n , big ups
 	return toProject - (dot(planeNor, toProject - planePoint) * planeNor);
 }
 

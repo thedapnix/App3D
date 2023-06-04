@@ -15,6 +15,7 @@
 #include "CubeMap.h"
 #include "ParticleSystem.h"
 #include "ShadowMap.h"
+#include "QuadTree.h"
 
 class D3D11Engine
 {
