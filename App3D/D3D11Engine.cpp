@@ -926,10 +926,10 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 	UINT iCount = 0u;
 
 	/*Material data to pass to drawable*/
-	std::string ambientData = "";
-	std::string diffuseData = "";
-	std::string specularData = "";
-	float shineData = 0.0f;
+	std::string ambientData = "Textures/dark_grey.png";
+	std::string diffuseData = "Textures/grey.png";
+	std::string specularData = "Textures/light_grey.png";
+	float shineData = 1.0f;
 
 	//Read the text file
 	std::string lineStr;

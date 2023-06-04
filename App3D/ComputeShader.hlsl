@@ -35,7 +35,7 @@ sampler shadowMapSampler : register(s0);
                                             //In this case, I make a 8x8 grid, making sure to cover the entire view (by dispatching 100x100)
 void main(uint3 DTid : SV_DispatchThreadID) //So the DTid is the index of the specific thread we're working with
 {    
-    float4 position = positionGBuffer[DTid.xy];
+    float4 position = float4(positionGBuffer[DTid.xy].xyz, 1.0f);
     float3 ambientAlbedo = ambientGBuffer[DTid.xy].xyz;
     float3 diffuseAlbedo = diffuseGBuffer[DTid.xy].xyz;
     float3 specularAlbedo = specularGBuffer[DTid.xy].xyz;
@@ -88,7 +88,7 @@ void main(uint3 DTid : SV_DispatchThreadID) //So the DTid is the index of the sp
         //Calculate the specular term
         float3 V = cameraPosition - position.xyz;
         float3 H = normalize(L + V);
-        float3 specular = pow(dot(normal, H), shininess) * spotlights[i].colour * specularAlbedo * nDotL; //removed: saturate
+        float3 specular = pow(saturate(dot(normal, H)), shininess) * spotlights[i].colour * specularAlbedo * nDotL; //removed: saturate
         
         if (!isInShadow)
         {
@@ -98,5 +98,5 @@ void main(uint3 DTid : SV_DispatchThreadID) //So the DTid is the index of the sp
     finalColour += ambientAlbedo;
     
     //Apply the appropriate effect
-    backBufferUAV[DTid.xy] += float4(finalColour, 1.0f);
+    backBufferUAV[DTid.xy] = float4(finalColour, 1.0f);
 }

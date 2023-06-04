@@ -42,8 +42,10 @@ PixelShaderOutput main(PixelShaderInput input)
     output.position = float4(input.worldPosition.xyz, shininess);
     
     float3 ambient = ambientTexture.Sample(samplerState, input.uv).xyz;
+    ambient *= 0.25f;
     float3 diffuse = diffuseTexture.Sample(samplerState, input.uv).xyz;
     float3 specular = specularTexture.Sample(samplerState, input.uv).xyz;
+    //specular *= 1.5f;
     
     //and then pack the normal into the 4th component of the other texture containers?
     output.ambient = float4(ambient, input.nor.x);
