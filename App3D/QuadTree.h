@@ -9,10 +9,6 @@
 //Liberal use of quoting the cookbook here because I'm not a big fan of trees
 //Crashes if I try having function definitions in a cpp file. Love templates.
 
-static constexpr int maxElements = 16;
-static constexpr int maxHeight = 80;
-static constexpr int minHeight = -80;
-
 template<typename T>
 class QuadTree
 {
@@ -32,6 +28,12 @@ private:
 	void CheckNode(const DirectX::BoundingFrustum& frustum, const std::unique_ptr<Node>& node, std::vector<const T*>& foundObjects);
 
 	std::unique_ptr<Node> m_root;
+	int m_depth = 0;
+
+	static constexpr int maxElements = 8;
+	static constexpr int maxDepth = 4;
+	static constexpr int maxHeight = 80;
+	static constexpr int minHeight = -80;
 };
 
 template<typename T>
@@ -44,7 +46,10 @@ void QuadTree<T>::AddElement(const T* element, const DirectX::BoundingBox& aabb)
 		DirectX::BoundingBox rootAABB = { { minHeight, minHeight, minHeight }, { maxHeight, maxHeight, maxHeight } };
 		m_root->aabb = rootAABB;
 	}
-	AddToNode(element, aabb, m_root);
+	if (m_depth < maxDepth)
+	{
+		AddToNode(element, aabb, m_root);
+	}
 }
 
 template<typename T>
@@ -129,13 +134,18 @@ void QuadTree<T>::AddToNode(const T* element, const DirectX::BoundingBox& aabb, 
 					}
 				}
 			}
-			node->elements.clear(); //I'VE FORGOTTEN TO CLEAR
+			node->elements.clear();
+			m_depth++;
+			return;
 		}
 	}
 	//"Once each child node has been correctly created and the previously stored elements have been inserted into them correctly, the recursive process can simply be done with the new element and each of the new child nodes"
-	for (int i = 0; i < 4; i++)
+	if (m_depth < maxDepth)
 	{
-		AddToNode(element, aabb, node->children[i]);
+		for (int i = 0; i < 4; i++)
+		{
+			AddToNode(element, aabb, node->children[i]);
+		}
 	}
 }
 

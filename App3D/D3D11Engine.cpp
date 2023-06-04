@@ -40,14 +40,14 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	m_shadowMap = ShadowMap(device.Get(), &m_drawables, &m_spotlights);
 	
 	//Drawable setup
-	InitDrawableFromFile("Meshes/gravel.obj", m_drawables, { 14.0f, 1.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -10.0f, 5.0f }); //Ground
-	InitDrawableFromFile("Meshes/gravel.obj", m_drawables, { 14.0f, 1.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -10.0f, -23.0f }); //Ground2
-	InitDrawableFromFile("Meshes/brick_wall.obj", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, 19.0f }); //Back wall
-	InitDrawableFromFile("Meshes/brick_wall.obj", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, -37.0f }); //Front wall
-	InitDrawableFromFile("Meshes/brick_wall.obj", m_drawables, { 1.0f, 5.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { -14.0f, -4.0f, 8.0f }); //Left wall
-	InitDrawableFromFile("Meshes/brick_wall.obj", m_drawables, { 1.0f, 5.0f, 13.0f }, { 0.0f, 0.0f, 0.0f }, { -14.0f, -4.0f, -23.0f }); //Left wall2
-	InitDrawableFromFile("Meshes/brick_wall.obj", m_drawables, { 1.0f, 5.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, {  14.0f, -4.0f, 4.0f }); //Right wall
-	InitDrawableFromFile("Meshes/brick_wall.obj", m_drawables, { 1.0f, 5.0f, 13.0f }, { 0.0f, 0.0f, 0.0f }, { 14.0f, -4.0f, -23.0f }); //Right wall2
+	InitDrawableFromFile("Meshes/ground.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -10.0f, 5.0f }); //Ground
+	InitDrawableFromFile("Meshes/ground.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -10.0f, -23.0f }); //Ground2
+	InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, 19.0f }); //Back wall
+	InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, -37.0f }); //Front wall
+	InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 1.0f, 5.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { -14.0f, -4.0f, 8.0f }); //Left wall
+	InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 1.0f, 5.0f, 13.0f }, { 0.0f, 0.0f, 0.0f }, { -14.0f, -4.0f, -23.0f }); //Left wall2
+	InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 1.0f, 5.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, {  14.0f, -4.0f, 4.0f }); //Right wall
+	InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 1.0f, 5.0f, 13.0f }, { 0.0f, 0.0f, 0.0f }, { 14.0f, -4.0f, -23.0f }); //Right wall2
 
 	InitDrawableFromFile("Meshes/wood_crate.obj", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, 5.0f }); //Mirror cube
 
@@ -58,6 +58,10 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 5.0f, -3.0f, -33.0f }); //index 11, the spinny boy
 
 	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -8.0f, -3.0f, -30.0f });
+	InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -6.0f, -3.0f, -32.0f });
+	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -10.0f, -5.0f, -30.0f });
+	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -9.0f, -7.0f, -32.0f });
+	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -6.0f, -7.0f, -28.0f });
 
 	for (const auto& drawable : m_drawables)
 	{
