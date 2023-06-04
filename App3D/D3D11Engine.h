@@ -62,7 +62,7 @@ private:
 	void InitRTV();
 	void InitDepthStencil();
 	void InitShadersAndInputLayout();
-	bool InitDrawableFromFile(std::string objFileName, std::string textureFileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
+	bool InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
 	void InitSampler();
 	void InitCamera();
 
@@ -78,6 +78,9 @@ private:
 
 	//Shadow
 	void InitSpotlights();
+
+	//Internal function called by the obj-parser to now also parse materials
+	bool ParseMaterial(std::string mtlFileName, std::string& ambient, std::string& diffuse, std::string& specular, float& shininess);
 	
 	/*VARIABLES*/
 	UINT m_windowWidth;

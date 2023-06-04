@@ -42,7 +42,6 @@ Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOA
 void Drawable::InitTexture(ID3D11Device* device, const char* textureFileName)
 {
 	/*Read from texture file*/
-	//int width, height;
 	int width, height;
 	int channels;
 

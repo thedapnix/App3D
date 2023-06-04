@@ -1,0 +1,5 @@
+newmtl gravel
+Ka gravel.png
+Kd gravel.png
+Ks gravel.png
+Ns 1.0000

@@ -1,0 +1,5 @@
+newmtl wood_crate
+Ka wood_crate.png
+Kd wood_crate.png
+Ks wood_crate.png
+Ns 1.0000

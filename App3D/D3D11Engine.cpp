@@ -40,22 +40,22 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	m_shadowMap = ShadowMap(device.Get(), &m_drawables, &m_spotlights);
 	
 	//Drawable setup
-	InitDrawableFromFile("Meshes/cube.obj", "Textures/gravel.png", m_drawables, { 14.0f, 1.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -10.0f, 5.0f }); //Ground
-	InitDrawableFromFile("Meshes/cube.obj", "Textures/gravel.png", m_drawables, { 14.0f, 1.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -10.0f, -23.0f }); //Ground2
-	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, 19.0f }); //Back wall
-	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, -37.0f }); //Front wall
-	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 1.0f, 5.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { -14.0f, -4.0f, 8.0f }); //Left wall
-	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 1.0f, 5.0f, 13.0f }, { 0.0f, 0.0f, 0.0f }, { -14.0f, -4.0f, -23.0f }); //Left wall2
-	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 1.0f, 5.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, {  14.0f, -4.0f, 4.0f }); //Right wall
-	InitDrawableFromFile("Meshes/cube.obj", "Textures/brick_wall.png", m_drawables, { 1.0f, 5.0f, 13.0f }, { 0.0f, 0.0f, 0.0f }, { 14.0f, -4.0f, -23.0f }); //Right wall2
+	InitDrawableFromFile("Meshes/gravel.obj", m_drawables, { 14.0f, 1.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -10.0f, 5.0f }); //Ground
+	InitDrawableFromFile("Meshes/gravel.obj", m_drawables, { 14.0f, 1.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -10.0f, -23.0f }); //Ground2
+	InitDrawableFromFile("Meshes/brick_wall.obj", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, 19.0f }); //Back wall
+	InitDrawableFromFile("Meshes/brick_wall.obj", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, -37.0f }); //Front wall
+	InitDrawableFromFile("Meshes/brick_wall.obj", m_drawables, { 1.0f, 5.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { -14.0f, -4.0f, 8.0f }); //Left wall
+	InitDrawableFromFile("Meshes/brick_wall.obj", m_drawables, { 1.0f, 5.0f, 13.0f }, { 0.0f, 0.0f, 0.0f }, { -14.0f, -4.0f, -23.0f }); //Left wall2
+	InitDrawableFromFile("Meshes/brick_wall.obj", m_drawables, { 1.0f, 5.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, {  14.0f, -4.0f, 4.0f }); //Right wall
+	InitDrawableFromFile("Meshes/brick_wall.obj", m_drawables, { 1.0f, 5.0f, 13.0f }, { 0.0f, 0.0f, 0.0f }, { 14.0f, -4.0f, -23.0f }); //Right wall2
 
-	InitDrawableFromFile("Meshes/cube.obj", "Textures/dog.png", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, 5.0f }); //Mirror cube
+	InitDrawableFromFile("Meshes/wood_crate.obj", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, 5.0f }); //Mirror cube
 
-	InitDrawableFromFile("Meshes/cube.obj", "Textures/wood_crate.png", m_drawables, { 2.0f, 2.0f, 2.0f }, { 0.0f, 0.0f, 0.0f }, { -10.0f, -7.0f, 15.0f }); //Corner cubes for shadow testing
-	InitDrawableFromFile("Meshes/cube.obj", "Textures/wood_crate.png", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f }, { -10.0f, -4.0f, 15.0f }); //
-	InitDrawableFromFile("Meshes/cube.obj", "Textures/wood_crate.png", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f }, { -10.0f, -8.0f, 11.0f });
+	InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 2.0f, 2.0f, 2.0f }, { 0.0f, 0.0f, 0.0f }, { -10.0f, -7.0f, 15.0f }); //Corner cubes for shadow testing
+	InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f }, { -10.0f, -4.0f, 15.0f }); //
+	InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f }, { -10.0f, -8.0f, 11.0f });
 
-	InitDrawableFromFile("Meshes/cube.obj", "Textures/icon.png", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 5.0f, -3.0f, -33.0f }); //index 11, the spinny boy
+	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 5.0f, -3.0f, -33.0f }); //index 11, the spinny boy
 
 	//Sampler setup for texture access in shaders
 	InitSampler();
@@ -862,12 +862,25 @@ void D3D11Engine::InitSampler()
 	}
 }
 
-bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::string textureFileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate)
+bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate)
 {
+	/*Dawn of the final day: We need to be able to parse materials too. 
+	We'll get the ambient, diffuse, specular, and shininess components from here, so I guess we're no longer manually applying textures
+	Example mtl as provided by :
+	newmtl shinyred
+		Ka  0.1986  0.0000  0.0000
+		Kd  0.5922  0.0166  0.0000
+		Ks  0.5974  0.2084  0.2084
+		illum 2
+		Ns 100.2237
+	So Ka, Kd, Ks and Ns are what we're interested in here (Ns is the shininess) and we can skip illum 
+	I'll also replace the x-, y-, and z-values with textures for the ambient, diffuse, and specular components so this will be really simple to add (famous last words?)
+	These will be used in the deferred renderer*/
+
 	std::ifstream ifs(objFileName);
 	if (!ifs)
 	{
-		MessageBox(NULL, L"Couldn't read obj file name!", L"Error", MB_OK);
+		MessageBox(NULL, L"Couldn't open obj file!", L"Error", MB_OK);
 		return false;
 	}
 
@@ -893,6 +906,12 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::string text
 	UINT vCount = 0u;
 	UINT iCount = 0u;
 
+	/*Material data to pass to drawable*/
+	std::string ambientData = "";
+	std::string diffuseData = "";
+	std::string specularData = "";
+	float shineData = 0.0f;
+
 	//Read the text file
 	std::string lineStr;
 	while (std::getline(ifs, lineStr))
@@ -900,6 +919,17 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::string text
 		std::istringstream lineSS(lineStr);
 		std::string lineType;
 		lineSS >> lineType;
+
+		/*Material stuff*/
+		if (lineType == "mtllib")
+		{
+			//So this line is basically the one telling us which file we'll need to read
+			std::string mtlFileName;
+			lineSS >> mtlFileName;
+			ParseMaterial(mtlFileName, ambientData, diffuseData, specularData, shineData); //Split up the functions because too much text, honestly I kinda wanna do that to this whole function already but crunch
+		}
+
+
 
 		if (lineType == "v")
 		{
@@ -1008,11 +1038,56 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::string text
 	bufferData.iData.count = iCount;
 	bufferData.iData.vector = indices;
 
-	bufferData.textureFileName = textureFileName;
+	bufferData.textureFileName = ambientData;
 
 	Drawable cube(device.Get(), bufferData, scale, rotate, translate);
 	cube.CreateBoundingBoxFromPoints(vMin, vMax);
 	vecToFill.push_back(cube);
+
+	return true;
+}
+
+bool D3D11Engine::ParseMaterial(std::string mtlFileName, std::string& ambient, std::string& diffuse, std::string& specular, float& shininess)
+{
+	std::ifstream ifs("Meshes/" + mtlFileName);
+	if (!ifs)
+	{
+		MessageBox(NULL, L"Couldn't open mtl file!", L"Error", MB_OK);
+		return false;
+	}
+
+	//Read the text file
+	std::string lineStr;
+	while (std::getline(ifs, lineStr))
+	{
+		std::istringstream lineSS(lineStr);
+		std::string lineType;
+		lineSS >> lineType;
+		if (lineType == "Ka")
+		{
+			std::string ambientData;
+			lineSS >> ambientData;
+			ambient = "Textures/" + ambientData;
+		}
+		if (lineType == "Kd")
+		{
+			std::string diffuseData;
+			lineSS >> diffuseData;
+			diffuse = "Textures/" + diffuseData;
+		}
+		if (lineType == "Ks")
+		{
+			std::string specularData;
+			lineSS >> specularData;
+			specular = "Textures/" + specularData;
+		}
+		if (lineType == "Ns")
+		{
+			float shineData;
+			lineSS >> shineData;
+			shininess = shineData;
+		}
+	}
 
 	return true;
 }

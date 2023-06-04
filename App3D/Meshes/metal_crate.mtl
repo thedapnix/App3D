@@ -1,0 +1,5 @@
+newmtl metal_crate
+Ka metal_crate.png
+Kd metal_crate.png
+Ks metal_crate.png
+Ns 32.0000
