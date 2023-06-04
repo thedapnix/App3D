@@ -38,7 +38,13 @@ struct BufferData
 		std::vector<UINT> vector;
 	} iData;
 
-	std::string textureFileName;
+	struct MaterialData
+	{
+		std::string ambient;
+		std::string diffuse;
+		std::string specular;
+		float shininess;
+	} mData;
 };
 
 class Drawable
@@ -90,4 +96,7 @@ private:
 	DirectX::BoundingBox m_aabb;
 
 	void* m_vertexVectorData;
+
+	/*Material stuff*/
+	float m_shininess;
 };

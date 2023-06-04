@@ -35,8 +35,9 @@ Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOA
 	));
 	m_constantBuffer.Init(device, &m_transform, sizeof(m_transform));
 
-	//They can also have shader resource view+texture (realistically everything will be textured but hey, we have the option not to)
-	InitTexture(device, data.textureFileName.c_str());
+	InitTexture(device, data.mData.diffuse.c_str());
+
+	m_shininess = data.mData.shininess;
 }
 
 void Drawable::InitTexture(ID3D11Device* device, const char* textureFileName)

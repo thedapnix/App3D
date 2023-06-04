@@ -1038,7 +1038,10 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 	bufferData.iData.count = iCount;
 	bufferData.iData.vector = indices;
 
-	bufferData.textureFileName = ambientData;
+	bufferData.mData.ambient = ambientData;
+	bufferData.mData.diffuse = diffuseData;
+	bufferData.mData.specular = specularData;
+	bufferData.mData.shininess = shineData;
 
 	Drawable cube(device.Get(), bufferData, scale, rotate, translate);
 	cube.CreateBoundingBoxFromPoints(vMin, vMax);
