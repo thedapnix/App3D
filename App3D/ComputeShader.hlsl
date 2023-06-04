@@ -95,7 +95,7 @@ void main(uint3 DTid : SV_DispatchThreadID) //So the DTid is the index of the sp
             finalColour += (diffuse + specular) * attenuation;
         }
     }
-    finalColour += ambientAlbedo;
+    finalColour += (ambientAlbedo * 0.25f);
     
     //Apply the appropriate effect
     backBufferUAV[DTid.xy] = float4(finalColour, 1.0f);
