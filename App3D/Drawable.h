@@ -57,7 +57,7 @@ public:
 
 	//Movement stuff
 	void EditTranslation(float x, float y, float z);
-	void RotateY(float dt);
+	void Rotate(float angleX, float angleY, float angleZ);
 
 	/*Getters*/
 	DirectX::XMMATRIX World();

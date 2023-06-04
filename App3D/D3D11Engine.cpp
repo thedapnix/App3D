@@ -55,7 +55,7 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	InitDrawableFromFile("Meshes/cube.obj", "Textures/wood_crate.png", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f }, { -10.0f, -4.0f, 15.0f }); //
 	InitDrawableFromFile("Meshes/cube.obj", "Textures/wood_crate.png", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f }, { -10.0f, -8.0f, 11.0f });
 
-	InitDrawableFromFile("Meshes/cube.obj", "Textures/wood_crate.png", m_drawables, { 2.0f, 2.0f, 2.0f }, { 0.0f, 0.0f, 0.0f }, { 5.0f, -7.0f, -15.0f });
+	InitDrawableFromFile("Meshes/cube.obj", "Textures/icon.png", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 5.0f, -3.0f, -33.0f }); //index 11, the spinny boy
 
 	//Sampler setup for texture access in shaders
 	InitSampler();
@@ -74,6 +74,7 @@ void D3D11Engine::Update(float dt)
 	//UPDATE CONSTANT BUFFERS
 	m_camera->UpdateConstantBuffer(context.Get());
 
+	m_drawables.at(11).Rotate(0.0f, 0.01f, 0.01f);
 	for (auto& drawable : m_drawables)
 	{
 		drawable.UpdateConstantBuffer(context.Get());
@@ -81,7 +82,7 @@ void D3D11Engine::Update(float dt)
 
 	for (auto& mirror : m_reflectiveDrawables)
 	{
-		mirror.RotateY(0.005f);
+		mirror.Rotate(0.0f, 0.005f, 0.0f);
 		mirror.UpdateConstantBuffer(context.Get());
 	}
 
@@ -787,12 +788,12 @@ void D3D11Engine::InitSpotlights()
 	data.col = XMFLOAT3(1.0f, 1.0f, 1.0f);
 	dataVec.push_back(data);
 
-	//Spotlight angled out into the room from the near right corner of the room
+	//Spotlight angled out into the upper corner from the near right side of the room
 	LightData data2;
-	data2.pos = XMFLOAT3(5.0f, -4.0f, -25.0f);
+	data2.pos = XMFLOAT3(5.0f, -7.0f, -25.0f);
 	data2.fovY = XM_PI / 4.0f;
-	data2.rotX = 0.0f;
-	data2.rotY = XM_PI / 12.0f;
+	data2.rotX = XM_PI;
+	data2.rotY = -XM_PI / 8.0f;
 	data2.col = XMFLOAT3(1.0f, 1.0f, 1.0f);
 	dataVec.push_back(data2);
 
