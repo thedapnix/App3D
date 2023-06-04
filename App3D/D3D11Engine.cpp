@@ -150,7 +150,7 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		
 		//SHADOWS AND LIGHTING STUFF
 		ID3D11ShaderResourceView* shadowViews[] = { m_spotlights.GetStructuredBufferSRV() , m_spotlights.GetDepthBufferSRV() };
-		context->PSSetShaderResources(1, 2, shadowViews);
+		context->PSSetShaderResources(3, 2, shadowViews);
 		context->PSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
 		ID3D11SamplerState* shadowSampler = m_shadowMap.GetSampler();
 		context->PSSetSamplers(1, 1, &shadowSampler);
@@ -200,8 +200,8 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		ID3D11RenderTargetView* nullRTV = NULL;
 		context->OMSetRenderTargets(1, &nullRTV, NULL);
 
-		ID3D11ShaderResourceView* nullSRVs[] = {NULL, NULL, NULL};
-		context->PSSetShaderResources(0, 3, nullSRVs);
+		ID3D11ShaderResourceView* nullSRVs[] = {NULL, NULL, NULL, NULL, NULL};
+		context->PSSetShaderResources(0, 5, nullSRVs);
 
 		ID3D11SamplerState* nullSamplers[] = {NULL, NULL};
 		context->PSSetSamplers(0, 2, nullSamplers);
@@ -799,7 +799,7 @@ void D3D11Engine::InitSpotlights()
 
 	//Spotlight angled straight down in the near left corner of the room
 	LightData data3;
-	data3.pos = XMFLOAT3(-10.0f, 0.0f, -30.0f);
+	data3.pos = XMFLOAT3(-8.0f, 4.0f, -30.0f);
 	data3.fovY = XM_PI / 4.0f;
 	data3.rotX = 0.0f;
 	data3.rotY = XM_PIDIV2;

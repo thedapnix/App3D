@@ -35,9 +35,14 @@ Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOA
 	));
 	m_constantBuffer.Init(device, &m_transform, sizeof(m_transform));
 
-	InitTexture(device, data.mData.diffuse.c_str());
-
-	m_shininess = data.mData.shininess;
+	/*Init textures, material update. Don't load duplicate textures*/
+	InitTexture(device, data.mData.ambient.c_str());
+	diffuseSRV = ambientSRV;
+	specularSRV = ambientSRV;
+	//InitTexture(device, data.mData.diffuse.c_str(), diffuseSRT.Get(), diffuseSRV.Get());
+	//InitTexture(device, data.mData.specular.c_str(), specularSRT.Get(), specularSRV.Get());
+	m_shineCB.shininess = data.mData.shininess;
+	m_constantBufferShininess.Init(device, &m_shineCB, sizeof(m_shineCB));
 }
 
 void Drawable::InitTexture(ID3D11Device* device, const char* textureFileName)
@@ -92,7 +97,7 @@ void Drawable::InitTexture(ID3D11Device* device, const char* textureFileName)
 	srvDesc.Texture2D.MipLevels = srtDesc.MipLevels;
 	srvDesc.Format = srtDesc.Format;*/
 
-	hr = device->CreateShaderResourceView(srt.Get(), NULL, srv.GetAddressOf());
+	hr = device->CreateShaderResourceView(srt.Get(), NULL, ambientSRV.GetAddressOf());
 
 	if (FAILED(hr)) {
 		MessageBox(NULL, L"Failed to create shader resource view for drawable!", L"Error", MB_OK);
@@ -132,11 +137,14 @@ void Drawable::Bind(ID3D11DeviceContext* context, ID3D11ShaderResourceView* inpu
 	//Index Buffer
 	context->IASetIndexBuffer(m_indexBuffer.GetBuffer(), DXGI_FORMAT_R32_UINT, 0);
 
-	//Texture
-	//ID3D11ShaderResourceView* view = { srv.Get() };
+	//Textures
+	ID3D11ShaderResourceView* views[] = {ambientSRV.Get(), diffuseSRV.Get(), specularSRV.Get()};
 	if (inputSRV != NULL)	context->PSSetShaderResources(0, 1, &inputSRV);
-	else					context->PSSetShaderResources(0, 1, srv.GetAddressOf());
+	else					context->PSSetShaderResources(0, 3, views);
 	context->PSSetSamplers(0, 1, sampler.GetAddressOf());
+
+	//Shine cb
+	context->PSSetConstantBuffers(1, 1, m_constantBufferShininess.GetBufferAddress());
 }
 
 void Drawable::Draw(ID3D11DeviceContext* context) const

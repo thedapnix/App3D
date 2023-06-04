@@ -6,7 +6,14 @@ cbuffer CAMERA_CONSTANT_BUFFER : register(b0)
     float3 cameraPosition;
 };
 
-Texture2D tex2D : register(t0);
+cbuffer SHININESS_CONSTANT_BUFFER : register(b1)
+{
+    float shininess;
+};
+
+Texture2D ambientTexture : register(t0);
+Texture2D diffuseTexture : register(t1);
+Texture2D specularTexture : register(t2);
 SamplerState samplerState : register(s0);
 
 struct PixelShaderInput
@@ -33,18 +40,18 @@ struct SpotLight
     float fov;
 };
 
-StructuredBuffer<SpotLight> spotlights : register(t1);
+StructuredBuffer<SpotLight> spotlights : register(t3);
 
-Texture2DArray<float> shadowMaps : register(t2);
+Texture2DArray<float> shadowMaps : register(t4);
 sampler shadowMapSampler : register(s1);
 
 
 float4 main(PixelShaderInput input) : SV_TARGET
 {
     float3 ambient = 0.25f;
-    float4 base = tex2D.Sample(samplerState, input.uv);
-    float3 specularAlbedo = 1.0f;   //Hardcoding these because uhh
-    float specularPower = 1.0f;     //Pretty sure this would need me to rewrite hundreds of lines to do materials with different levels of specularity
+    float4 base = diffuseTexture.Sample(samplerState, input.uv);
+    float3 specularAlbedo = specularTexture.Sample(samplerState, input.uv).xyz;
+    float specularPower = shininess;
     
     float3 finalColor = base.xyz * ambient;
     float3 lighting = 0.0f;
@@ -60,6 +67,7 @@ float4 main(PixelShaderInput input) : SV_TARGET
         //So the cookbook gives us the formula: float3 shadowMapUV = float3(ndcSpace.x * 0.5f + 0.5f, ndcSpace.y * -0.5f + 0.5f, lightIndex);
         //To get coordinates in ndc space, we do the perspective divide (w-component) on the transformed position
         bool isInShadow = false;
+        
         float4 ndcPos = mul(input.worldPosition, spotlights[i].view);
         ndcPos = mul(ndcPos, spotlights[i].proj);
         ndcPos.xyz /= ndcPos.w;
@@ -83,31 +91,36 @@ float4 main(PixelShaderInput input) : SV_TARGET
         if(spotlights[i].fov != 0.0f) //If it doesn't have an fov, I'll treat it as a directional light
         {
             L = spotlights[i].origin - input.worldPosition.xyz; //Base the light vector on the light position
-        
             //Calculate attenuation based on distance from the light source
             float dist = length(L);
-            attenuation = max(0.0f, 1.0f - (dist / 20.0f)); //What I write as "20.0f" here is what the book refers to as LightRange.x, so some arbitrary value representing how far the light reaches
+            attenuation = max(0.0f, 1.0f - (dist / 30.0f)); //What I write as "20.0f" here is what the book refers to as LightRange.x, so some arbitrary value representing how far the light reaches
             L /= dist;
             
-            float minCos = cos(spotlights[i].fov);
-            float maxCos = (minCos + 1.0f) / 2.0f;
-            float cosAngle = dot(spotlights[i].direction, -L);
-            attenuation *= smoothstep(minCos, maxCos, cosAngle);
+            //Also add in the spotlight attenuation factor
+            //float3 L2 = spotlights[i].direction;
+            //float rho = dot(L, L2); //Book shows this as "-L", but that makes the light go in the wrong direction for me (maybe I should fix the light implementation in D3D11Engine instead?)
+            //float rotXY = spotlights[i].rotation.x - spotlights[i].rotation.y;
+            //if (rotXY == 0.0f)
+            //    rotXY = 1.0f; //Please don't divide by 0
+            //attenuation *= saturate(
+            //(rho - spotlights[i].rotation.y) /
+            //rotXY);
+            
+            //The formula above doesn't take into account the fov of the light, essentially making it more like a directional light, which I think is kinda weird of the book to do
+            //https://learn.microsoft.com/en-us/windows/win32/direct3d9/light-types#spotlight
+            //Attenuation of 1.0f means we're in full light, 0.0f means we're not in the light. We want to interpolate between 0 and 1 (using, for instance, the hlsl function smoothstep())
+            //Msdn states that spotlights have an inner cone and an outer cone, based off of an angle, so outer cone = fov, inner cone = fov / 2
+            //"Because the attenuation occurs as the vertex becomes more distant from the center of illumination (rather than across the total cone angle), the runtime divides these cone angles in half before calculating their cosines."
+            //Then we check to see if the projected vector of the lights direction onto the pixel (L dot D, effectively the angle) lies within the range of these cones, interpolating thusly
+            float outerCone = cos(spotlights[i].fov / 2.0f);
+            float innerCone = cos(spotlights[i].fov / 4.0f);
+            float alpha = dot(-L, spotlights[i].direction); //I need to do -L here instead of just L
+            attenuation *= smoothstep(outerCone, innerCone, alpha);
         }
         else
         {
             L = -spotlights[i].direction;
         }
-        
-        //Also add in the spotlight attenuation factor
-        //float3 L2 = spotlights[i].direction;
-        //float rho = dot(L, L2); //Book shows this as "-L", but that makes the light go in the wrong direction for me (maybe I should fix the light implementation in D3D11Engine instead?)
-        //float rotXY = spotlights[i].rotation.x - spotlights[i].rotation.y;
-        //if (rotXY == 0.0f)
-        //    rotXY = 1.0f; //Please don't divide by 0
-        //attenuation *= saturate(
-        //(rho - spotlights[i].rotation.y) /
-        //rotXY);
 
         float nDotL = saturate(dot(input.nor.xyz, L));
         float3 diffuse = nDotL * spotlights[i].colour * base.xyz;
@@ -115,13 +128,9 @@ float4 main(PixelShaderInput input) : SV_TARGET
         //Calculate the specular term
         float3 V = cameraPosition - input.worldPosition.xyz;
         float3 H = normalize(L + V);
-        float3 specular = pow(saturate(dot(input.nor.xyz, H)), specularPower) * spotlights[i].colour * specularAlbedo * nDotL; //previously float3 specular, now gets defined higher up so we can access outside of scope
+        float3 specular = pow(dot(input.nor.xyz, H), shininess) * spotlights[i].colour * specularAlbedo * nDotL; //removed: saturate
         
-        if(isInShadow)
-        {
-            lighting += (diffuse + specular) * attenuation * 0.0f;
-        }
-        else
+        if(!isInShadow)
         {
             lighting += (diffuse + specular) * attenuation;
         }
@@ -129,5 +138,4 @@ float4 main(PixelShaderInput input) : SV_TARGET
     finalColor += lighting;
     
     return float4(finalColor, 1.0f);
-    //return float4(result, 1.0f);
 }
