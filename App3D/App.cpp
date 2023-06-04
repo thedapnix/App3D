@@ -50,7 +50,6 @@ int App::Run()
         }
         else //Since moving the camera using the mouse is currently reliant on windows messages, I have to separate these so as to not fuck up the camera when I try using keyboard and mouse at the same time
         {
-            //TODO: Make camera movement and rotation use deltatime
             //Game loop
             float deltaTime = (float)m_timer->GetMilisecondsElapsed();
             m_timer->Restart();

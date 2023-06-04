@@ -13,7 +13,7 @@ ParticleSystem::ParticleSystem(ID3D11Device* device)
 		{{-8.0f, -8.0f,  -28.0f}},
 		{{  -9.0f,   -9.0f,  -27.0f}},
 		{{ -10.0f,  -10.0f, -26.0f}},
-		{{-11.0f, -11.0f,  -27.0f}},
+		{{-11.0f, -11.0f,  -27.0f}}
 	};
 	InitStructuredBuffer(device, false, true, true, sizeof(Particle), m_elementCount, particles);
 	

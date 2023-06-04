@@ -35,7 +35,11 @@ Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOA
 	));
 	m_constantBuffer.Init(device, &m_transform, sizeof(m_transform));
 
-	m_subMeshGroups = data.subMeshGroups;
+	/*Submesh stuff*/
+	for (auto& submesh : data.subMeshVector)
+	{
+		
+	}
 
 	/*Init textures, material update. Don't load duplicate textures*/
 	InitTexture(device, data.mData.ambient.c_str());

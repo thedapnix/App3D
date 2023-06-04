@@ -120,6 +120,9 @@
     <ClCompile Include="ConstantBuffer.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="SubMesh.cpp">
+      <Filter>Graphics\Drawable</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h">
@@ -199,6 +202,9 @@
     </ClInclude>
     <ClInclude Include="ConstantBuffer.h">
       <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="SubMesh.h">
+      <Filter>Graphics\Drawable</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

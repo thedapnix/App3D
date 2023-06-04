@@ -1074,7 +1074,7 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 	bufferData.mData.specular = specularData;
 	bufferData.mData.shininess = shineData;
 
-	bufferData.subMeshGroups = submeshGroups;
+	//bufferData.subMeshVector = submeshGroups;
 
 	Drawable cube(device.Get(), bufferData, scale, rotate, translate);
 	cube.CreateBoundingBoxFromPoints(vMin, vMax);

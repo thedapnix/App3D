@@ -14,6 +14,8 @@
 #include "IndexBuffer.h"
 #include "ConstantBuffer.h"
 
+#include "SubMesh.h"
+
 /*Structs that D3D11Engine needs to know about*/
 struct Vertex
 {
@@ -51,7 +53,7 @@ struct BufferData
 		UINT startIndex;
 		UINT count;
 	} smData;
-	std::vector<std::string> subMeshGroups;
+	std::vector<SubMeshData> subMeshVector;
 };
 
 class Drawable
@@ -97,13 +99,12 @@ private:
 	ConstantBuffer m_constantBuffer;
 	ConstantBuffer m_constantBufferShininess;
 
-	std::vector<std::string> m_subMeshGroups;
+	std::vector<SubMesh> m_submeshes;
 
 	/*Buffers*/
 	VertexBuffer m_vertexBuffer;
 	IndexBuffer m_indexBuffer;
 
-	/*To-do, shader resource views allowing for all drawables to be textured*/
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> ambientSRT;
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> diffuseSRT;
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> specularSRT;
