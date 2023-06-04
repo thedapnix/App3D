@@ -209,7 +209,7 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 
 	if (deferredIsEnabled)
 	{
-		DefPassTwo(); //Lighting pass, editing the backbuffer using a compute shader
+		DefPassTwo(cam); //Lighting pass, editing the backbuffer using a compute shader
 	}
 }
 
@@ -349,19 +349,18 @@ void D3D11Engine::DefPassOne(Camera* cam)
 	context->ClearRenderTargetView(m_gBuffers[0].rtv.Get(), CLEAR_COLOR);
 	context->ClearRenderTargetView(m_gBuffers[1].rtv.Get(), CLEAR_COLOR);
 	context->ClearRenderTargetView(m_gBuffers[2].rtv.Get(), CLEAR_COLOR);
-	context->ClearDepthStencilView(dsv.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0.0f);
+	context->ClearRenderTargetView(m_gBuffers[3].rtv.Get(), CLEAR_COLOR);
+	context->ClearDepthStencilView(dsv.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0.0f);
 	context->RSSetViewports(1, &viewport);
-	ID3D11RenderTargetView* rtvArr[] = { m_gBuffers[0].rtv.Get(), m_gBuffers[1].rtv.Get(), m_gBuffers[2].rtv.Get() }; //Create an array of render target views and fill it with the rtv's from our gbuffers
-	context->OMSetRenderTargets(3, rtvArr, dsv.Get()); //When render targets are bound to the output merger (if I understand correctly), they are sent to the pixel shader where they get filled with data yes?
+	ID3D11RenderTargetView* rtvArr[] = { m_gBuffers[0].rtv.Get(), m_gBuffers[1].rtv.Get(), m_gBuffers[2].rtv.Get(), m_gBuffers[3].rtv.Get() }; //Create an array of render target views and fill it with the rtv's from our gbuffers
+	context->OMSetRenderTargets(4, rtvArr, dsv.Get()); //When render targets are bound to the output merger (if I understand correctly), they are sent to the pixel shader where they get filled with data yes?
 
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);
 	context->IASetInputLayout(inputLayout.Get());
 
 	///////////////////////////////////////////////////////////////////////////////
-	//DRAW PASS, DRAW SCENE ONTO BACKBUFFER WITHOUT DOING LIGHTING CALCULATIONS
 	context->VSSetShader(vertexShader.Get(), NULL, 0);
 	context->PSSetShader(deferredPixelShader.Get(), NULL, 0);
-	context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
 
 	//Tessellation
 	if (lodIsEnabled)context->RSSetState(wireframeRS.Get());
@@ -399,12 +398,25 @@ void D3D11Engine::DefPassOne(Camera* cam)
 	}
 
 	//Now that we're done writing data to the render targets, unbind them
-	rtvArr[0] = NULL;
-	rtvArr[1] = NULL;
-	rtvArr[2] = NULL;
+	ID3D11RenderTargetView* nullRTVs[] = { NULL, NULL, NULL, NULL };
+	context->OMSetRenderTargets(4, nullRTVs, NULL);
+
+	context->VSSetShader(NULL, NULL, 0);
+	context->PSSetShader(NULL, NULL, 0);
+	context->HSSetShader(NULL, NULL, 0);
+	context->DSSetShader(NULL, NULL, 0);
+
+	context->HSSetConstantBuffers(0, 0, NULL);
+	context->DSSetConstantBuffers(0, 0, NULL);
+
+	ID3D11ShaderResourceView* nullSRVs[] = { NULL, NULL, NULL };
+	context->PSSetShaderResources(0, 3, nullSRVs);
+
+	ID3D11SamplerState* nullSamplers[] = { NULL };
+	context->PSSetSamplers(0, 1, nullSamplers);
 }
 
-void D3D11Engine::DefPassTwo()
+void D3D11Engine::DefPassTwo(Camera* cam)
 {
 	///////////////////////////////////////////////////////////////////////////////
 	//LIGHTING PASS, USE COMPUTE SHADER TO EDIT THE BACKBUFFER AND DO LIGHTING COMPUTATIONS
@@ -412,24 +424,31 @@ void D3D11Engine::DefPassTwo()
 	ID3D11RenderTargetView* nullRtv = NULL;
 	context->OMSetRenderTargets(1, &nullRtv, NULL);
 
-	ID3D11ShaderResourceView* srvArr[] = { m_gBuffers[0].srv.Get(), m_gBuffers[1].srv.Get(), m_gBuffers[2].srv.Get() };
-	context->CSSetShaderResources(0, 3, srvArr);
-
-	//Use compute shader to edit the backbuffer
 	context->CSSetShader(computeShader.Get(), NULL, 0);
+
+	ID3D11ShaderResourceView* srvArr[] = { m_gBuffers[0].srv.Get(), m_gBuffers[1].srv.Get(), m_gBuffers[2].srv.Get(), m_gBuffers[3].srv.Get(),
+	 m_spotlights.GetStructuredBufferSRV() , m_spotlights.GetDepthBufferSRV() }; //shadows
+	context->CSSetShaderResources(0, 6, srvArr);
+
+	context->CSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
+	ID3D11SamplerState* shadowSampler = m_shadowMap.GetSampler();
+	context->CSSetSamplers(0, 1, &shadowSampler);
+
+	//Use unordered access view to edit the backbuffer
+	context->ClearUnorderedAccessViewFloat(uav.Get(), CLEAR_COLOR);
 	context->CSSetUnorderedAccessViews(0, 1, uav.GetAddressOf(), NULL); //Last value matters in case of "append consume" buffers, but I've only heard of that, I've *no idea* what it means
 	context->Dispatch(m_windowWidth / 8, m_windowHeight / 8, 1);		//In order to make our Dispatch cover the entire window, we group threads by the width and height of the 
 	//window divided by 8 (as 8x8 is defined in compute shader)
 
-	//Unbind UAV
+	//UNBIND
+	context->CSSetShader(NULL, NULL, 0);
+	context->CSSetConstantBuffers(0, 0, NULL);
 	ID3D11UnorderedAccessView* nullUav = NULL;
 	context->CSSetUnorderedAccessViews(0, 1, &nullUav, NULL);
-
-	//Unbind SRVs
-	srvArr[0] = NULL;
-	srvArr[1] = NULL;
-	srvArr[2] = NULL;
-	context->CSSetShaderResources(0, 3, srvArr);
+	ID3D11ShaderResourceView* nullSRVs[] = { NULL, NULL, NULL, NULL, NULL, NULL };
+	context->CSSetShaderResources(0, 6, nullSRVs);
+	ID3D11SamplerState* nullSamplers[] = { NULL };
+	context->PSSetSamplers(0, 1, nullSamplers);
 }
 
 /*INITIALIZERS FOR DIRECTX STUFF*/
@@ -728,7 +747,7 @@ void D3D11Engine::InitUAV()
 	}
 }
 
-void D3D11Engine::InitGraphicsBuffer(GBuffer(&gbuf)[3])
+void D3D11Engine::InitGraphicsBuffer(GBuffer(&gbuf)[4])
 {
 	HRESULT hr;
 
@@ -742,7 +761,7 @@ void D3D11Engine::InitGraphicsBuffer(GBuffer(&gbuf)[3])
 	textureDesc.Usage = D3D11_USAGE_DEFAULT;
 	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 
-	for (UINT i = 0; i < 3; i++) //Create texture(s)
+	for (UINT i = 0; i < 4; i++) //Create texture(s)
 	{
 		hr = device->CreateTexture2D(&textureDesc, NULL, &gbuf[i].texture);
 		if (FAILED(hr))
@@ -751,7 +770,7 @@ void D3D11Engine::InitGraphicsBuffer(GBuffer(&gbuf)[3])
 		}
 	}
 
-	for (UINT i = 0; i < 3; i++) //Create RTV(s), used to write geometric data to texture
+	for (UINT i = 0; i < 4; i++) //Create RTV(s), used to write geometric data to texture
 	{
 		hr = device->CreateRenderTargetView(gbuf[i].texture.Get(), NULL, &gbuf[i].rtv); //hr = device->CreateRenderTargetView(gBuffer[i].texture, &renderTargetViewDesc, &gBuffer[i].rtv);
 		if (FAILED(hr))
@@ -760,7 +779,7 @@ void D3D11Engine::InitGraphicsBuffer(GBuffer(&gbuf)[3])
 		}
 	}
 
-	for (UINT i = 0; i < 3; i++) //Create SRV(s), used to read the data from RTV(s)
+	for (UINT i = 0; i < 4; i++) //Create SRV(s), used to read the data from RTV(s)
 	{
 		hr = device->CreateShaderResourceView(gbuf[i].texture.Get(), NULL, &gbuf[i].srv); //hr = device->CreateShaderResourceView(gBuffer[i].texture, &shaderResourceViewDesc, &gBuffer[i].srv);
 		if (FAILED(hr))
@@ -928,7 +947,6 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 			lineSS >> mtlFileName;
 			ParseMaterial(mtlFileName, ambientData, diffuseData, specularData, shineData); //Split up the functions because too much text, honestly I kinda wanna do that to this whole function already but crunch
 		}
-
 
 
 		if (lineType == "v")

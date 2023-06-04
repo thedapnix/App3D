@@ -53,7 +53,7 @@ private:
 	void RenderReflectiveObject(float dt);
 	void RenderDepth(float dt);
 	void DefPassOne(Camera* cam);
-	void DefPassTwo();
+	void DefPassTwo(Camera* cam);
 
 	/*Initializers because this constructor would be HUGE otherwise*/
 	//"Regular" stuff
@@ -68,7 +68,7 @@ private:
 
 	//Deferred
 	void InitUAV();
-	void InitGraphicsBuffer(GBuffer(&gbuf)[3]);
+	void InitGraphicsBuffer(GBuffer(&gbuf)[4]);
 
 	//Culling
 	bool DrawableIsVisible(DirectX::BoundingFrustum frustum, DirectX::BoundingBox aabb, DirectX::XMMATRIX view, DirectX::XMMATRIX world);
@@ -92,7 +92,7 @@ private:
 	SpotLights m_spotlights;
 	std::unique_ptr<Camera> m_camera;
 	int m_drawablesBeingRendered = 0;
-	GBuffer m_gBuffers[3];
+	GBuffer m_gBuffers[4];
 
 	/*ImGui variables*/
 	int m_fpsCounter = 0;
