@@ -71,9 +71,6 @@ private:
 	void InitUAV();
 	void InitGraphicsBuffer(GBuffer(&gbuf)[4]);
 
-	//Culling
-	bool DrawableIsVisible(DirectX::BoundingFrustum frustum, DirectX::BoundingBox aabb, DirectX::XMMATRIX view, DirectX::XMMATRIX world);
-
 	//LOD
 	void InitRasterizerStates();
 
@@ -94,6 +91,7 @@ private:
 	std::unique_ptr<Camera> m_camera;
 	int m_drawablesBeingRendered = 0;
 	GBuffer m_gBuffers[4];
+	float particleVar = 0.0f;
 
 	/*ImGui variables*/
 	int m_fpsCounter = 0;

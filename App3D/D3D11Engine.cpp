@@ -57,6 +57,8 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 
 	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 5.0f, -3.0f, -33.0f }); //index 11, the spinny boy
 
+	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -8.0f, -3.0f, -30.0f });
+
 	for (const auto& drawable : m_drawables)
 	{
 		m_quadTree.AddElement(&drawable, drawable.GetBoundingBox());
@@ -90,6 +92,9 @@ void D3D11Engine::Update(float dt)
 		mirror.Rotate(0.0f, 0.005f, 0.0f);
 		mirror.UpdateConstantBuffer(context.Get());
 	}
+
+	particleVar += dt;
+	m_particles.UpdateConstantBuffer(context.Get(), particleVar);
 
 	//RENDER
 	RenderDepth(dt);
@@ -226,6 +231,8 @@ void D3D11Engine::RenderParticles(Camera* cam)
 
 	/*Shader Stage*/
 	context->VSSetShader(m_particles.GetVertexShader(), NULL, 0);
+	ID3D11ShaderResourceView* view = m_particles.GetSRV();
+	context->VSSetShaderResources(0, 1, &view);
 	context->GSSetShader(m_particles.GetGeometryShader(), NULL, 0);
 	context->GSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
 	context->PSSetShader(m_particles.GetPixelShader(), NULL, 0);
@@ -235,9 +242,13 @@ void D3D11Engine::RenderParticles(Camera* cam)
 
 	//Unbind shaders and constant buffer
 	context->VSSetShader(NULL, NULL, 0);
+	ID3D11ShaderResourceView* nullSRV = NULL;
+	context->VSSetShaderResources(0, 1, &nullSRV);
 	context->GSSetShader(NULL, NULL, 0);
 	context->GSSetConstantBuffers(0, 0, NULL);
 	context->PSSetShader(NULL, NULL, 0);
+	ID3D11RenderTargetView* nullRTV = NULL;
+	context->OMSetRenderTargets(0, &nullRTV, NULL);
 
 	//Use compute shader and uav to edit stuff
 	context->CSSetShader(m_particles.GetComputeShader(), NULL, 0);
@@ -377,16 +388,13 @@ void D3D11Engine::DefPassOne(Camera* cam)
 	if (cullingIsEnabled)
 	{
 		int visibleDrawables = 0;
-		for (auto& drawable : m_drawables)
+		for (auto& drawable : m_quadTree.CheckTree(cam->GetFrustum()))
 		{
-			if (DrawableIsVisible(cam->GetFrustum(), drawable.GetBoundingBox(), m_camera->View(), drawable.World()))
-			{
-				drawable.Bind(context.Get(), NULL);
-				drawable.Draw(context.Get());
-				visibleDrawables++;
-			}
-			m_drawablesBeingRendered = visibleDrawables;
+			drawable->Bind(context.Get(), NULL);
+			drawable->Draw(context.Get());
+			visibleDrawables++;
 		}
+		m_drawablesBeingRendered = visibleDrawables;
 	}
 	else
 	{
@@ -830,34 +838,13 @@ void D3D11Engine::InitSpotlights()
 	//Directional light
 	LightData data4;
 	data4.pos = XMFLOAT3(-80.0f, 1.0f, -6.0f);
-	data4.fovY = 0.0f; //Directional light
+	data4.fovY = 0.0f;
 	data4.rotX = XM_PIDIV2;
 	data4.rotY = XM_PI / 8.0f;
 	data4.col = XMFLOAT3(0.25f, 0.25f, 0.25f); //Since directional lights don't fall off with distance, we manually lower the strength of the light here (got bright white walls earlier)
 	dataVec.push_back(data4);
 
 	m_spotlights = SpotLights(device.Get(), dataVec);
-}
-
-bool D3D11Engine::DrawableIsVisible(DirectX::BoundingFrustum frustum, DirectX::BoundingBox aabb, DirectX::XMMATRIX view, DirectX::XMMATRIX world)
-{
-	//The frustum is in view space, and the AABB is in the local space of the object it wraps
-	//So the frustum needs to be multiplied by the inverse view- (which we get from the camera) and world-matrices (of the particular object) to take it to the object's local space
-
-	//Get determinants and the the inverses of the view- and world-matrices
-	DirectX::XMVECTOR detView = DirectX::XMMatrixDeterminant(view);
-	DirectX::XMVECTOR detWorld = DirectX::XMMatrixDeterminant(world);
-
-	DirectX::XMMATRIX invView = DirectX::XMMatrixInverse(&detView, view);
-	DirectX::XMMATRIX invWorld = DirectX::XMMatrixInverse(&detWorld, world);
-
-	//Create the matrix that transforms from view space to the local space of the object
-	DirectX::XMMATRIX viewToLocal = DirectX::XMMatrixMultiply(invView, invWorld);
-
-	DirectX::BoundingFrustum localFrustum = frustum;	//Copy the input frustum so as to not modify the original
-	localFrustum.Transform(localFrustum, viewToLocal);	//Transform the copied frustum so it's in the same space as the object we're testing it against
-
-	return localFrustum.Intersects(aabb);
 }
 
 void D3D11Engine::InitSampler()

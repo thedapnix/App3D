@@ -25,7 +25,7 @@ void ConstantBuffer::Init(ID3D11Device* device, void* initialData, size_t byteSi
 	}
 }
 
-void ConstantBuffer::UpdateBuffer(ID3D11DeviceContext* context, void* data)
+void ConstantBuffer::Update(ID3D11DeviceContext* context, void* data)
 {
 	D3D11_MAPPED_SUBRESOURCE mappedResource = {};
 	HRESULT hr = context->Map(m_buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);

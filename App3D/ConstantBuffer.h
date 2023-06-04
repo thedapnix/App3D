@@ -18,7 +18,7 @@ public:
 	~ConstantBuffer() = default;
 
 	void Init(ID3D11Device* device, void* initialData, size_t byteSize);
-	void UpdateBuffer(ID3D11DeviceContext* context, void* data);
+	void Update(ID3D11DeviceContext* context, void* data);
 
 	ID3D11Buffer* GetBuffer() const;
 	ID3D11Buffer* const *GetBufferAddress() const;

@@ -2,6 +2,7 @@
 struct Particle
 {
     float3 pos;
+    float padding; //i somehow always forgor
 };
 
 StructuredBuffer<Particle> Particles : register(t0);

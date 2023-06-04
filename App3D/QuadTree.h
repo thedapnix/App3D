@@ -38,7 +38,7 @@ template<typename T>
 void QuadTree<T>::AddElement(const T* element, const DirectX::BoundingBox& aabb)
 {
 	//Can't add to root if root is nullptr so
-	if (m_root == nullptr)
+	if (m_root == NULL)
 	{
 		m_root = std::make_unique<Node>();
 		DirectX::BoundingBox rootAABB = { { minHeight, minHeight, minHeight }, { maxHeight, maxHeight, maxHeight } };
@@ -68,7 +68,7 @@ void QuadTree<T>::AddToNode(const T* element, const DirectX::BoundingBox& aabb, 
 	}
 
 	//"If a collided with node is not a leaf node, then it should not contain any information about objects"
-	if (node->children[0].get() == nullptr) //Doesn't have leaves = is a leaf
+	if (node->children[0].get() == NULL) //Doesn't have leaves = is a leaf
 	{
 		//"In the case that there is room in a collided with leaf node, then the object and any required information can be inserted"
 		if (node->elements.size() < maxElements)

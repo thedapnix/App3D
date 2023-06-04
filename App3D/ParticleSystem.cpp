@@ -6,17 +6,30 @@ ParticleSystem::ParticleSystem(ID3D11Device* device)
 	//Create some amount of particles (manipulate this value through imgui slider later)
 	Particle particles[m_elementCount]
 	{
-		{{-10.0f, -10.0f,  0.0f}},
-		{{  5.0f,   5.0f,  5.0f}},
-		{{ 25.0f,  25.0f, 10.0f}}
+		{{-8.0f, -11.0f,  -28.0f}},
+		{{  -9.0f,   -10.0f,  -27.0f}},
+		{{ -10.0f,  -9.0f, -26.0f}},
+		{{-11.0f, -8.0f,  -27.0f}},
+		{{-8.0f, -8.0f,  -28.0f}},
+		{{  -9.0f,   -9.0f,  -27.0f}},
+		{{ -10.0f,  -10.0f, -26.0f}},
+		{{-11.0f, -11.0f,  -27.0f}},
 	};
-	InitStructuredBuffer(device, false, false, true, sizeof(Particle), m_elementCount, particles);
+	InitStructuredBuffer(device, false, true, true, sizeof(Particle), m_elementCount, particles);
 	
 	//Since this is basically its own system of drawables, the particle system also needs its own shaders and a constant buffer
 	InitShaders(device);
 
-	ParticleCB pcb;
+	ParticleCB pcb = {};
 	m_constantBuffer.Init(device, &pcb, sizeof(pcb));
+}
+
+void ParticleSystem::UpdateConstantBuffer(ID3D11DeviceContext* context, float angle)
+{
+	ParticleCB pcb = {};
+	pcb.angle = angle;
+
+	m_constantBuffer.Update(context, &pcb);
 }
 
 ID3D11VertexShader* ParticleSystem::GetVertexShader()
@@ -52,6 +65,11 @@ const ConstantBuffer& ParticleSystem::GetConstantBuffer() const
 ID3D11UnorderedAccessView* const* ParticleSystem::GetUAVAddress()
 {
 	return uav.GetAddressOf();
+}
+
+ID3D11ShaderResourceView* ParticleSystem::GetSRV()
+{
+	return srv.Get();
 }
 
 void ParticleSystem::InitStructuredBuffer(ID3D11Device* device, bool isDynamic, bool hasSRV, bool hasUAV, UINT elementSize, UINT elementCount, void* bufferData)

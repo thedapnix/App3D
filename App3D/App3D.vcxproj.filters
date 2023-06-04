@@ -81,9 +81,6 @@
     <ClCompile Include="Drawable.cpp">
       <Filter>Graphics\Drawable</Filter>
     </ClCompile>
-    <ClCompile Include="ConstantBuffer.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>Graphics\Camera</Filter>
     </ClCompile>
@@ -120,6 +117,9 @@
     <ClCompile Include="Spotlights.cpp">
       <Filter>Graphics\Shadowmap</Filter>
     </ClCompile>
+    <ClCompile Include="ConstantBuffer.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h">
@@ -151,9 +151,6 @@
     </ClInclude>
     <ClInclude Include="D3D11MathHelper.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ConstantBuffer.h">
-      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
       <Filter>Graphics\Camera</Filter>
@@ -199,6 +196,9 @@
     </ClInclude>
     <ClInclude Include="QuadTree.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ConstantBuffer.h">
+      <Filter>Graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

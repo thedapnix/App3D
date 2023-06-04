@@ -25,6 +25,8 @@ public:
 	ParticleSystem(ID3D11Device* device);
 	~ParticleSystem() = default;
 
+	void UpdateConstantBuffer(ID3D11DeviceContext* context, float angle);
+
 	ID3D11VertexShader* GetVertexShader();
 	ID3D11GeometryShader* GetGeometryShader();
 	ID3D11PixelShader* GetPixelShader();
@@ -32,11 +34,12 @@ public:
 	ID3D11ComputeShader* GetComputeShader();
 	const ConstantBuffer& GetConstantBuffer() const;
 	ID3D11UnorderedAccessView* const* GetUAVAddress();
+	ID3D11ShaderResourceView* GetSRV();
 
 private:
 	//Structured buffer
 	void InitStructuredBuffer(ID3D11Device* device, bool isDynamic, bool hasSRV, bool hasUAV, UINT elementSize, UINT elementCount, void* bufferData);
-	static constexpr UINT m_elementCount = 3;
+	static constexpr UINT m_elementCount = 8;
 	Microsoft::WRL::ComPtr<ID3D11Buffer> structuredBuffer;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv;
 	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> uav;
