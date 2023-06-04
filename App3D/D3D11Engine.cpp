@@ -95,10 +95,10 @@ void D3D11Engine::Update(float dt)
 		drawable.UpdateConstantBuffer(context.Get());
 	}
 
-	for (auto& mirror : m_reflectiveDrawables)
+	for (auto& mirrorCube : m_reflectiveDrawables)
 	{
-		mirror.Rotate(0.0f, 0.005f, 0.0f);
-		mirror.UpdateConstantBuffer(context.Get());
+		mirrorCube.Rotate(0.0f, 0.005f, 0.0f);
+		mirrorCube.UpdateConstantBuffer(context.Get());
 	}
 
 	particleVar += dt;
@@ -928,6 +928,11 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 	std::string specularData = "Textures/light_grey.png";
 	float shineData = 1.0f;
 
+	/*Submesh stuff*/
+	std::vector<std::string> submeshGroups;
+	std::vector<UINT> submeshStartIndices;
+	std::vector<UINT> submeshIndexCount;
+
 	//Read the text file
 	std::string lineStr;
 	while (std::getline(ifs, lineStr))
@@ -945,8 +950,19 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 			ParseMaterial(mtlFileName, ambientData, diffuseData, specularData, shineData); //Split up the functions because too much text, honestly I kinda wanna do that to this whole function already but crunch
 		}
 
+		if (lineType == "usemtl") //"From this point onward, use this specified material"
+		{
+			std::string groupName;
+			lineSS >> groupName;
+			submeshGroups.push_back(groupName);
+			if (!submeshStartIndices.empty()) //We've reached a new submesh material
+			{
+				submeshIndexCount.push_back(iCount);
+			}
+			submeshStartIndices.push_back(iCount);
+		}
 
-		if (lineType == "v")
+		if (lineType == "v") //Vertex (Position)
 		{
 			float x, y, z;
 			lineSS >> x >> y >> z;
@@ -959,7 +975,7 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 			vMax = DirectX::XMVectorMax(vMax, V);
 		}
 
-		if (lineType == "vt")
+		if (lineType == "vt") //Vertex Texture Coordinate
 		{
 			float u, v;
 			lineSS >> u >> v;
@@ -967,7 +983,7 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 			fileHasTexcoord = true;
 		}
 
-		if (lineType == "vn")
+		if (lineType == "vn") //Vertex Normal
 		{
 			float nx, ny, nz;
 			lineSS >> nx >> ny >> nz;
@@ -975,7 +991,7 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 			fileHasNormal = true;
 		}
 
-		if (lineType == "f")
+		if (lineType == "f") //Face
 		{
 			//Each face references three vertices, with their respective positions, texture coordinates and normals (think triangles)
 			//Some obj-files simply have something like "f 2 5 3", while others are built more like "f 2/1/0 5/3/1 3/2/2"
@@ -1042,6 +1058,7 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 	//Before we return out of this function, we store the values that we've now received to make a bounding box
 	//Either pass into the function, or perhaps more fittingly, create a new function in the Drawable-class that calls CreateFromPoints() to make its own aabb
 	//DirectX::BoundingBox::CreateFromPoints(aabb, vMin, vMax);
+	submeshIndexCount.push_back(iCount);
 
 	BufferData bufferData;
 	bufferData.vData.size = sizeof(Vertex);
@@ -1056,6 +1073,8 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 	bufferData.mData.diffuse = diffuseData;
 	bufferData.mData.specular = specularData;
 	bufferData.mData.shininess = shineData;
+
+	bufferData.subMeshGroups = submeshGroups;
 
 	Drawable cube(device.Get(), bufferData, scale, rotate, translate);
 	cube.CreateBoundingBoxFromPoints(vMin, vMax);

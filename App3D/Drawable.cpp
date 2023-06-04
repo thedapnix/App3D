@@ -35,12 +35,12 @@ Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOA
 	));
 	m_constantBuffer.Init(device, &m_transform, sizeof(m_transform));
 
+	m_subMeshGroups = data.subMeshGroups;
+
 	/*Init textures, material update. Don't load duplicate textures*/
 	InitTexture(device, data.mData.ambient.c_str());
 	diffuseSRV = ambientSRV;
 	specularSRV = ambientSRV;
-	//InitTexture(device, data.mData.diffuse.c_str(), diffuseSRT.Get(), diffuseSRV.Get());
-	//InitTexture(device, data.mData.specular.c_str(), specularSRT.Get(), specularSRV.Get());
 	m_shineCB.shininess = data.mData.shininess;
 	m_constantBufferShininess.Init(device, &m_shineCB, sizeof(m_shineCB));
 }

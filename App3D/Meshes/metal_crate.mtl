@@ -1,4 +1,4 @@
-newmtl metal_crate
+newmtl metal
 Ka metal_crate.png
 Kd metal_crate.png
 Ks metal_crate.png

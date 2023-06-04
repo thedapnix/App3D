@@ -45,6 +45,13 @@ struct BufferData
 		std::string specular;
 		float shininess;
 	} mData;
+
+	struct SubMeshData
+	{
+		UINT startIndex;
+		UINT count;
+	} smData;
+	std::vector<std::string> subMeshGroups;
 };
 
 class Drawable
@@ -89,6 +96,8 @@ private:
 	ShininessCB m_shineCB;
 	ConstantBuffer m_constantBuffer;
 	ConstantBuffer m_constantBufferShininess;
+
+	std::vector<std::string> m_subMeshGroups;
 
 	/*Buffers*/
 	VertexBuffer m_vertexBuffer;
