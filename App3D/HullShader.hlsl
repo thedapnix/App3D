@@ -31,7 +31,6 @@ HS_CONSTANT_DATA_OUTPUT CalcHSPatchConstants(InputPatch<VertexShaderOutput, NUM_
     HS_CONSTANT_DATA_OUTPUT output = (HS_CONSTANT_DATA_OUTPUT) 0;
 
 	//Constants
-    //float maxDist = 1600.0f; //40*40
     float maxDist = 20.0f;
     float minDist = 2.0f;
     float maxTess = 16.0f;
@@ -39,17 +38,17 @@ HS_CONSTANT_DATA_OUTPUT CalcHSPatchConstants(InputPatch<VertexShaderOutput, NUM_
     
     //Store triangle centerpoint as well as distance from camera
     float3 center = (ip[0].worldPosition + ip[1].worldPosition + ip[2].worldPosition) / 3.0f; //Triangle centerpoint formula: (Ax + Bx + Cx)/3
-    float dist = distance(center, cameraPosition); //HLSL built-in way of doing the below calculation
+    float dist = distance(center, cameraPosition);
 	
 	//Calculate tessellation
     float tess;
     if (dist >= maxDist) //This is the point where we're sufficiently far away for us to only need to tessellate once
     {
-        tess = 1.0f;
+        tess = minTess;
     }
     else
     {
-        tess = (maxTess * (maxDist - dist) / maxDist); //I want this to be more of a smooth transition, like a linear transition from some max tessellation to some minimum
+        tess = (maxTess * (maxDist - dist) / maxDist);
     }
     
     output.EdgeTessFactor[0] = output.EdgeTessFactor[1] = output.EdgeTessFactor[2] = tess;

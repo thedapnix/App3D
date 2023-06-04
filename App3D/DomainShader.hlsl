@@ -32,6 +32,14 @@ struct DomainShaderOutput
 	float4 worldPosition : TEXCOORD2;
 };
 
+
+float3 ProjectPointOntoPlane(float3 toProject, float3 planePoint, float3 planeNor)
+{
+    //Cheers to stackoverflow person: p' = p - (n dot (p - o)) * n
+	return toProject - (dot(planeNor, toProject - planePoint) * planeNor);
+}
+
+
 [domain("tri")]
 DomainShaderOutput main(
 	HS_CONSTANT_DATA_OUTPUT input,
@@ -41,11 +49,35 @@ DomainShaderOutput main(
 	DomainShaderOutput output = (DomainShaderOutput)0;
 
 	//Unbelievably cursed
-	output.worldPosition = 
-		patch[0].worldPosition * barycentric.x + 
-		patch[1].worldPosition * barycentric.y + 
+	//output.worldPosition = 
+	//	patch[0].worldPosition * barycentric.x + 
+	//	patch[1].worldPosition * barycentric.y + 
+	//	patch[2].worldPosition * barycentric.z;
+	
+	//Oh god it's getting even worse
+	//http://www.klayge.org/material/4_0/PhongTess/PhongTessellation.pdf
+	//1. Compute the linear tessellation, then
+	//2. project the resulting point orthogonally onto the three tangent planes defined by the triangle vertices, and finally
+	//3. Compute the barycentric interpolation of these three projections
+	//So we've already computed the tessellation in our hull shader. So now we do orthogonal projection onto plane (straight-up take triangle positions x, y, and z to make a plane)
+    float3 worldPos = 
+		patch[0].worldPosition * barycentric.x +
+		patch[1].worldPosition * barycentric.y +
 		patch[2].worldPosition * barycentric.z;
-
+	
+	//Formula for orthogonal projection of point onto plane: p' = p - (n . p + d) * n , courtesy of google
+    float3 b0 = ProjectPointOntoPlane(worldPos, patch[0].worldPosition.xyz, patch[0].nor.xyz);
+    float3 b1 = ProjectPointOntoPlane(worldPos, patch[1].worldPosition.xyz, patch[1].nor.xyz);
+    float3 b2 = ProjectPointOntoPlane(worldPos, patch[2].worldPosition.xyz, patch[2].nor.xyz);
+	
+	//And barycentric(again), + interpolation
+    float3 baryPos =
+		b0 * barycentric.x +
+		b1 * barycentric.y + 
+		b2 * barycentric.z;
+	
+    output.worldPosition = float4(lerp(worldPos, baryPos, (3.0f / 4.0f)), 1.0f); //"..a shape factor A can be used to interpolate between linear and phong tessellation" and "In our experiments, we fix A = 3/4 globally"
+	
 	output.uv = 
 		patch[0].uv * barycentric.x + 
 		patch[1].uv * barycentric.y + 
