@@ -17,12 +17,16 @@ SubMesh::SubMesh(ID3D11Device* device, UINT startIndex, UINT indexCount,
 
 void SubMesh::Bind(ID3D11DeviceContext* context) const
 {
-	ID3D11ShaderResourceView* SRVs[] = { ambientSRV.Get(), diffuseSRV.Get(), specularSRV.Get() };
-	context->PSSetShaderResources(0, 3, SRVs);
-	context->PSSetConstantBuffers(0, 1, m_constantBufferShininess.GetBufferAddress());
+	//Textures
+	ID3D11ShaderResourceView* views[] = { ambientSRV.Get(), diffuseSRV.Get(), specularSRV.Get() };
+	context->PSSetShaderResources(0, 3, views);
+
+	//Shine cb
+	context->PSSetConstantBuffers(1, 1, m_constantBufferShininess.GetBufferAddress());
 }
 
 void SubMesh::Draw(ID3D11DeviceContext* context) const
 {
-	context->DrawIndexed(m_indexCount, m_startIndex, 0);
+	context->Draw(m_indexCount, m_startIndex);
+	//context->DrawIndexed(m_indexCount, m_startIndex, 0);
 }

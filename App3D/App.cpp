@@ -68,7 +68,7 @@ int App::Run()
 void App::DoFrame(float dt)
 {
     /*Camera stuff*/
-    InterpretKeyboardInput();
+    InterpretKeyboardInput(dt);
     m_engine->GetCamera().UpdateViewMatrix();
 
     /*Imgui stuff*/
@@ -81,7 +81,7 @@ void App::DoFrame(float dt)
     m_fpsShouldUpdate = false;
 }
 
-void App::InterpretKeyboardInput()
+void App::InterpretKeyboardInput(float dt)
 {
     if (m_currentState == States::CAMERA_CONTROL)
     {
@@ -91,19 +91,19 @@ void App::InterpretKeyboardInput()
         }
         if (m_keyboard->IsKeyPressed(0x57)) //W
         {
-            m_engine->GetCamera().Walk(0.25f);
+            m_engine->GetCamera().Walk(0.025f * dt);
         }
         if (m_keyboard->IsKeyPressed(0x53)) //S
         {
-            m_engine->GetCamera().Walk(-0.25f);
+            m_engine->GetCamera().Walk(-0.025f * dt);
         }
         if (m_keyboard->IsKeyPressed(0x44)) //D
         {
-            m_engine->GetCamera().Strafe(0.25f);
+            m_engine->GetCamera().Strafe(0.025f * dt);
         }
         if (m_keyboard->IsKeyPressed(0x41)) //A
         {
-            m_engine->GetCamera().Strafe(-0.25f);
+            m_engine->GetCamera().Strafe(-0.025f * dt);
         }
 
         if (m_keyboard->IsKeyPressed(0x50)) //P

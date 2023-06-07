@@ -123,6 +123,9 @@
     <ClCompile Include="SubMesh.cpp">
       <Filter>Graphics\Drawable</Filter>
     </ClCompile>
+    <ClCompile Include="ShaderResource.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h">
@@ -205,6 +208,9 @@
     </ClInclude>
     <ClInclude Include="SubMesh.h">
       <Filter>Graphics\Drawable</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderResource.h">
+      <Filter>Graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -49,8 +49,6 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 1.0f, 5.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, {  14.0f, -4.0f, 4.0f }); //Right wall
 	InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 1.0f, 5.0f, 13.0f }, { 0.0f, 0.0f, 0.0f }, { 14.0f, -4.0f, -23.0f }); //Right wall2
 
-	InitDrawableFromFile("Meshes/wood_crate.obj", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, 5.0f }); //Mirror cube
-
 	InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 2.0f, 2.0f, 2.0f }, { 0.0f, 0.0f, 0.0f }, { -10.0f, -7.0f, 15.0f }); //Corner cubes for shadow testing
 	InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f }, { -10.0f, -4.0f, 15.0f }); //
 	InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f }, { -10.0f, -8.0f, 11.0f });
@@ -59,7 +57,8 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 
 	InitDrawableFromFile("Meshes/cube.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { -5.0f, -8.0f, 16.0f }); //Corner cube with no mtl
 
-	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -8.0f, -7.0f }); //Middle of the room cube, directional light casts shadows too
+	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -8.0f, -7.0f }); //Middle of the room cubes, directional light casts shadows too
+	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 2.5f, -8.0f, -6.5f }); //Middle of the room cubes, directional light casts shadows too
 
 	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -8.0f, -3.0f, -30.0f }); //Floaty shadowboys
 	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.25f, 0.25f, 0.25f }, { 0.0f, 0.0f, 0.0f }, { -7.0f, -3.0f, -31.0f });
@@ -67,10 +66,13 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -9.0f, -7.0f, -32.0f });
 	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -6.0f, -7.0f, -28.0f });
 
+	InitDrawableFromFile("Meshes/wood_crate.obj", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, 5.0f }); //Mirror cube
+
 	for (const auto& drawable : m_drawables)
 	{
 		m_quadTree.AddElement(&drawable, drawable.GetBoundingBox());
 	}
+	m_quadTree.AddElement(&m_reflectiveDrawables.at(0), m_reflectiveDrawables.at(0).GetBoundingBox());
 
 	//Sampler setup for texture access in shaders
 	InitSampler();
@@ -89,15 +91,14 @@ void D3D11Engine::Update(float dt)
 	//UPDATE CONSTANT BUFFERS
 	m_camera->UpdateConstantBuffer(context.Get());
 
-	m_drawables.at(11).Rotate(0.0f, 0.01f, 0.01f);
+	m_drawables.at(11).Rotate(0.0f, 0.001f * dt, 0.001f * dt);
 	for (auto& drawable : m_drawables)
 	{
 		drawable.UpdateConstantBuffer(context.Get());
 	}
-
 	for (auto& mirrorCube : m_reflectiveDrawables)
 	{
-		mirrorCube.Rotate(0.0f, 0.005f, 0.0f);
+		mirrorCube.Rotate(0.0f, 0.001f * dt, 0.0f);
 		mirrorCube.UpdateConstantBuffer(context.Get());
 	}
 
@@ -111,7 +112,7 @@ void D3D11Engine::Update(float dt)
 	if (cubemapIsEnabled)RenderReflectiveObject(dt);
 
 	//PRESENT
-	swapChain->Present(1, 0); //vSync enabled
+	swapChain->Present(0, 0); //vSync enabled
 }
 
 void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps, int state)
@@ -125,7 +126,7 @@ void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps,
 	}
 	ImGuiEngineWindow(
 		m_camera.get(), m_fpsString, state,
-		deferredIsEnabled, cullingIsEnabled, billboardingIsEnabled, lodIsEnabled, cubemapIsEnabled, shadowmapIsEnabled,
+		deferredIsEnabled, cullingIsEnabled, billboardingIsEnabled, lodIsEnabled, cubemapIsEnabled,
 		m_drawablesBeingRendered
 	);
 	EndImGuiFrame();
@@ -165,6 +166,7 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		//SHADER STAGE
 		context->VSSetShader(vertexShader.Get(), NULL, 0);
 		context->PSSetShader(pixelShader.Get(), NULL, 0);
+		context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
 		
 		//SHADOWS AND LIGHTING STUFF
 		ID3D11ShaderResourceView* shadowViews[] = { m_spotlights.GetStructuredBufferSRV() , m_spotlights.GetDepthBufferSRV() };
@@ -187,8 +189,8 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 			int visibleDrawables = 0;
 			for (const auto& drawable : m_quadTree.CheckTree(cam->GetFrustum()))
 			{
-				drawable->Bind(context.Get(), NULL);
-				drawable->Draw(context.Get());
+				drawable->Bind(context.Get());
+				//drawable->Draw(context.Get());
 				visibleDrawables++;
 			}
 			m_drawablesBeingRendered = visibleDrawables;
@@ -197,8 +199,8 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		{
 			for (auto& drawable : m_drawables)
 			{
-				drawable.Bind(context.Get(), NULL);
-				drawable.Draw(context.Get());
+				drawable.Bind(context.Get());
+				//drawable.Draw(context.Get());
 			}
 			m_drawablesBeingRendered = (int)m_drawables.size();
 		}
@@ -275,57 +277,66 @@ void D3D11Engine::RenderParticles(Camera* cam)
 
 void D3D11Engine::RenderReflectiveObject(float dt)
 {
-
-	for (int i = 0; i < 6; i++)
+	std::vector<const Drawable*> visibleDrawables = m_quadTree.CheckTree(m_camera->GetFrustum());
+	const Drawable* cube = &m_reflectiveDrawables.at(0);
+	if(cullingIsEnabled && std::find(visibleDrawables.begin(), visibleDrawables.end(), cube) == visibleDrawables.end())
 	{
-		/*Cookbook notes
-		Perform your normal rendering logic here, rendering each relevant(from the reflective object's perspective) object in the scene
-		Instead of the "normal" render target (potentially the back buffer), render to the one associated with the texture cube side currently being processed
-		Instead of the "normal" depth stencil, use the one associated with the reflective object's texture cube
-		Instead of the "normal" viewport, use the one associated with the reflective object's texture cube
-		Instead of the "normal" camera information, use the one associated with the texture cube side currently being processed
-		*/
-		Render(dt, m_cubeMap.GetRenderTargetViewAt(i), m_cubeMap.GetDepthStencilView(), m_cubeMap.GetViewport(), m_cubeMap.GetCameraAt(i), CLEAR_COLOR);
+		//For some reason the cube looks scuffed while I have culling enabled, huh?
+		return;
 	}
-
-	/*Copy the Render() function but remove stuff we're not interested in here*/
-	context->RSSetViewports(1, &viewport);
-	context->OMSetRenderTargets(1, rtv.GetAddressOf(), dsv.Get());
-
-	/*Input Assembler Stage*/
-	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST); //return of trianglelist, because we're just doing old-school vertex+pixel shader, no other fancy shaders
-	context->IASetInputLayout(inputLayout.Get());
-
-	/*Shader Stage*/
-	context->VSSetShader(m_cubeMap.GetVertexShader(), NULL, 0);
-	context->VSSetConstantBuffers(1, 1, m_camera->GetConstantBuffer().GetBufferAddress());
-
-	context->PSSetShader(m_cubeMap.GetPixelShader(), NULL, 0);
-	context->PSSetShaderResources(0, 1, m_cubeMap.GetShaderResourceViewAddress());
-	context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
-	context->PSSetConstantBuffers(0, 1, m_camera->GetConstantBuffer().GetBufferAddress());
-
-	for (auto& drawable : m_reflectiveDrawables)
+	else
 	{
-		drawable.Bind(context.Get(), m_cubeMap.GetShaderResourceView());
-		drawable.Draw(context.Get());
+		for (int i = 0; i < 6; i++)
+		{
+			/*Cookbook notes
+			Perform your normal rendering logic here, rendering each relevant(from the reflective object's perspective) object in the scene
+			Instead of the "normal" render target (potentially the back buffer), render to the one associated with the texture cube side currently being processed
+			Instead of the "normal" depth stencil, use the one associated with the reflective object's texture cube
+			Instead of the "normal" viewport, use the one associated with the reflective object's texture cube
+			Instead of the "normal" camera information, use the one associated with the texture cube side currently being processed
+			*/
+			Render(dt, m_cubeMap.GetRenderTargetViewAt(i), m_cubeMap.GetDepthStencilView(), m_cubeMap.GetViewport(), m_cubeMap.GetCameraAt(i), CLEAR_COLOR);
+		}
+
+		/*Copy the Render() function but remove stuff we're not interested in here*/
+		context->RSSetViewports(1, &viewport);
+		context->OMSetRenderTargets(1, rtv.GetAddressOf(), dsv.Get());
+
+		/*Input Assembler Stage*/
+		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST); //return of trianglelist, because we're just doing old-school vertex+pixel shader, no other fancy shaders
+		context->IASetInputLayout(inputLayout.Get());
+
+		/*Shader Stage*/
+		context->VSSetShader(m_cubeMap.GetVertexShader(), NULL, 0);
+		context->VSSetConstantBuffers(1, 1, m_camera->GetConstantBuffer().GetBufferAddress());
+
+		context->PSSetShader(m_cubeMap.GetPixelShader(), NULL, 0);
+		context->PSSetShaderResources(0, 1, m_cubeMap.GetShaderResourceViewAddress());
+		context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
+		context->PSSetConstantBuffers(0, 1, m_camera->GetConstantBuffer().GetBufferAddress());
+
+		for (auto& drawable : m_reflectiveDrawables)
+		{
+			drawable.Bind(context.Get());
+			//drawable.Draw(context.Get());
+		}
+
+		/*Unbind shaders*/
+		//Vertex shader
+		context->VSSetShader(NULL, NULL, 0);
+		context->VSSetConstantBuffers(0, 0, NULL);
+		//Pixel shader
+		context->PSSetShader(NULL, NULL, 0);
+		context->PSSetConstantBuffers(0, 0, NULL);
+		ID3D11ShaderResourceView* nullSRV = NULL;
+		context->PSSetShaderResources(0, 0, &nullSRV);
+		ID3D11SamplerState* nullSampler = NULL;
+		context->PSSetSamplers(0, 0, &nullSampler);
+
+		/*Unbind rtv*/
+		ID3D11RenderTargetView* nullRTV = NULL;
+		context->OMSetRenderTargets(1, &nullRTV, NULL);
 	}
-
-	/*Unbind shaders*/
-	//Vertex shader
-	context->VSSetShader(NULL, NULL, 0);
-	context->VSSetConstantBuffers(0, 0, NULL);
-	//Pixel shader
-	context->PSSetShader(NULL, NULL, 0);
-	context->PSSetConstantBuffers(0, 0, NULL);
-	ID3D11ShaderResourceView* nullSRV = NULL;
-	context->PSSetShaderResources(0, 0, &nullSRV);
-	ID3D11SamplerState* nullSampler = NULL;
-	context->PSSetSamplers(0, 0, &nullSampler);
-
-	/*Unbind rtv*/
-	ID3D11RenderTargetView* nullRTV = NULL;
-	context->OMSetRenderTargets(1, &nullRTV, NULL);
 }
 
 void D3D11Engine::RenderDepth(float dt)
@@ -349,8 +360,8 @@ void D3D11Engine::RenderDepth(float dt)
 
 		for (auto& drawable : m_drawables)
 		{
-			drawable.Bind(context.Get(), NULL);
-			drawable.Draw(context.Get());
+			drawable.Bind(context.Get());
+			//drawable.Draw(context.Get());
 		}
 	}
 
@@ -398,8 +409,8 @@ void D3D11Engine::DefPassOne(Camera* cam)
 		int visibleDrawables = 0;
 		for (auto& drawable : m_quadTree.CheckTree(cam->GetFrustum()))
 		{
-			drawable->Bind(context.Get(), NULL);
-			drawable->Draw(context.Get());
+			drawable->Bind(context.Get());
+			//drawable->Draw(context.Get());
 			visibleDrawables++;
 		}
 		m_drawablesBeingRendered = visibleDrawables;
@@ -409,8 +420,8 @@ void D3D11Engine::DefPassOne(Camera* cam)
 		//Per drawable: bind vertex and index buffers, then draw them
 		for (auto& drawable : m_drawables)
 		{
-			drawable.Bind(context.Get(), NULL);
-			drawable.Draw(context.Get());
+			drawable.Bind(context.Get());
+			//drawable.Draw(context.Get());
 		}
 		m_drawablesBeingRendered = (int)m_drawables.size();
 	}
@@ -948,17 +959,31 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 			std::string mtlFileName;
 			lineSS >> mtlFileName;
 			ParseMaterial(mtlFileName, ambientData, diffuseData, specularData, shineData); //Split up the functions because too much text, honestly I kinda wanna do that to this whole function already but crunch
+
+			//Load texture
+			if (m_textures.count(ambientData) == 0)
+			{
+				m_textures[ambientData].Init(device.Get(), ambientData.c_str()); //Only load texture once. Copy SRV's later
+			}
+			//LoadTexture(diffuseData.c_str());
+			//LoadTexture(specularData.c_str());
 		}
 
 		if (lineType == "usemtl") //"From this point onward, use this specified material"
 		{
+			//Example for my own visualisation: hybrid_crate.obj has "usemtl wood" on line 26. 
+			//So the first time we see usemtl, we push back the string "wood" to the list of which submesh we're in
+			//Then, if this ISN'T the first time we're doing this, we push back the index count. We only know the index count of a submesh once we start making our second one
+			//Then we push back the start index.
+			//So on line 26, we'd push back Wood with a start index of 0, and then on line 33 we'd push back the index count, giving us our first proper submesh of "wood, 0, 18"
+			//as we then make the new "metal, 18, " and so on. Once we reach the end of file, we push back the last index count
 			std::string groupName;
 			lineSS >> groupName;
-			submeshGroups.push_back(groupName);
 			if (!submeshStartIndices.empty()) //We've reached a new submesh material
 			{
 				submeshIndexCount.push_back(iCount);
 			}
+			submeshGroups.push_back(groupName);
 			submeshStartIndices.push_back(iCount);
 		}
 
@@ -1058,7 +1083,6 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 	//Before we return out of this function, we store the values that we've now received to make a bounding box
 	//Either pass into the function, or perhaps more fittingly, create a new function in the Drawable-class that calls CreateFromPoints() to make its own aabb
 	//DirectX::BoundingBox::CreateFromPoints(aabb, vMin, vMax);
-	submeshIndexCount.push_back(iCount);
 
 	BufferData bufferData;
 	bufferData.vData.size = sizeof(Vertex);
@@ -1074,7 +1098,36 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 	bufferData.mData.specular = specularData;
 	bufferData.mData.shininess = shineData;
 
-	//bufferData.subMeshVector = submeshGroups;
+	/*Submesh*/
+	submeshIndexCount.push_back(iCount);
+	//We should now have 2 submeshes worth of information(wood, 0, 18) and (metal, 18, 36), and the "wood" and "metal" keywords here imply a complete material
+	for (int i = 0; i < submeshGroups.size(); i++)
+	{
+		BufferData::SubMeshData smb;
+		smb.startIndex = submeshStartIndices.at(i);
+		smb.indexCount = submeshIndexCount.at(i);
+		smb.ambientSRV = m_textures[ambientData].GetSRV();
+		smb.diffuseSRV = smb.ambientSRV;
+		smb.specularSRV = smb.ambientSRV;
+		smb.shininess = shineData;
+
+		bufferData.subMeshVector.push_back(smb);
+	}
+
+	if (ambientData == "Textures/dark_grey.png") //no mtl-file added, use base materials
+	{
+		m_textures[ambientData].Init(device.Get(), ambientData.c_str());
+
+		BufferData::SubMeshData smb;
+		smb.startIndex = 0;
+		smb.indexCount = iCount;
+		smb.ambientSRV = m_textures[ambientData].GetSRV();
+		smb.diffuseSRV = smb.ambientSRV;
+		smb.specularSRV = smb.ambientSRV;
+		smb.shininess = shineData;
+
+		bufferData.subMeshVector.push_back(smb);
+	}
 
 	Drawable cube(device.Get(), bufferData, scale, rotate, translate);
 	cube.CreateBoundingBoxFromPoints(vMin, vMax);

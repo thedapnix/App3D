@@ -181,6 +181,7 @@
     <ClCompile Include="Drawable.cpp" />
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="ParticleSystem.cpp" />
+    <ClCompile Include="ShaderResource.cpp" />
     <ClCompile Include="ShadowMap.cpp" />
     <ClCompile Include="Spotlights.cpp" />
     <ClCompile Include="SubMesh.cpp" />
@@ -209,6 +210,7 @@
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="ParticleSystem.h" />
     <ClInclude Include="QuadTree.h" />
+    <ClInclude Include="ShaderResource.h" />
     <ClInclude Include="ShadowMap.h" />
     <ClInclude Include="Spotlights.h" />
     <ClInclude Include="stb_image.h" />

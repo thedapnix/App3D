@@ -1,7 +1,7 @@
 #include "Drawable.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+//#define STB_IMAGE_IMPLEMENTATION
+//#include "stb_image.h"
 
 Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOAT3 scaling, DirectX::XMFLOAT3 rotation, DirectX::XMFLOAT3 translation)
 {
@@ -38,123 +38,147 @@ Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOA
 	/*Submesh stuff*/
 	for (auto& submesh : data.subMeshVector)
 	{
-		
+		m_submeshes.push_back(
+			SubMesh(device, submesh.startIndex, submesh.indexCount,
+			submesh.ambientSRV.Get(), submesh.diffuseSRV.Get(), submesh.specularSRV.Get(), submesh.shininess)
+		);
 	}
 
 	/*Init textures, material update. Don't load duplicate textures*/
-	InitTexture(device, data.mData.ambient.c_str());
-	diffuseSRV = ambientSRV;
-	specularSRV = ambientSRV;
-	m_shineCB.shininess = data.mData.shininess;
-	m_constantBufferShininess.Init(device, &m_shineCB, sizeof(m_shineCB));
+	//InitTexture(device, data.mData.ambient.c_str());
+	//diffuseSRV = ambientSRV;
+	//specularSRV = ambientSRV;
+	//m_shineCB.shininess = data.mData.shininess;
+	//m_constantBufferShininess.Init(device, &m_shineCB, sizeof(m_shineCB));
 }
 
-void Drawable::InitTexture(ID3D11Device* device, const char* textureFileName)
+//void Drawable::InitTexture(ID3D11Device* device, const char* textureFileName)
+//{
+//	/*Read from texture file*/
+//	int width, height;
+//	int channels;
+//
+//	unsigned char* img = stbi_load(textureFileName, &width, &height, &channels, 4);
+//
+//	if (!img)
+//	{
+//		MessageBox(NULL, L"Failed to load texture file!", L"Error", MB_OK);
+//		return;
+//	}
+//
+//	/*Create descriptor and subresource data using info from the file you read*/
+//	D3D11_TEXTURE2D_DESC srtDesc;
+//	ZeroMemory(&srtDesc, sizeof(srtDesc));
+//
+//	srtDesc.Width = width;
+//	srtDesc.Height = height;
+//	srtDesc.MipLevels = 1;
+//	srtDesc.ArraySize = 1;
+//	srtDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+//	srtDesc.SampleDesc.Count = 1;
+//	//srtDesc.SampleDesc.Quality = 0;
+//	srtDesc.Usage = D3D11_USAGE_IMMUTABLE; //GPU read-only
+//	srtDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+//	srtDesc.CPUAccessFlags = 0;
+//	srtDesc.MiscFlags = 0;
+//
+//	D3D11_SUBRESOURCE_DATA srtData;
+//	ZeroMemory(&srtData, sizeof(srtData));
+//
+//	srtData.pSysMem = img;
+//	srtData.SysMemPitch = width * channels;
+//	//srtData.SysMemSlicePitch = 0;
+//
+//	HRESULT hr = device->CreateTexture2D(&srtDesc, &srtData, srt.GetAddressOf());
+//
+//	if (FAILED(hr)) {
+//		MessageBox(NULL, L"Failed to create shader resource texture for drawable!", L"Error", MB_OK);
+//		return;
+//	}
+//
+//	/*D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+//	ZeroMemory(&srvDesc, sizeof(srvDesc));
+//
+//	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+//	srvDesc.Texture2D.MostDetailedMip = 0;
+//	srvDesc.Texture2D.MipLevels = srtDesc.MipLevels;
+//	srvDesc.Format = srtDesc.Format;*/
+//
+//	hr = device->CreateShaderResourceView(srt.Get(), NULL, ambientSRV.GetAddressOf());
+//
+//	if (FAILED(hr)) {
+//		MessageBox(NULL, L"Failed to create shader resource view for drawable!", L"Error", MB_OK);
+//		return;
+//	}
+//
+//	stbi_image_free(img);
+//
+//	/*Setup sampler, allowing us to access texture data in shader*/
+//	D3D11_SAMPLER_DESC samplerDesc;
+//	ZeroMemory(&samplerDesc, sizeof(samplerDesc));
+//	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;		//Anisotropic filtering (crazy that D3D does this for us, thank you <3)
+//	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;	//Method to use for resolving texture coordinates outside the 0 to 1 range (WRAP is basically repeat)
+//	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+//	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+//	samplerDesc.MipLODBias = 0;							//Offset from the calculated mipmap level
+//	samplerDesc.MaxAnisotropy = 16;						//Clamping for the anisotropic filtering (Valid values are between 1 and 16)
+//	samplerDesc.MinLOD = 0;
+//	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+//
+//	hr = device->CreateSamplerState(&samplerDesc, sampler.GetAddressOf());
+//
+//	if (FAILED(hr)) {
+//		MessageBox(NULL, L"Failed to create sampler for drawable!", L"Error", MB_OK);
+//		return;
+//	}
+//}
+
+void Drawable::Bind(ID3D11DeviceContext* context) const
 {
-	/*Read from texture file*/
-	int width, height;
-	int channels;
-
-	unsigned char* img = stbi_load(textureFileName, &width, &height, &channels, 4);
-
-	if (!img)
-	{
-		MessageBox(NULL, L"Failed to load texture file!", L"Error", MB_OK);
-		return;
-	}
-
-	/*Create descriptor and subresource data using info from the file you read*/
-	D3D11_TEXTURE2D_DESC srtDesc;
-	ZeroMemory(&srtDesc, sizeof(srtDesc));
-
-	srtDesc.Width = width;
-	srtDesc.Height = height;
-	srtDesc.MipLevels = 1;
-	srtDesc.ArraySize = 1;
-	srtDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	srtDesc.SampleDesc.Count = 1;
-	//srtDesc.SampleDesc.Quality = 0;
-	srtDesc.Usage = D3D11_USAGE_IMMUTABLE; //GPU read-only
-	srtDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-	srtDesc.CPUAccessFlags = 0;
-	srtDesc.MiscFlags = 0;
-
-	D3D11_SUBRESOURCE_DATA srtData;
-	ZeroMemory(&srtData, sizeof(srtData));
-
-	srtData.pSysMem = img;
-	srtData.SysMemPitch = width * channels;
-	//srtData.SysMemSlicePitch = 0;
-
-	HRESULT hr = device->CreateTexture2D(&srtDesc, &srtData, srt.GetAddressOf());
-
-	if (FAILED(hr)) {
-		MessageBox(NULL, L"Failed to create shader resource texture for drawable!", L"Error", MB_OK);
-		return;
-	}
-
-	/*D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-	ZeroMemory(&srvDesc, sizeof(srvDesc));
-
-	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MostDetailedMip = 0;
-	srvDesc.Texture2D.MipLevels = srtDesc.MipLevels;
-	srvDesc.Format = srtDesc.Format;*/
-
-	hr = device->CreateShaderResourceView(srt.Get(), NULL, ambientSRV.GetAddressOf());
-
-	if (FAILED(hr)) {
-		MessageBox(NULL, L"Failed to create shader resource view for drawable!", L"Error", MB_OK);
-		return;
-	}
-
-	stbi_image_free(img);
-
-	/*Setup sampler, allowing us to access texture data in shader*/
-	D3D11_SAMPLER_DESC samplerDesc;
-	ZeroMemory(&samplerDesc, sizeof(samplerDesc));
-	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;		//Anisotropic filtering (crazy that D3D does this for us, thank you <3)
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;	//Method to use for resolving texture coordinates outside the 0 to 1 range (WRAP is basically repeat)
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.MipLODBias = 0;							//Offset from the calculated mipmap level
-	samplerDesc.MaxAnisotropy = 16;						//Clamping for the anisotropic filtering (Valid values are between 1 and 16)
-	samplerDesc.MinLOD = 0;
-	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-
-	hr = device->CreateSamplerState(&samplerDesc, sampler.GetAddressOf());
-
-	if (FAILED(hr)) {
-		MessageBox(NULL, L"Failed to create sampler for drawable!", L"Error", MB_OK);
-		return;
-	}
-}
-
-void Drawable::Bind(ID3D11DeviceContext* context, ID3D11ShaderResourceView* inputSRV) const
-{
-	//Vertex Buffer
+	//Buffers
+	context->VSSetConstantBuffers(0, 1, m_constantBuffer.GetBufferAddress());
+	
 	ID3D11Buffer* buffer[] = { m_vertexBuffer.GetBuffer() };
 	UINT stride = m_vertexBuffer.GetVertexSize();
 	UINT offset = 0;
 	context->IASetVertexBuffers(0, 1, buffer, &stride, &offset);
 
-	//Index Buffer
 	context->IASetIndexBuffer(m_indexBuffer.GetBuffer(), DXGI_FORMAT_R32_UINT, 0);
 
-	//Textures
-	ID3D11ShaderResourceView* views[] = {ambientSRV.Get(), diffuseSRV.Get(), specularSRV.Get()};
-	if (inputSRV != NULL)	context->PSSetShaderResources(0, 1, &inputSRV);
-	else					context->PSSetShaderResources(0, 3, views);
-	context->PSSetSamplers(0, 1, sampler.GetAddressOf());
+	for (int i = 0; i < m_submeshes.size(); i++)
+	{
+		m_submeshes.at(i).Bind(context);
+		m_submeshes.at(i).Draw(context);
+	}
+	////Vertex Buffer
+	//ID3D11Buffer* buffer[] = { m_vertexBuffer.GetBuffer() };
+	//UINT stride = m_vertexBuffer.GetVertexSize();
+	//UINT offset = 0;
+	//context->IASetVertexBuffers(0, 1, buffer, &stride, &offset);
 
-	//Shine cb
-	context->PSSetConstantBuffers(1, 1, m_constantBufferShininess.GetBufferAddress());
+	////Index Buffer
+	//context->IASetIndexBuffer(m_indexBuffer.GetBuffer(), DXGI_FORMAT_R32_UINT, 0);
+
+	////Textures
+	//ID3D11ShaderResourceView* views[] = {ambientSRV.Get(), diffuseSRV.Get(), specularSRV.Get()};
+	//if (inputSRV != NULL)	context->PSSetShaderResources(0, 1, &inputSRV);
+	//else					context->PSSetShaderResources(0, 3, views);
+	//context->PSSetSamplers(0, 1, sampler.GetAddressOf());
+
+	////Shine cb
+	//context->PSSetConstantBuffers(1, 1, m_constantBufferShininess.GetBufferAddress());
 }
 
-void Drawable::Draw(ID3D11DeviceContext* context) const
+void Drawable::BindSubMesh(ID3D11DeviceContext* context, UINT index) const
 {
-	context->VSSetConstantBuffers(0, 1, m_constantBuffer.GetBufferAddress());
-	context->Draw(m_vertexBuffer.GetVertexCount(), 0);
+	m_submeshes.at(index).Bind(context);
+}
+
+void Drawable::Draw(ID3D11DeviceContext* context, UINT index) const
+{
+	//context->VSSetConstantBuffers(0, 1, m_constantBuffer.GetBufferAddress());
+	//context->Draw(m_vertexBuffer.GetVertexCount(), 0);
+	m_submeshes.at(index).Draw(context);
 	//context->DrawIndexed(m_indexBuffer.GetIndexCount(), 0, 0);
 }
 
@@ -175,6 +199,7 @@ void Drawable::UpdateConstantBuffer(ID3D11DeviceContext* context)
 void Drawable::CreateBoundingBoxFromPoints(DirectX::XMVECTOR min, DirectX::XMVECTOR max)
 {
 	DirectX::BoundingBox::CreateFromPoints(m_aabb, min, max);
+	m_aabb.Transform(m_aabb, World()); //Transform without transposing the world matrix
 }
 
 void Drawable::EditTranslation(float x, float y, float z)

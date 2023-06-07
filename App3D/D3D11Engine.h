@@ -8,6 +8,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <unordered_map>
 
 #include "ConstantBuffer.h"
 #include "Drawable.h"
@@ -16,6 +17,7 @@
 #include "ParticleSystem.h"
 #include "ShadowMap.h"
 #include "QuadTree.h"
+#include "ShaderResource.h" //new
 
 class D3D11Engine
 {
@@ -79,6 +81,7 @@ private:
 
 	//Internal function called by the obj-parser to now also parse materials
 	bool ParseMaterial(std::string mtlFileName, std::string& ambient, std::string& diffuse, std::string& specular, float& shininess);
+	std::unordered_map<std::string, ShaderResource> m_textures;
 	
 	/*VARIABLES*/
 	UINT m_windowWidth;
@@ -101,7 +104,6 @@ private:
 	bool billboardingIsEnabled = false;
 	bool cubemapIsEnabled = false;
 	bool lodIsEnabled = false;
-	bool shadowmapIsEnabled = false;
 
 private:
 	/*D3D11 Interfaces*/

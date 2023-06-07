@@ -14,15 +14,12 @@ class ShaderResource {
 public:
 	ShaderResource() = default;
 	~ShaderResource() = default;
-	ShaderResource& operator=(const ShaderResource&) = delete;
-	ShaderResource(const ShaderResource&) = delete;
 
-	void Init(ID3D11Device* device, const char* textureFile);
-	void SetTexture(ID3D11Device* device, UINT width, UINT height, void* textureData);
+	void Init(ID3D11Device* device, const char* textureFileName);
 
 	ID3D11ShaderResourceView* GetSRV() const;
 
 private:
-	Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> srt;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv;
 };

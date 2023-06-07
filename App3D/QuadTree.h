@@ -32,8 +32,8 @@ private:
 
 	static constexpr int maxElements = 8;
 	static constexpr int maxDepth = 4; //For sanity reasons, don't let the tree subdivide forever
-	static constexpr int maxHeight = 80;
-	static constexpr int minHeight = -80;
+	static constexpr int maxHeight = 100;
+	static constexpr int minHeight = -100;
 };
 
 template<typename T>
@@ -43,7 +43,7 @@ void QuadTree<T>::AddElement(const T* element, const DirectX::BoundingBox& aabb)
 	if (m_root == NULL)
 	{
 		m_root = std::make_unique<Node>();
-		DirectX::BoundingBox rootAABB = { { minHeight, minHeight, minHeight }, { maxHeight, maxHeight, maxHeight } };
+		DirectX::BoundingBox rootAABB = { { 0.0f, 0.0f, 0.0f }, { maxHeight, maxHeight, maxHeight } }; //Experimented with a bunch of different values but I have to init this as (0,0,0)?
 		m_root->aabb = rootAABB;
 	}
 	if (m_depth < maxDepth)
@@ -113,15 +113,18 @@ void QuadTree<T>::AddToNode(const T* element, const DirectX::BoundingBox& aabb, 
 			farRight.CreateFromPoints(farRight,
 				{ center.x, maxHeight, center.z },
 				{ center.x + extents.x, minHeight, center.z + extents.z });
-			childBoxes.push_back(farLeft);
+			childBoxes.push_back(farRight);
 
 			//"For each of the currently stored elements in this node, attempt to add them to the new child nodes"
+			for (int i = 0; i < 4; i++)
+			{
+				node->children[i] = std::make_unique<Node>();
+				node->children[i]->aabb = childBoxes.at(i);
+			}
 			for (const auto& element : node->elements)
 			{
 				for (int i = 0; i < 4; i++)
 				{
-					node->children[i] = std::make_unique<Node>();
-					node->children[i]->aabb = childBoxes.at(i);
 					if (node->children[i]->aabb.Intersects(element->GetBoundingBox()))
 					{
 						node->children[i]->elements.push_back(element);
@@ -130,7 +133,6 @@ void QuadTree<T>::AddToNode(const T* element, const DirectX::BoundingBox& aabb, 
 			}
 			node->elements.clear();
 			m_depth++;
-			return;
 		}
 	}
 	//"Once each child node has been correctly created and the previously stored elements have been inserted into them correctly, the recursive process can simply be done with the new element and each of the new child nodes"
@@ -156,12 +158,7 @@ void QuadTree<T>::CheckNode(const DirectX::BoundingFrustum& frustum, const std::
 	{
 		for (const auto& element : node->elements)
 		{
-			//Transform frustum to object local space
-			DirectX::XMVECTOR detWorld = DirectX::XMMatrixDeterminant(element->World());
-			DirectX::XMMATRIX invWorld = DirectX::XMMatrixInverse(&detWorld, element->World());
-			DirectX::BoundingFrustum localFrustum = frustum;
-			localFrustum.Transform(localFrustum, invWorld);
-			if (localFrustum.Intersects(element->GetBoundingBox()))
+			if (frustum.Intersects(element->GetBoundingBox()))
 			{
 				//Check if the object is already present in the return vector, add if not
 				//https://stackoverflow.com/questions/3450860/check-if-a-stdvector-contains-a-certain-object thank you stackoverflow

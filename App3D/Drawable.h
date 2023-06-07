@@ -51,8 +51,12 @@ struct BufferData
 	struct SubMeshData
 	{
 		UINT startIndex;
-		UINT count;
-	} smData;
+		UINT indexCount;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ambientSRV;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> diffuseSRV;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> specularSRV;
+		float shininess;
+	};
 	std::vector<SubMeshData> subMeshVector;
 };
 
@@ -62,10 +66,11 @@ public:
 	Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOAT3 scaling, DirectX::XMFLOAT3 rotation, DirectX::XMFLOAT3 translation);
 	~Drawable() = default;
 
-	void InitTexture(ID3D11Device* device, const char* textureFileName);
+	//void InitTexture(ID3D11Device* device, const char* textureFileName);
 
-	void Bind(ID3D11DeviceContext* context, ID3D11ShaderResourceView* inputSRV) const;
-	void Draw(ID3D11DeviceContext* context) const;
+	void Bind(ID3D11DeviceContext* context) const;
+	void BindSubMesh(ID3D11DeviceContext* context, UINT index) const;
+	void Draw(ID3D11DeviceContext* context, UINT index) const;
 	void Unbind(ID3D11DeviceContext* context);
 	void UpdateConstantBuffer(ID3D11DeviceContext* context);
 	void CreateBoundingBoxFromPoints(DirectX::XMVECTOR min, DirectX::XMVECTOR max);
@@ -109,9 +114,9 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> diffuseSRT;
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> specularSRT;
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> srt;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ambientSRV;
+	/*Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ambientSRV;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> diffuseSRV;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> specularSRV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> specularSRV;*/
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
 
 	DirectX::BoundingBox m_aabb;

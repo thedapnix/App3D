@@ -34,7 +34,7 @@ public:
 private:
 	/*Functions*/
 	void DoFrame(float dt);
-	void InterpretKeyboardInput();
+	void InterpretKeyboardInput(float dt);
 	void OnMouseMove(WPARAM btnState, int x, int y); //Don't want to have it like this but I gotta, for now
 
 	/*Window Stuff*/
