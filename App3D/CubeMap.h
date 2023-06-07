@@ -48,12 +48,6 @@ public:
 private:
 	//Note the comment in CubeMapView constructor: "Texture cube is 6 textures combined in a cubic pattern, where we let indices 0-1 be positive and negative X, 2-3 be Y, 4-5 be Z"
 	static constexpr UINT m_sides = 6;
-	enum class CubeFace
-	{
-		POSITIVE_X, NEGATIVE_X,
-		POSITIVE_Y, NEGATIVE_Y,
-		POSITIVE_Z, NEGATIVE_Z
-	};
 	Camera m_cameras[m_sides];
 	CubeMapView m_cubeMapView;
 

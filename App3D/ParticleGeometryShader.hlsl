@@ -28,7 +28,7 @@ void main(
     float3 upVec = float3(0.0f, 1.0f, 0.0f);
     float3 rightVec = normalize(cross(frontVec, upVec));
     upVec = normalize(cross(rightVec, frontVec));
-	//As for "scale right and up based on preference" i'm not sure. make particles larger? maybe affect value through imgui?
+	//As for "scale right and up based on preference" i'm just going to scale them down to be small particles here. in the future i could pass in some scalar that imgui can modify
     rightVec *= 0.05f;
     upVec *= 0.05;
 	

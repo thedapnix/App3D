@@ -72,7 +72,7 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	{
 		m_quadTree.AddElement(&drawable, drawable.GetBoundingBox());
 	}
-	m_quadTree.AddElement(&m_reflectiveDrawables.at(0), m_reflectiveDrawables.at(0).GetBoundingBox());
+	//m_quadTree.AddElement(&m_reflectiveDrawables.at(0), m_reflectiveDrawables.at(0).GetBoundingBox());
 
 	//Sampler setup for texture access in shaders
 	InitSampler();
@@ -91,14 +91,14 @@ void D3D11Engine::Update(float dt)
 	//UPDATE CONSTANT BUFFERS
 	m_camera->UpdateConstantBuffer(context.Get());
 
-	m_drawables.at(11).Rotate(0.0f, 0.001f * dt, 0.001f * dt);
+	m_drawables.at(11).Rotate(0.0f, 0.0005f * dt, 0.001f * dt);
 	for (auto& drawable : m_drawables)
 	{
 		drawable.UpdateConstantBuffer(context.Get());
 	}
 	for (auto& mirrorCube : m_reflectiveDrawables)
 	{
-		mirrorCube.Rotate(0.0f, 0.001f * dt, 0.0f);
+		mirrorCube.Rotate(0.0f, 0.0003f * dt, 0.0f);
 		mirrorCube.UpdateConstantBuffer(context.Get());
 	}
 
@@ -190,7 +190,6 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 			for (const auto& drawable : m_quadTree.CheckTree(cam->GetFrustum()))
 			{
 				drawable->Bind(context.Get());
-				//drawable->Draw(context.Get());
 				visibleDrawables++;
 			}
 			m_drawablesBeingRendered = visibleDrawables;
@@ -200,7 +199,6 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 			for (auto& drawable : m_drawables)
 			{
 				drawable.Bind(context.Get());
-				//drawable.Draw(context.Get());
 			}
 			m_drawablesBeingRendered = (int)m_drawables.size();
 		}
@@ -281,7 +279,6 @@ void D3D11Engine::RenderReflectiveObject(float dt)
 	const Drawable* cube = &m_reflectiveDrawables.at(0);
 	if(cullingIsEnabled && std::find(visibleDrawables.begin(), visibleDrawables.end(), cube) == visibleDrawables.end())
 	{
-		//For some reason the cube looks scuffed while I have culling enabled, huh?
 		return;
 	}
 	else
@@ -393,6 +390,7 @@ void D3D11Engine::DefPassOne(Camera* cam)
 	///////////////////////////////////////////////////////////////////////////////
 	context->VSSetShader(vertexShader.Get(), NULL, 0);
 	context->PSSetShader(deferredPixelShader.Get(), NULL, 0);
+	context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
 
 	//Tessellation
 	if (lodIsEnabled)context->RSSetState(wireframeRS.Get());
@@ -952,8 +950,6 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 			{
 				m_textures[ambientData].Init(device.Get(), ambientData.c_str()); //Only load texture once. Copy SRV's later
 			}
-			//LoadTexture(diffuseData.c_str());
-			//LoadTexture(specularData.c_str());
 		}
 
 		if (lineType == "usemtl") //"From this point onward, use this specified material"
@@ -1060,9 +1056,6 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 			}
 		}
 	}
-	//Before we return out of this function, we store the values that we've now received to make a bounding box
-	//Either pass into the function, or perhaps more fittingly, create a new function in the Drawable-class that calls CreateFromPoints() to make its own aabb
-	//DirectX::BoundingBox::CreateFromPoints(aabb, vMin, vMax);
 
 	BufferData bufferData;
 	bufferData.vData.size = sizeof(Vertex);
