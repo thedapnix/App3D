@@ -133,7 +133,7 @@ Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOA
 //	}
 //}
 
-void Drawable::Bind(ID3D11DeviceContext* context) const
+void Drawable::Bind(ID3D11DeviceContext* context, bool isReflective) const
 {
 	//Buffers
 	context->VSSetConstantBuffers(0, 1, m_constantBuffer.GetBufferAddress());
@@ -147,7 +147,7 @@ void Drawable::Bind(ID3D11DeviceContext* context) const
 
 	for (int i = 0; i < m_submeshes.size(); i++)
 	{
-		m_submeshes.at(i).Bind(context);
+		m_submeshes.at(i).Bind(context, isReflective);
 		m_submeshes.at(i).Draw(context);
 	}
 	////Vertex Buffer
@@ -167,11 +167,6 @@ void Drawable::Bind(ID3D11DeviceContext* context) const
 
 	////Shine cb
 	//context->PSSetConstantBuffers(1, 1, m_constantBufferShininess.GetBufferAddress());
-}
-
-void Drawable::BindSubMesh(ID3D11DeviceContext* context, UINT index) const
-{
-	m_submeshes.at(index).Bind(context);
 }
 
 void Drawable::Draw(ID3D11DeviceContext* context, UINT index) const

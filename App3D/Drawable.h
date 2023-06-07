@@ -66,10 +66,7 @@ public:
 	Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOAT3 scaling, DirectX::XMFLOAT3 rotation, DirectX::XMFLOAT3 translation);
 	~Drawable() = default;
 
-	//void InitTexture(ID3D11Device* device, const char* textureFileName);
-
-	void Bind(ID3D11DeviceContext* context) const;
-	void BindSubMesh(ID3D11DeviceContext* context, UINT index) const;
+	void Bind(ID3D11DeviceContext* context, bool isReflective = false) const;
 	void Draw(ID3D11DeviceContext* context, UINT index) const;
 	void Unbind(ID3D11DeviceContext* context);
 	void UpdateConstantBuffer(ID3D11DeviceContext* context);

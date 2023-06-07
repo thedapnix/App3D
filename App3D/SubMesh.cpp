@@ -15,11 +15,14 @@ SubMesh::SubMesh(ID3D11Device* device, UINT startIndex, UINT indexCount,
 	m_constantBufferShininess.Init(device, &m_shineCB, sizeof(m_shineCB));
 }
 
-void SubMesh::Bind(ID3D11DeviceContext* context) const
+void SubMesh::Bind(ID3D11DeviceContext* context, bool isReflective) const
 {
 	//Textures
-	ID3D11ShaderResourceView* views[] = { ambientSRV.Get(), diffuseSRV.Get(), specularSRV.Get() };
-	context->PSSetShaderResources(0, 3, views);
+	if (!isReflective)
+	{
+		ID3D11ShaderResourceView* views[] = { ambientSRV.Get(), diffuseSRV.Get(), specularSRV.Get() };
+		context->PSSetShaderResources(0, 3, views);
+	}
 
 	//Shine cb
 	context->PSSetConstantBuffers(1, 1, m_constantBufferShininess.GetBufferAddress());

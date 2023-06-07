@@ -317,7 +317,7 @@ void D3D11Engine::RenderReflectiveObject(float dt)
 
 		for (auto& drawable : m_reflectiveDrawables)
 		{
-			drawable.Bind(context.Get());
+			drawable.Bind(context.Get(), true);
 			//drawable.Draw(context.Get());
 		}
 
@@ -891,19 +891,6 @@ void D3D11Engine::InitSampler()
 
 bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate)
 {
-	/*Dawn of the final day: We need to be able to parse materials too. 
-	We'll get the ambient, diffuse, specular, and shininess components from here, so I guess we're no longer manually applying textures
-	Example mtl as provided by :
-	newmtl shinyred
-		Ka  0.1986  0.0000  0.0000
-		Kd  0.5922  0.0166  0.0000
-		Ks  0.5974  0.2084  0.2084
-		illum 2
-		Ns 100.2237
-	So Ka, Kd, Ks and Ns are what we're interested in here (Ns is the shininess) and we can skip illum 
-	I'll also replace the x-, y-, and z-values with textures for the ambient, diffuse, and specular components so this will be really simple to add (famous last words?)
-	These will be used in the deferred renderer*/
-
 	std::ifstream ifs(objFileName);
 	if (!ifs)
 	{
@@ -933,7 +920,7 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 	UINT vCount = 0u;
 	UINT iCount = 0u;
 
-	/*Material data to pass to drawable*/
+	/*Material data to pass to drawable, give default values here that we use if the text file doesn't specify a material*/
 	std::string ambientData = "Textures/dark_grey.png";
 	std::string diffuseData = "Textures/grey.png";
 	std::string specularData = "Textures/light_grey.png";
@@ -971,12 +958,6 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 
 		if (lineType == "usemtl") //"From this point onward, use this specified material"
 		{
-			//Example for my own visualisation: hybrid_crate.obj has "usemtl wood" on line 26. 
-			//So the first time we see usemtl, we push back the string "wood" to the list of which submesh we're in
-			//Then, if this ISN'T the first time we're doing this, we push back the index count. We only know the index count of a submesh once we start making our second one
-			//Then we push back the start index.
-			//So on line 26, we'd push back Wood with a start index of 0, and then on line 33 we'd push back the index count, giving us our first proper submesh of "wood, 0, 18"
-			//as we then make the new "metal, 18, " and so on. Once we reach the end of file, we push back the last index count
 			std::string groupName;
 			lineSS >> groupName;
 			if (!submeshStartIndices.empty()) //We've reached a new submesh material
@@ -1047,7 +1028,6 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 				indices.push_back(v - 1);
 				refs.push_back({ v - 1 , vt - 1 , vn - 1 });
 				iCount++;
-				//vCountMesh++;
 			}
 
 			//We now have all the information we need to construct our vertices
@@ -1100,7 +1080,6 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 
 	/*Submesh*/
 	submeshIndexCount.push_back(iCount);
-	//We should now have 2 submeshes worth of information(wood, 0, 18) and (metal, 18, 36), and the "wood" and "metal" keywords here imply a complete material
 	for (int i = 0; i < submeshGroups.size(); i++)
 	{
 		BufferData::SubMeshData smb;

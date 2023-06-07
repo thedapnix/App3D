@@ -13,7 +13,7 @@ public:
 		ID3D11ShaderResourceView* ambient, ID3D11ShaderResourceView* diffuse, ID3D11ShaderResourceView* specular, float shine);
 	~SubMesh() = default;
 
-	void Bind(ID3D11DeviceContext* context) const;
+	void Bind(ID3D11DeviceContext* context, bool isReflective) const;
 	void Draw(ID3D11DeviceContext* context) const;
 
 private:
