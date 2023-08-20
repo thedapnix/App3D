@@ -111,9 +111,6 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> diffuseSRT;
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> specularSRT;
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> srt;
-	/*Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ambientSRV;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> diffuseSRV;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> specularSRV;*/
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
 
 	DirectX::BoundingBox m_aabb;

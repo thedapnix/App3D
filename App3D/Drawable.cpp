@@ -43,13 +43,6 @@ Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOA
 			submesh.ambientSRV.Get(), submesh.diffuseSRV.Get(), submesh.specularSRV.Get(), submesh.shininess)
 		);
 	}
-
-	/*Init textures, material update. Don't load duplicate textures*/
-	//InitTexture(device, data.mData.ambient.c_str());
-	//diffuseSRV = ambientSRV;
-	//specularSRV = ambientSRV;
-	//m_shineCB.shininess = data.mData.shininess;
-	//m_constantBufferShininess.Init(device, &m_shineCB, sizeof(m_shineCB));
 }
 
 void Drawable::Bind(ID3D11DeviceContext* context, bool isReflective) const
