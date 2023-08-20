@@ -34,12 +34,6 @@ public:
 	Camera& GetCamera() const noexcept;
 
 private:
-	//OBJ-parser
-	struct VertexReference
-	{
-		int v, vt, vn;
-	};
-
 	//Deferred Renderer
 	struct GBuffer
 	{

@@ -40,6 +40,8 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	m_shadowMap = ShadowMap(device.Get(), &m_drawables, &m_spotlights);
 	
 	//Drawable setup
+	InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f }, { -10.0f, -4.0f, 15.0f }); //
+
 	InitDrawableFromFile("Meshes/ground.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -10.0f, 5.0f }); //Ground
 	InitDrawableFromFile("Meshes/ground.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -10.0f, -23.0f }); //Ground2
 	InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, 19.0f }); //Back wall
@@ -50,7 +52,7 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 1.0f, 5.0f, 13.0f }, { 0.0f, 0.0f, 0.0f }, { 14.0f, -4.0f, -23.0f }); //Right wall2
 
 	InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 2.0f, 2.0f, 2.0f }, { 0.0f, 0.0f, 0.0f }, { -10.0f, -7.0f, 15.0f }); //Corner cubes for shadow testing
-	InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f }, { -10.0f, -4.0f, 15.0f }); //
+	//InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f }, { -10.0f, -4.0f, 15.0f }); //
 	InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f }, { -10.0f, -8.0f, 11.0f });
 
 	InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 5.0f, -3.0f, -33.0f }); //index 11, the spinny boy
@@ -112,7 +114,7 @@ void D3D11Engine::Update(float dt)
 	if (cubemapIsEnabled)RenderReflectiveObject(dt);
 
 	//PRESENT
-	swapChain->Present(0, 0); //vSync enabled
+	swapChain->Present(0, 0); //vSync, 1 = enabled, 0 = disabled
 }
 
 void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps, int state)
@@ -447,7 +449,6 @@ void D3D11Engine::DefPassTwo(Camera* cam)
 {
 	///////////////////////////////////////////////////////////////////////////////
 	//LIGHTING PASS, USE COMPUTE SHADER TO EDIT THE BACKBUFFER AND DO LIGHTING COMPUTATIONS
-	//Looking at it with a more experienced eye, I'd say no. We're now no longer rendering, more like using the compute shader to edit the final image
 	ID3D11RenderTargetView* nullRtv = NULL;
 	context->OMSetRenderTargets(1, &nullRtv, NULL);
 
@@ -915,8 +916,6 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 	/*Pass along to drawable*/
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
-	UINT vCount = 0u;
-	UINT iCount = 0u;
 
 	/*Material data to pass to drawable, give default values here that we use if the text file doesn't specify a material*/
 	std::string ambientData = "Textures/dark_grey.png";
@@ -929,6 +928,9 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 	std::vector<UINT> submeshStartIndices;
 	std::vector<UINT> submeshIndexCount;
 
+	//new
+	std::unordered_map<std::string, UINT> refs;
+
 	//Read the text file
 	std::string lineStr;
 	while (std::getline(ifs, lineStr))
@@ -940,7 +942,7 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 		/*Material stuff*/
 		if (lineType == "mtllib")
 		{
-			//So this line is basically the one telling us which file we'll need to read
+			//Get the name of the file containing the material (texture) and parse it
 			std::string mtlFileName;
 			lineSS >> mtlFileName;
 			ParseMaterial(mtlFileName, ambientData, diffuseData, specularData, shineData); //Split up the functions because too much text, honestly I kinda wanna do that to this whole function already but crunch
@@ -958,10 +960,10 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 			lineSS >> groupName;
 			if (!submeshStartIndices.empty()) //We've reached a new submesh material
 			{
-				submeshIndexCount.push_back(iCount);
+				submeshIndexCount.push_back((UINT)indices.size());
 			}
 			submeshGroups.push_back(groupName);
-			submeshStartIndices.push_back(iCount);
+			submeshStartIndices.push_back((UINT)indices.size());
 		}
 
 		if (lineType == "v") //Vertex (Position)
@@ -996,11 +998,8 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 		if (lineType == "f") //Face
 		{
 			//Each face references three vertices, with their respective positions, texture coordinates and normals (think triangles)
-			//Some obj-files simply have something like "f 2 5 3", while others are built more like "f 2/1/0 5/3/1 3/2/2"
-			//We write the following code in a way that works with both of these formats
-			std::vector<VertexReference> refs;
 			std::string refStr;
-			while (lineSS >> refStr)
+			while (lineSS >> refStr) //Get line up until the next space, in the case of for example "1/1/1 2/2/1 3/3/1" we get 1/1/1
 			{
 				std::istringstream ref(refStr);
 				std::string vStr, vtStr, vnStr;
@@ -1010,60 +1009,43 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 				std::getline(ref, vtStr, '/');
 				std::getline(ref, vnStr, '/');
 
-				//Convert to integer
-				int v = atoi(vStr.c_str());
-				int vt = atoi(vtStr.c_str());
-				int vn = atoi(vnStr.c_str());
+				//Convert to integer (and subtract 1 since obj files start counting from 1 but we want to count from 0)
+				int v = atoi(vStr.c_str()) - 1;
+				int vt = atoi(vtStr.c_str()) - 1;
+				int vn = atoi(vnStr.c_str()) - 1;
 
 				//Error checking in case of negative references (shouldn't be necessary as long as the .obj-file isn't trash but I did have to deal with it one time)
 				if (v < 0) v = (int)vPos.size() + v;
 				if (vt < 0) vt = (int)vTex.size() + vt;
 				if (vn < 0) vn = (int)vNor.size() + vn;
 
-				//Subtract by one because the "faces" part of an obj-file starts counting from 1, but we want to count from 0
-				indices.push_back(v - 1);
-				refs.push_back({ v - 1 , vt - 1 , vn - 1 });
-				iCount++;
-			}
-
-			//We now have all the information we need to construct our vertices
-			for (size_t i = 1; i + 1 < refs.size(); ++i)
-			{
-				//Get the actual values of the vertices referenced by the face
-				const VertexReference* p[3] = { &refs[0], &refs[i], &refs[i + 1] };
-
-				//If we haven't gotten normals from the .obj-file we calculate them manually
-				//If we already have them, skip this step so as to not waste processing power on unnecessary calculations
-				XMVECTOR faceNormal;
-				if (!fileHasNormal)
+				//If the face is unique, add it to the list of refs so we'll create the vertices later
+				if (refs.count(refStr) == 0)
 				{
-					XMVECTOR U = XMVectorSubtract(XMLoadFloat3(&vPos[p[1]->v]), XMLoadFloat3(&vPos[p[0]->v]));
-					XMVECTOR V = XMVectorSubtract(XMLoadFloat3(&vPos[p[2]->v]), XMLoadFloat3(&vPos[p[0]->v]));
-					faceNormal = XMVector3Cross(U, V);
-					faceNormal = XMVector3Normalize(faceNormal);
-				}
-
-				for (size_t j = 0; j < 3; ++j)
-				{
+					//Create the vertex
 					Vertex vert;
-					vert.position = vPos[p[j]->v];
-					vert.texcoord = (fileHasTexcoord ? vTex[p[j]->vt] : XMFLOAT2({0.0f, 0.0f}));
-					if (fileHasNormal) vert.normal = vNor[p[j]->vn]; else XMStoreFloat3(&vert.normal, faceNormal); //Ternary operator replaced with if-else since we're having different return values
+					vert.position = vPos[v];
+					vert.texcoord = vTex[vt];
+					vert.normal = vNor[vn];
 
+					uint32_t idx = vertices.size();
 					vertices.push_back(vert);
-					vCount++;
+					refs.insert({ refStr, idx });
 				}
+
+				//Push back indices regardless of whether or not the face is unique
+				indices.push_back(refs[refStr]);
 			}
 		}
 	}
 
 	BufferData bufferData;
 	bufferData.vData.size = sizeof(Vertex);
-	bufferData.vData.count = vCount;
+	bufferData.vData.count = (UINT)vertices.size();
 	bufferData.vData.vector = vertices;
 
 	bufferData.iData.size = sizeof(uint32_t);
-	bufferData.iData.count = iCount;
+	bufferData.iData.count = (UINT)indices.size();
 	bufferData.iData.vector = indices;
 
 	bufferData.mData.ambient = ambientData;
@@ -1072,33 +1054,33 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 	bufferData.mData.shininess = shineData;
 
 	/*Submesh*/
-	submeshIndexCount.push_back(iCount);
+	submeshIndexCount.push_back((UINT)indices.size());
 	for (int i = 0; i < submeshGroups.size(); i++)
 	{
-		BufferData::SubMeshData smb;
-		smb.startIndex = submeshStartIndices.at(i);
-		smb.indexCount = submeshIndexCount.at(i);
-		smb.ambientSRV = m_textures[ambientData].GetSRV();
-		smb.diffuseSRV = smb.ambientSRV;
-		smb.specularSRV = smb.ambientSRV;
-		smb.shininess = shineData;
+		BufferData::SubMeshData smd;
+		smd.startIndex = submeshStartIndices.at(i);
+		smd.indexCount = submeshIndexCount.at(i);
+		smd.ambientSRV = m_textures[ambientData].GetSRV();
+		smd.diffuseSRV = smd.ambientSRV;
+		smd.specularSRV = smd.ambientSRV;
+		smd.shininess = shineData;
 
-		bufferData.subMeshVector.push_back(smb);
+		bufferData.subMeshVector.push_back(smd);
 	}
 
 	if (ambientData == "Textures/dark_grey.png") //no mtl-file added, use base materials
 	{
 		m_textures[ambientData].Init(device.Get(), ambientData.c_str());
 
-		BufferData::SubMeshData smb;
-		smb.startIndex = 0;
-		smb.indexCount = iCount;
-		smb.ambientSRV = m_textures[ambientData].GetSRV();
-		smb.diffuseSRV = smb.ambientSRV;
-		smb.specularSRV = smb.ambientSRV;
-		smb.shininess = shineData;
+		BufferData::SubMeshData smd;
+		smd.startIndex = 0;
+		smd.indexCount = (UINT)indices.size();
+		smd.ambientSRV = m_textures[ambientData].GetSRV();
+		smd.diffuseSRV = smd.ambientSRV;
+		smd.specularSRV = smd.ambientSRV;
+		smd.shininess = shineData;
 
-		bufferData.subMeshVector.push_back(smb);
+		bufferData.subMeshVector.push_back(smd);
 	}
 
 	Drawable cube(device.Get(), bufferData, scale, rotate, translate);

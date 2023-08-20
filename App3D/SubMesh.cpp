@@ -30,6 +30,6 @@ void SubMesh::Bind(ID3D11DeviceContext* context, bool isReflective) const
 
 void SubMesh::Draw(ID3D11DeviceContext* context) const
 {
-	context->Draw(m_indexCount, m_startIndex);
-	//context->DrawIndexed(m_indexCount, m_startIndex, 0);
+	//context->Draw(m_indexCount, m_startIndex);
+	context->DrawIndexed(m_indexCount, m_startIndex, 0);
 }
