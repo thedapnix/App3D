@@ -56,9 +56,6 @@ int App::Run()
 
             //Perform game logic things
             DoFrame(deltaTime);
-
-            //Render the new scene
-            m_engine->Update(deltaTime);
         }
     }
 
@@ -67,11 +64,12 @@ int App::Run()
 
 void App::DoFrame(float dt)
 {
+    //THIS FUNCTION IS THE ONLY THING YOU AS A USER NEED TO CARE ABOUT
     /*Camera stuff*/
     InterpretKeyboardInput(dt);
     m_engine->GetCamera().UpdateViewMatrix();
 
-    /*Imgui stuff*/
+    /*Imgui stuff (Right now just an fps counter)*/
     if (m_fpsTimer->GetMilisecondsElapsed() > 1000.0f)
     {
         m_fpsShouldUpdate = true;
@@ -79,6 +77,9 @@ void App::DoFrame(float dt)
     }
     m_engine->ImGuiSceneData(m_engine.get(), m_fpsShouldUpdate, (int)m_currentState);
     m_fpsShouldUpdate = false;
+
+    /*Render the new scene*/
+    m_engine->Update(dt);
 }
 
 void App::InterpretKeyboardInput(float dt)

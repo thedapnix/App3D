@@ -180,6 +180,7 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Drawable.cpp" />
     <ClCompile Include="Mouse.cpp" />
+    <ClCompile Include="ObjParser.cpp" />
     <ClCompile Include="ParticleSystem.cpp" />
     <ClCompile Include="ShaderResource.cpp" />
     <ClCompile Include="ShadowMap.cpp" />
@@ -191,10 +192,12 @@
   <ItemGroup>
     <ClInclude Include="App.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="ComponentHelper.h" />
     <ClInclude Include="ConstantBuffer.h" />
     <ClInclude Include="CubeMap.h" />
     <ClInclude Include="D3D11Engine.h" />
     <ClInclude Include="D3D11MathHelper.h" />
+    <ClInclude Include="EntityFramework.h" />
     <ClInclude Include="ImGuiHelper.h" />
     <ClInclude Include="IndexBuffer.h" />
     <ClInclude Include="Keyboard.h" />
@@ -208,6 +211,7 @@
     <ClInclude Include="Libraries\ImGui\imstb_textedit.h" />
     <ClInclude Include="Libraries\ImGui\imstb_truetype.h" />
     <ClInclude Include="Mouse.h" />
+    <ClInclude Include="ObjParser.h" />
     <ClInclude Include="ParticleSystem.h" />
     <ClInclude Include="QuadTree.h" />
     <ClInclude Include="ShaderResource.h" />
@@ -215,7 +219,9 @@
     <ClInclude Include="Spotlights.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="SubMesh.h" />
+    <ClInclude Include="SystemHelper.h" />
     <ClInclude Include="Timer.h" />
+    <ClInclude Include="Upgrades.h" />
     <ClInclude Include="VertexBuffer.h" />
   </ItemGroup>
   <ItemGroup>

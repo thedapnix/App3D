@@ -52,6 +52,12 @@
     <Filter Include="Resource Files\Shadowmap Shaders">
       <UniqueIdentifier>{3a3b831e-0cbd-4efa-a2b9-2578913e86c0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ECS">
+      <UniqueIdentifier>{d27ceb32-0bf6-4716-87ed-0461f31885bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Parser">
+      <UniqueIdentifier>{c60783f8-5fa0-4152-a82b-573641493410}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -125,6 +131,9 @@
     </ClCompile>
     <ClCompile Include="ShaderResource.cpp">
       <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjParser.cpp">
+      <Filter>Graphics\Parser</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -211,6 +220,21 @@
     </ClInclude>
     <ClInclude Include="ShaderResource.h">
       <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="EntityFramework.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="ComponentHelper.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="Upgrades.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="SystemHelper.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjParser.h">
+      <Filter>Graphics\Parser</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

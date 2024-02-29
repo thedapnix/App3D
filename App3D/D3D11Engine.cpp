@@ -40,38 +40,42 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	m_shadowMap = ShadowMap(device.Get(), &m_drawables, &m_spotlights);
 	
 	//Drawable setup
-	InitDrawableFromFile("Meshes/ground.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -10.0f, 5.0f }); //Ground
-	InitDrawableFromFile("Meshes/ground.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -10.0f, -23.0f }); //Ground2
-	InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, 19.0f }); //Back wall
-	InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, -37.0f }); //Front wall
-	InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 1.0f, 5.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { -14.0f, -4.0f, 8.0f }); //Left wall
-	InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 1.0f, 5.0f, 13.0f }, { 0.0f, 0.0f, 0.0f }, { -14.0f, -4.0f, -23.0f }); //Left wall2
-	InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 1.0f, 5.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, {  14.0f, -4.0f, 4.0f }); //Right wall
-	InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 1.0f, 5.0f, 13.0f }, { 0.0f, 0.0f, 0.0f }, { 14.0f, -4.0f, -23.0f }); //Right wall2
+	InitDrawableFromFile("Meshes/ground.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -10.0f, 5.0f }, m_textures, device.Get()); //Ground
+	//InitDrawableFromFile("Meshes/ground.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -10.0f, -23.0f }); //Ground2
+	//InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, 19.0f }); //Back wall
+	//InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, -37.0f }); //Front wall
+	//InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 1.0f, 5.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { -14.0f, -4.0f, 8.0f }); //Left wall
+	//InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 1.0f, 5.0f, 13.0f }, { 0.0f, 0.0f, 0.0f }, { -14.0f, -4.0f, -23.0f }); //Left wall2
+	//InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 1.0f, 5.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, {  14.0f, -4.0f, 4.0f }); //Right wall
+	//InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 1.0f, 5.0f, 13.0f }, { 0.0f, 0.0f, 0.0f }, { 14.0f, -4.0f, -23.0f }); //Right wall2
 
-	InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 2.0f, 2.0f, 2.0f }, { 0.0f, 0.0f, 0.0f }, { -10.0f, -7.0f, 15.0f }); //Corner cubes for shadow testing
-	InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f }, { -10.0f, -4.0f, 15.0f }); //
-	InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f }, { -10.0f, -8.0f, 11.0f });
+	//InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 2.0f, 2.0f, 2.0f }, { 0.0f, 0.0f, 0.0f }, { -10.0f, -7.0f, 15.0f }); //Corner cubes for shadow testing
+	//InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f }, { -10.0f, -4.0f, 15.0f }); //
+	//InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f }, { -10.0f, -8.0f, 11.0f });
 
-	InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 5.0f, -3.0f, -33.0f }); //index 11, the spinny boy
+	//InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 5.0f, -3.0f, -33.0f }); //index 11, the spinny boy
 
-	InitDrawableFromFile("Meshes/cube.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { -5.0f, -8.0f, 16.0f }); //Corner cube with no mtl
+	//InitDrawableFromFile("Meshes/cube.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { -5.0f, -8.0f, 16.0f }); //Corner cube with no mtl
 
-	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -8.0f, -7.0f }); //Middle of the room cubes, directional light casts shadows too
-	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 2.5f, -8.0f, -6.5f }); //Middle of the room cubes, directional light casts shadows too
+	//InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -8.0f, -7.0f }); //Middle of the room cubes, directional light casts shadows too
+	//InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 2.5f, -8.0f, -6.5f }); //Middle of the room cubes, directional light casts shadows too
 
-	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -8.0f, -3.0f, -30.0f }); //Floaty shadowboys
-	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.25f, 0.25f, 0.25f }, { 0.0f, 0.0f, 0.0f }, { -7.0f, -3.0f, -31.0f });
-	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -10.0f, -5.0f, -30.0f });
-	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -9.0f, -7.0f, -32.0f });
-	InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -6.0f, -7.0f, -28.0f });
+	//InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -8.0f, -3.0f, -30.0f }); //Floaty shadowboys
+	//InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.25f, 0.25f, 0.25f }, { 0.0f, 0.0f, 0.0f }, { -7.0f, -3.0f, -31.0f });
+	//InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -10.0f, -5.0f, -30.0f });
+	//InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -9.0f, -7.0f, -32.0f });
+	//InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -6.0f, -7.0f, -28.0f });
 
-	InitDrawableFromFile("Meshes/wood_crate.obj", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, 5.0f }); //Mirror cube
+	//InitDrawableFromFile("Meshes/wood_crate.obj", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, 5.0f }); //Mirror cube
 
-	for (const auto& drawable : m_drawables)
+	/*ECS SETUP INSTEAD OF DRAWABLES*/
+	//auto player = m_registry.CreateEntity();
+	//InitEntityGraphics(player, {0.0f, 0.0f, 0.0f});
+
+	/*for (const auto& drawable : m_drawables)
 	{
 		m_quadTree.AddElement(&drawable, drawable.GetBoundingBox());
-	}
+	}*/
 	//m_quadTree.AddElement(&m_reflectiveDrawables.at(0), m_reflectiveDrawables.at(0).GetBoundingBox());
 
 	//Sampler setup for texture access in shaders
@@ -91,7 +95,7 @@ void D3D11Engine::Update(float dt)
 	//UPDATE CONSTANT BUFFERS
 	m_camera->UpdateConstantBuffer(context.Get());
 
-	m_drawables.at(11).Rotate(0.0f, 0.0005f * dt, 0.001f * dt);
+	//m_drawables.at(11).Rotate(0.0f, 0.0005f * dt, 0.001f * dt);
 	for (auto& drawable : m_drawables)
 	{
 		drawable.UpdateConstantBuffer(context.Get());
@@ -112,7 +116,7 @@ void D3D11Engine::Update(float dt)
 	if (cubemapIsEnabled)RenderReflectiveObject(dt);
 
 	//PRESENT
-	swapChain->Present(0, 0); //vSync, 1 = enabled, 0 = disabled
+	swapChain->Present(1, 0); //vSync, 1 = enabled, 0 = disabled
 }
 
 void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps, int state)
@@ -134,8 +138,8 @@ void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps,
 
 void D3D11Engine::MovePlayer(float speed)
 {
-	//Right now we should have 2 drawables, one at [0] which is the ground, and one at [1] that we consider to be the player. This is the biggest of temp solutions
-	//m_drawables.at(1).EditTranslation(speed, 0.0f, 0.0f);
+	//Remaking my 3d project into an ECS-based Game Engine, one step at a time
+
 }
 
 Camera& D3D11Engine::GetCamera() const noexcept
@@ -886,157 +890,53 @@ void D3D11Engine::InitSampler()
 	}
 }
 
-bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate)
+bool D3D11Engine::InitEntityGraphics(EntityID& entity, DirectX::XMFLOAT3 translate)
 {
-	std::ifstream ifs(objFileName);
-	if (!ifs)
-	{
-		MessageBox(NULL, L"Couldn't open obj file!", L"Error", MB_OK);
-		return false;
-	}
+	//So this function no longer leads to any errors, but let's see if we can actually draw the cube ahaA
 
-	//Member variables to store positions, texture coordinates and normals
-	std::vector<XMFLOAT3> vPos;
-	std::vector<XMFLOAT2> vTex;
-	std::vector<XMFLOAT3> vNor;
-
-	//Error handling for faces (preferably every .obj file has v, vt and vn, but not all .obj files were made equal)
-	bool fileHasTexcoord = false;
-	bool fileHasNormal = false;
-
-	//Wrap the mesh in a bounding box by getting the highest and lowest x-, y-, and z-values (use a library for actual infinities xd)
-	XMFLOAT3 vMinf3(1000000.0f, 1000000.0f, 1000000.0f);
-	XMFLOAT3 vMaxf3(-1000000.0f, -1000000.0f, -1000000.0f);
-
-	XMVECTOR vMin = DirectX::XMLoadFloat3(&vMinf3);
-	XMVECTOR vMax = DirectX::XMLoadFloat3(&vMaxf3);
-
-	/*Pass along to drawable*/
+	//Stuff to pass along
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
-
-	/*Material data to pass to drawable, give default values here that we use if the text file doesn't specify a material*/
 	std::string ambientData = "Textures/dark_grey.png";
 	std::string diffuseData = "Textures/grey.png";
 	std::string specularData = "Textures/light_grey.png";
 	float shineData = 1.0f;
 
-	/*Submesh stuff*/
-	std::vector<std::string> submeshGroups;
-	std::vector<UINT> submeshStartIndices;
-	std::vector<UINT> submeshIndexCount;
-
-	//new
-	std::unordered_map<std::string, UINT> refs;
-
-	//Read the text file
-	std::string lineStr;
-	while (std::getline(ifs, lineStr))
+	//Hard-code cube vertices and indices for now (blegh)
+	Vertex verts[] = 
 	{
-		std::istringstream lineSS(lineStr);
-		std::string lineType;
-		lineSS >> lineType;
+		{ {-1.0f, -1.0f, -1.0f}, { 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } }, //
+		{ { 1.0f, -1.0f, -1.0f}, { 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } },
+		{ {-1.0f,  1.0f, -1.0f}, { 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } },
+		{ { 1.0f,  1.0f, -1.0f}, { 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } },
 
-		/*Material stuff*/
-		if (lineType == "mtllib")
-		{
-			//Get the name of the file containing the material (texture) and parse it
-			std::string mtlFileName;
-			lineSS >> mtlFileName;
-			ParseMaterial(mtlFileName, ambientData, diffuseData, specularData, shineData); //Split up the functions because too much text, honestly I kinda wanna do that to this whole function already but crunch
-
-			//Load texture
-			if (m_textures.count(ambientData) == 0)
-			{
-				m_textures[ambientData].Init(device.Get(), ambientData.c_str()); //Only load texture once. Copy SRV's later
-			}
-		}
-
-		if (lineType == "usemtl") //"From this point onward, use this specified material"
-		{
-			std::string groupName;
-			lineSS >> groupName;
-			if (!submeshStartIndices.empty()) //We've reached a new submesh material
-			{
-				submeshIndexCount.push_back((UINT)indices.size());
-			}
-			submeshGroups.push_back(groupName);
-			submeshStartIndices.push_back((UINT)indices.size());
-		}
-
-		if (lineType == "v") //Vertex (Position)
-		{
-			float x, y, z;
-			lineSS >> x >> y >> z;
-			vPos.push_back({ x,y,z });
-
-			//Check vMin and vMax against the x-, y-, and z-values of the vertex, once we've looped through everything we should have the edges of our box
-			XMFLOAT3 vf3(x, y, z);
-			XMVECTOR V = DirectX::XMLoadFloat3(&vf3);
-			vMin = DirectX::XMVectorMin(vMin, V);
-			vMax = DirectX::XMVectorMax(vMax, V);
-		}
-
-		if (lineType == "vt") //Vertex Texture Coordinate
-		{
-			float u, v;
-			lineSS >> u >> v;
-			vTex.push_back({ u,v });
-			fileHasTexcoord = true;
-		}
-
-		if (lineType == "vn") //Vertex Normal
-		{
-			float nx, ny, nz;
-			lineSS >> nx >> ny >> nz;
-			vNor.push_back({ nx, ny, nz });
-			fileHasNormal = true;
-		}
-
-		if (lineType == "f") //Face
-		{
-			//Each face references three vertices, with their respective positions, texture coordinates and normals (think triangles)
-			std::string refStr;
-			while (lineSS >> refStr) //Get line up until the next space, in the case of for example "1/1/1 2/2/1 3/3/1" we get 1/1/1
-			{
-				std::istringstream ref(refStr);
-				std::string vStr, vtStr, vnStr;
-
-				//Split the line at every / (this is the point where we know what kind of obj-file we're reading, as mentioned above)
-				std::getline(ref, vStr, '/');
-				std::getline(ref, vtStr, '/');
-				std::getline(ref, vnStr, '/');
-
-				//Convert to integer (and subtract 1 since obj files start counting from 1 but we want to count from 0)
-				int v = atoi(vStr.c_str()) - 1;
-				int vt = atoi(vtStr.c_str()) - 1;
-				int vn = atoi(vnStr.c_str()) - 1;
-
-				//Error checking in case of negative references (shouldn't be necessary as long as the .obj-file isn't trash but I did have to deal with it one time)
-				if (v < 0) v = (int)vPos.size() + v;
-				if (vt < 0) vt = (int)vTex.size() + vt;
-				if (vn < 0) vn = (int)vNor.size() + vn;
-
-				//If the face is unique, add it to the list of refs so we'll create the vertices later
-				if (refs.count(refStr) == 0)
-				{
-					//Create the vertex
-					Vertex vert;
-					vert.position = vPos[v];
-					vert.texcoord = vTex[vt];
-					vert.normal = vNor[vn];
-
-					uint32_t idx = vertices.size();
-					vertices.push_back(vert);
-					refs.insert({ refStr, idx });
-				}
-
-				//Push back indices regardless of whether or not the face is unique
-				indices.push_back(refs[refStr]);
-			}
-		}
+		{ {-1.0f, -1.0f,  1.0f}, { 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } },
+		{ { 1.0f, -1.0f,  1.0f}, { 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } },
+		{ {-1.0f,  1.0f,  1.0f}, { 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } },
+		{ { 1.0f,  1.0f,  1.0f}, { 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } },
+	};
+	
+	for (int i = 0; i < 8; i++)
+	{
+		vertices.push_back(verts[i]);
 	}
 
+	uint32_t inds[] =
+	{
+		0,2,1,	2,3,1,
+		1,3,5,	3,7,5,
+		2,6,3,	3,6,7,
+		4,5,7,	4,7,6,
+		0,4,2,	2,4,6,
+		0,1,4,	1,5,4
+	};
+
+	for (int i = 0; i < 36; i++)
+	{
+		indices.push_back(inds[i]);
+	}
+
+	//Put all the stuff into bufferdata
 	BufferData bufferData;
 	bufferData.vData.size = sizeof(Vertex);
 	bufferData.vData.count = (UINT)vertices.size();
@@ -1051,84 +951,9 @@ bool D3D11Engine::InitDrawableFromFile(std::string objFileName, std::vector<Draw
 	bufferData.mData.specular = specularData;
 	bufferData.mData.shininess = shineData;
 
-	/*Submesh*/
-	submeshIndexCount.push_back((UINT)indices.size());
-	for (int i = 0; i < submeshGroups.size(); i++)
-	{
-		BufferData::SubMeshData smd;
-		smd.startIndex = submeshStartIndices.at(i);
-		smd.indexCount = submeshIndexCount.at(i);
-		smd.ambientSRV = m_textures[ambientData].GetSRV();
-		smd.diffuseSRV = smd.ambientSRV;
-		smd.specularSRV = smd.ambientSRV;
-		smd.shininess = shineData;
-
-		bufferData.subMeshVector.push_back(smd);
-	}
-
-	if (ambientData == "Textures/dark_grey.png") //no mtl-file added, use base materials
-	{
-		m_textures[ambientData].Init(device.Get(), ambientData.c_str());
-
-		BufferData::SubMeshData smd;
-		smd.startIndex = 0;
-		smd.indexCount = (UINT)indices.size();
-		smd.ambientSRV = m_textures[ambientData].GetSRV();
-		smd.diffuseSRV = smd.ambientSRV;
-		smd.specularSRV = smd.ambientSRV;
-		smd.shininess = shineData;
-
-		bufferData.subMeshVector.push_back(smd);
-	}
-
-	Drawable cube(device.Get(), bufferData, scale, rotate, translate);
-	cube.CreateBoundingBoxFromPoints(vMin, vMax);
-	vecToFill.push_back(cube);
+	//Create graphicscomponent passing in bufferdata and pray
+	m_registry.AddComponent<GraphicsComponent>(entity, device.Get(), bufferData, translate);
 
 	return true;
 }
 
-bool D3D11Engine::ParseMaterial(std::string mtlFileName, std::string& ambient, std::string& diffuse, std::string& specular, float& shininess)
-{
-	std::ifstream ifs("Meshes/" + mtlFileName);
-	if (!ifs)
-	{
-		MessageBox(NULL, L"Couldn't open mtl file!", L"Error", MB_OK);
-		return false;
-	}
-
-	//Read the text file
-	std::string lineStr;
-	while (std::getline(ifs, lineStr))
-	{
-		std::istringstream lineSS(lineStr);
-		std::string lineType;
-		lineSS >> lineType;
-		if (lineType == "Ka")
-		{
-			std::string ambientData;
-			lineSS >> ambientData;
-			ambient = "Textures/" + ambientData;
-		}
-		if (lineType == "Kd")
-		{
-			std::string diffuseData;
-			lineSS >> diffuseData;
-			diffuse = "Textures/" + diffuseData;
-		}
-		if (lineType == "Ks")
-		{
-			std::string specularData;
-			lineSS >> specularData;
-			specular = "Textures/" + specularData;
-		}
-		if (lineType == "Ns")
-		{
-			float shineData;
-			lineSS >> shineData;
-			shininess = shineData;
-		}
-	}
-
-	return true;
-}

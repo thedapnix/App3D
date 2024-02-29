@@ -16,12 +16,23 @@
 
 #include "SubMesh.h"
 
+#include <unordered_map>
+
 /*Structs that D3D11Engine needs to know about*/
 struct Vertex
 {
 	DirectX::XMFLOAT3 position;
 	DirectX::XMFLOAT2 texcoord;
 	DirectX::XMFLOAT3 normal;
+};
+
+struct MaterialData
+{
+	//Default values
+	std::string ambientData = "dark_grey.png";
+	std::string diffuseData = "grey.png";
+	std::string specularData = "light_grey.png";
+	float shineData = 1.0f;
 };
 
 struct BufferData
@@ -58,6 +69,26 @@ struct BufferData
 		float shininess;
 	};
 	std::vector<SubMeshData> subMeshVector;
+};
+
+struct ParsedData
+{
+	std::vector<DirectX::XMFLOAT3> vPos;
+	std::vector<DirectX::XMFLOAT2> vTex;
+	std::vector<DirectX::XMFLOAT3> vNor;
+
+	std::unordered_map<std::string, MaterialData> materials;
+
+	std::vector<Vertex> vertices;
+	std::vector<uint32_t> indices;
+
+	/*Material data to pass to drawable, give default values here that we use if the text file doesn't specify a material*/
+	std::string currentSubmeshMaterial = "";
+	UINT currentSubmeshIndex = 0;
+	std::vector<BufferData::SubMeshData> submeshes;
+
+	//faces
+	std::unordered_map<std::string, UINT> refs;
 };
 
 class Drawable

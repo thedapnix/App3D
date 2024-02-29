@@ -18,6 +18,9 @@
 #include "ShadowMap.h"
 #include "QuadTree.h"
 #include "ShaderResource.h" //new
+#include "ObjParser.h"
+
+#include "EntityFramework.h" //ECS baby
 
 class D3D11Engine
 {
@@ -59,7 +62,7 @@ private:
 	void InitRTV();
 	void InitDepthStencil();
 	void InitShadersAndInputLayout();
-	bool InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate);
+	bool InitEntityGraphics(EntityID& entity, DirectX::XMFLOAT3 translate);
 	void InitSampler();
 	void InitCamera();
 
@@ -74,7 +77,6 @@ private:
 	void InitSpotlights();
 
 	//Internal function called by the obj-parser to now also parse materials
-	bool ParseMaterial(std::string mtlFileName, std::string& ambient, std::string& diffuse, std::string& specular, float& shininess);
 	std::unordered_map<std::string, ShaderResource> m_textures;
 	
 	/*VARIABLES*/
@@ -141,4 +143,7 @@ private:
 	CubeMap m_cubeMap;
 	ShadowMap m_shadowMap;
 	QuadTree<Drawable> m_quadTree;
+
+	/*ECS*/
+	Registry m_registry;
 };
