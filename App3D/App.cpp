@@ -33,6 +33,9 @@ App::App(HINSTANCE hInstance)
     m_timer = std::make_unique<Timer>(); //Constructor should also Start()
     m_fpsTimer = std::make_unique<Timer>();
     m_engine = std::make_unique<D3D11Engine>(m_hwnd, m_width, m_height);
+
+    //Name of the obj file followed by Translate, Rotate, Scale (all of which have default values)
+    m_engine->CreateDrawable("Meshes/ground.obj", { 0.0f, -10.0f, 5.0f });
 }
 
 int App::Run()

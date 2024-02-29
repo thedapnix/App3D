@@ -40,7 +40,7 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	m_shadowMap = ShadowMap(device.Get(), &m_drawables, &m_spotlights);
 	
 	//Drawable setup
-	InitDrawableFromFile("Meshes/ground.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -10.0f, 5.0f }, m_textures, device.Get()); //Ground
+	//InitDrawableFromFile("Meshes/ground.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -10.0f, 5.0f }, m_textures, device.Get()); //Ground
 	//InitDrawableFromFile("Meshes/ground.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -10.0f, -23.0f }); //Ground2
 	//InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, 19.0f }); //Back wall
 	//InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, -37.0f }); //Front wall
@@ -145,6 +145,13 @@ void D3D11Engine::MovePlayer(float speed)
 Camera& D3D11Engine::GetCamera() const noexcept
 {
 	return *m_camera;
+}
+
+bool D3D11Engine::CreateDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 scale)
+{
+	InitDrawableFromFile(objFileName, m_drawables, scale, rotate, translate, m_textures, device.Get());
+
+	return false;
 }
 
 /*RENDER FUNCTIONS*/

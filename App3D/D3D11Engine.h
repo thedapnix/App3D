@@ -36,6 +36,8 @@ public:
 	void MovePlayer(float speed);
 	Camera& GetCamera() const noexcept;
 
+	bool CreateDrawable(std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f });
+
 private:
 	//Deferred Renderer
 	struct GBuffer
