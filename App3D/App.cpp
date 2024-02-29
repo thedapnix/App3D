@@ -34,8 +34,7 @@ App::App(HINSTANCE hInstance)
     m_fpsTimer = std::make_unique<Timer>();
     m_engine = std::make_unique<D3D11Engine>(m_hwnd, m_width, m_height);
 
-    //Name of the obj file followed by Translate, Rotate, Scale (all of which have default values)
-    m_engine->CreateDrawable("Meshes/ground.obj", { 0.0f, -10.0f, 5.0f });
+    DoSetup();
 }
 
 int App::Run()
@@ -63,6 +62,55 @@ int App::Run()
     }
 
     return (int)msg.wParam;
+}
+
+void App::DoSetup()
+{
+    /*EXAMPLE SCENE*/
+
+    //Name of the obj file followed by Translate, Scale, Rotate (all of which have default values)
+    m_engine->CreateDrawable("Meshes/ground.obj", { 0.0f, -10.0f,   5.0f });    //Ground part 1
+    m_engine->CreateDrawable("Meshes/ground.obj", { 0.0f, -10.0f, -23.0f });    //Ground part 2
+
+    m_engine->CreateDrawable("Meshes/wall.obj", { 0.0f, -4.0f,  19.0f },    { 15.0f, 5.0f, 1.0f }); //Front wall
+    m_engine->CreateDrawable("Meshes/wall.obj", { 0.0f, -4.0f, -37.0f },    { 15.0f, 5.0f, 1.0f }); //Back wall
+
+    m_engine->CreateDrawable("Meshes/wall.obj", { -14.0f, -4.0f,   8.0f },  { 1.0f, 5.0f, 10.0f }); //Left wall part 1
+    m_engine->CreateDrawable("Meshes/wall.obj", { -14.0f, -4.0f, -23.0f },  { 1.0f, 5.0f, 13.0f }); //Left wall part 2
+
+    m_engine->CreateDrawable("Meshes/wall.obj", { 14.0f, -4.0f,   4.0f },   { 1.0f, 5.0f, 14.0f }); //Right wall part 1
+    m_engine->CreateDrawable("Meshes/wall.obj", { 14.0f, -4.0f, -23.0f },   { 1.0f, 5.0f, 13.0f }); //Right wall part 2
+
+    m_engine->CreateDrawable("Meshes/wood_crate.obj", { -10.0f, -7.0f, 15.0f }, { 2.0f, 2.0f, 2.0f });                          //Big box in the corner
+    m_engine->CreateDrawable("Meshes/wood_crate.obj", { -10.0f, -4.0f, 15.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f,  0.45f, 0.0f });  //Smaller box on top
+    m_engine->CreateDrawable("Meshes/wood_crate.obj", { -10.0f, -8.0f, 11.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f });  //Smaller box in front
+
+    //Initialization of the lights happen in d3d11engine, this will be moved here as well
+
+    //InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 5.0f, -3.0f, -33.0f }); //index 11, the spinny boy
+
+    //InitDrawableFromFile("Meshes/cube.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { -5.0f, -8.0f, 16.0f }); //Corner cube with no mtl
+
+    //InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -8.0f, -7.0f }); //Middle of the room cubes, directional light casts shadows too
+    //InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 2.5f, -8.0f, -6.5f }); //Middle of the room cubes, directional light casts shadows too
+
+    //InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -8.0f, -3.0f, -30.0f }); //Floaty shadowboys
+    //InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.25f, 0.25f, 0.25f }, { 0.0f, 0.0f, 0.0f }, { -7.0f, -3.0f, -31.0f });
+    //InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -10.0f, -5.0f, -30.0f });
+    //InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -9.0f, -7.0f, -32.0f });
+    //InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -6.0f, -7.0f, -28.0f });
+
+    //InitDrawableFromFile("Meshes/wood_crate.obj", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, 5.0f }); //Mirror cube
+
+    /*ECS SETUP INSTEAD OF DRAWABLES*/
+    //auto player = m_registry.CreateEntity();
+    //InitEntityGraphics(player, {0.0f, 0.0f, 0.0f});
+
+    /*for (const auto& drawable : m_drawables)
+    {
+        m_quadTree.AddElement(&drawable, drawable.GetBoundingBox());
+    }*/
+    //m_quadTree.AddElement(&m_reflectiveDrawables.at(0), m_reflectiveDrawables.at(0).GetBoundingBox());
 }
 
 void App::DoFrame(float dt)

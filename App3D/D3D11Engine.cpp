@@ -38,45 +38,6 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	//Shadowmap setup
 	InitSpotlights();
 	m_shadowMap = ShadowMap(device.Get(), &m_drawables, &m_spotlights);
-	
-	//Drawable setup
-	//InitDrawableFromFile("Meshes/ground.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -10.0f, 5.0f }, m_textures, device.Get()); //Ground
-	//InitDrawableFromFile("Meshes/ground.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -10.0f, -23.0f }); //Ground2
-	//InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, 19.0f }); //Back wall
-	//InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 15.0f, 5.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -4.0f, -37.0f }); //Front wall
-	//InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 1.0f, 5.0f, 10.0f }, { 0.0f, 0.0f, 0.0f }, { -14.0f, -4.0f, 8.0f }); //Left wall
-	//InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 1.0f, 5.0f, 13.0f }, { 0.0f, 0.0f, 0.0f }, { -14.0f, -4.0f, -23.0f }); //Left wall2
-	//InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 1.0f, 5.0f, 14.0f }, { 0.0f, 0.0f, 0.0f }, {  14.0f, -4.0f, 4.0f }); //Right wall
-	//InitDrawableFromFile("Meshes/wall.obj", m_drawables, { 1.0f, 5.0f, 13.0f }, { 0.0f, 0.0f, 0.0f }, { 14.0f, -4.0f, -23.0f }); //Right wall2
-
-	//InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 2.0f, 2.0f, 2.0f }, { 0.0f, 0.0f, 0.0f }, { -10.0f, -7.0f, 15.0f }); //Corner cubes for shadow testing
-	//InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f }, { -10.0f, -4.0f, 15.0f }); //
-	//InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f }, { -10.0f, -8.0f, 11.0f });
-
-	//InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 5.0f, -3.0f, -33.0f }); //index 11, the spinny boy
-
-	//InitDrawableFromFile("Meshes/cube.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { -5.0f, -8.0f, 16.0f }); //Corner cube with no mtl
-
-	//InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -8.0f, -7.0f }); //Middle of the room cubes, directional light casts shadows too
-	//InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 2.5f, -8.0f, -6.5f }); //Middle of the room cubes, directional light casts shadows too
-
-	//InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -8.0f, -3.0f, -30.0f }); //Floaty shadowboys
-	//InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.25f, 0.25f, 0.25f }, { 0.0f, 0.0f, 0.0f }, { -7.0f, -3.0f, -31.0f });
-	//InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -10.0f, -5.0f, -30.0f });
-	//InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -9.0f, -7.0f, -32.0f });
-	//InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -6.0f, -7.0f, -28.0f });
-
-	//InitDrawableFromFile("Meshes/wood_crate.obj", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, 5.0f }); //Mirror cube
-
-	/*ECS SETUP INSTEAD OF DRAWABLES*/
-	//auto player = m_registry.CreateEntity();
-	//InitEntityGraphics(player, {0.0f, 0.0f, 0.0f});
-
-	/*for (const auto& drawable : m_drawables)
-	{
-		m_quadTree.AddElement(&drawable, drawable.GetBoundingBox());
-	}*/
-	//m_quadTree.AddElement(&m_reflectiveDrawables.at(0), m_reflectiveDrawables.at(0).GetBoundingBox());
 
 	//Sampler setup for texture access in shaders
 	InitSampler();
@@ -147,7 +108,7 @@ Camera& D3D11Engine::GetCamera() const noexcept
 	return *m_camera;
 }
 
-bool D3D11Engine::CreateDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 scale)
+bool D3D11Engine::CreateDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate)
 {
 	InitDrawableFromFile(objFileName, m_drawables, scale, rotate, translate, m_textures, device.Get());
 

@@ -33,7 +33,8 @@ public:
 
 private:
 	/*Functions*/
-	void DoFrame(float dt);
+	void DoSetup();			//Called when the program starts
+	void DoFrame(float dt);	//Called every frame
 	void InterpretKeyboardInput(float dt);
 	void OnMouseMove(WPARAM btnState, int x, int y); //Don't want to have it like this but I gotta, for now
 
