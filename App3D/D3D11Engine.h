@@ -30,13 +30,25 @@ public:
 	D3D11Engine& operator=(const D3D11Engine&) = delete;
 	D3D11Engine(const D3D11Engine&) = delete;
 
+	//Render and ImGui
 	void Update(float dt);
-	void ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps, int state);
+	void ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps, int state, int rawX, int rawY); //new: raw x and y mouse coordinates for debug purposes
 
-	void MovePlayer(float speed);
+	//Movement and camera stuff
+	void MovePlayerX(float speed);
+	void MovePlayerZ(float speed);
 	Camera& GetCamera() const noexcept;
 
+	//Drawable and culling stuff
 	bool CreateDrawable(std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f });
+	bool CreateReflectiveDrawable(std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f });
+	bool MoveDrawable(int i, DirectX::XMFLOAT3 dist);
+	bool SetupQT();
+
+	//Lights stuff
+	bool CreateLightSpot(DirectX::XMFLOAT3 position, float fov, float rotX, float rotY, DirectX::XMFLOAT3 color = {1.0f, 1.0f, 1.0f});
+	bool CreateLightDir(DirectX::XMFLOAT3 position, float rotX, float rotY, DirectX::XMFLOAT3 color = { 0.25f, 0.25f, 0.25f });
+	bool SetupLights(); //Because of how my current Spotlights class works, going to change this in the future but I shouldn't procastinate too much by just making the engine cool
 
 private:
 	//Deferred Renderer
@@ -88,6 +100,7 @@ private:
 	static constexpr float TEST_COLOR[4] = { 0.1f, 0.5f, 0.1f, 1.0f };
 	std::vector<Drawable> m_drawables;
 	std::vector<Drawable> m_reflectiveDrawables;
+	std::vector<LightData> m_lightDataVec;
 	SpotLights m_spotlights;
 	std::unique_ptr<Camera> m_camera;
 	int m_drawablesBeingRendered = 0;
@@ -97,12 +110,15 @@ private:
 	/*ImGui variables*/
 	int m_fpsCounter = 0;
 	std::string m_fpsString = "";
-	bool deferredIsEnabled = false;
+	bool deferredIsEnabled = false; //Dim the lights baby
 	bool cullingIsEnabled = false;
 	bool billboardingIsEnabled = false;
 	bool cubemapIsEnabled = false;
 	bool lodIsEnabled = false;
 
+	/*Collision stuff*/
+	DirectX::XMFLOAT3& ClosestPointOnBox(const DirectX::XMFLOAT3& point, const DirectX::BoundingBox& box); //Returns the closest point on the box in comparison to a given point
+	void MovePlayer(const DirectX::XMFLOAT3& toMove);
 private:
 	/*D3D11 Interfaces*/
 	//Device

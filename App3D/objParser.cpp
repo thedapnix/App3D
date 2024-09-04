@@ -4,6 +4,8 @@
 #include <fstream>
 #include <sstream>
 
+#include "Collision.h"
+
 using namespace DirectX;
 
 bool ParseMaterial(std::string mtlFileName, ParsedData& data, std::unordered_map<std::string, ShaderResource>& textures, ID3D11Device* device)
@@ -242,6 +244,18 @@ bool InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToF
 
 	Drawable cube(device, bufferData, scale, rotate, translate);
 	cube.CreateBoundingBoxFromPoints(vMin, vMax);
+
+	//new: attempt at adding the self-coded Collider
+	/*Collider collider;
+	DirectX::XMFLOAT3 vecMin, vecMax;
+	DirectX::XMStoreFloat3(&vecMin, vMin);
+	DirectX::XMStoreFloat3(&vecMax, vMax);*/
+
+	//Get the corners from the BoundingBox (temp as heck)
+	/*DirectX::XMFLOAT3 corners[8];
+	cube.GetBoundingBox().GetCorners(corners);
+	InitCollider(collider, 8, corners);*/
+
 	vecToFill.push_back(cube);
 
 	return true;

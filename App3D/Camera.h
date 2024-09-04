@@ -26,6 +26,10 @@ public:
 	DirectX::XMVECTOR GetPositionVec() const;
 	DirectX::XMFLOAT3 GetPosition() const;
 
+	//Bounding Sphere
+	DirectX::BoundingSphere GetBoundingSphere() const;
+	void SetBoundingSphereCenter(DirectX::XMFLOAT3 pos);
+
 	//X-, Y- and Z-vectors
 	DirectX::XMVECTOR GetRight() const;
 	//DirectX::XMVECTOR GetUp() const;
@@ -45,6 +49,10 @@ public:
 	float GetFarWindowWidth() const;
 	float GetFarWindowHeight() const;
 
+	//new
+	float GetYaw() const;
+	DirectX::XMVECTOR GetDefaultLook() const;
+
 	//View- and Projection-matrices
 	DirectX::XMMATRIX View() const;
 	DirectX::XMMATRIX Proj() const;
@@ -63,11 +71,15 @@ public:
 
 	/*COMMANDS*/
 	//Strafe and walk a distance d
-	void Strafe(float d);
+	DirectX::XMFLOAT3 Strafe(float d);
 	void Walk(float d);
+
+	//Temp
+	DirectX::XMFLOAT3 PlayerWalk(float d);
 
 	//Rotate
 	void Pitch(float angle);
+	void PitchFPC(float angle); //new: first person camera version
 	void RotateY(float angle);
 
 	//Update view matrix after modification of position/orientation
@@ -78,12 +90,20 @@ public:
 	const ConstantBuffer& GetConstantBuffer() const;
 	const DirectX::BoundingFrustum& GetFrustum() const;
 	void InitConstantBufferAndFrustum(ID3D11Device* device);
+
 private:
-	//Coordinate system of the camera relative to world space
-	DirectX::XMFLOAT3 m_position = { 0.0f, 0.0f, -5.0f };
+	//Coordinate system of the camera relative to world space (starting position)
+	DirectX::XMFLOAT3 m_position = { 0.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT3 m_right = { 1.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT3 m_up = { 0.0f, 1.0f, 0.0f };
 	DirectX::XMFLOAT3 m_look = { 0.0f, 0.0f, 1.0f };
+
+	/*DEFAULTS*/
+	DirectX::XMVECTOR m_defaultLook = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	DirectX::XMVECTOR m_defaultRight = DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+	/*ROTATIONS*/
+	float m_pitch = 0.0f;
+	float m_yaw = 0.0f;
 
 	//Frustum properties
 	float m_nearZ = 0.0f;
@@ -109,5 +129,9 @@ private:
 	};
 	CameraData m_cameraData;
 	ConstantBuffer m_cameraCB;
+
+	//Bounding volumes
 	DirectX::BoundingFrustum m_frustum;
+	DirectX::BoundingBox m_aabb; //Obsolete now because we're using sphere but I'm keeping it just in case
+	DirectX::BoundingSphere m_sphere;
 };

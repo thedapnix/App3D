@@ -1,0 +1,5 @@
+newmtl wood_red
+Ka wood_red.png
+Kd wood_red.png
+Ks wood_red.png
+Ns 1.0000

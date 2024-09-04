@@ -1,0 +1,5 @@
+newmtl metal_long
+Ka metal_long.png
+Kd metal_long.png
+Ks metal_long.png
+Ns 1.0000

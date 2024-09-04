@@ -55,8 +55,14 @@
     <Filter Include="ECS">
       <UniqueIdentifier>{d27ceb32-0bf6-4716-87ed-0461f31885bb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Graphics\Parser">
+    <Filter Include="Graphics\Drawable\Parser">
       <UniqueIdentifier>{c60783f8-5fa0-4152-a82b-573641493410}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Physics">
+      <UniqueIdentifier>{dfdc5a9b-fd0f-47f2-a831-9fb8ce271469}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Physics\Colliders">
+      <UniqueIdentifier>{53bf74da-7c01-45f6-a187-8ea597bf015d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -133,7 +139,25 @@
       <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="ObjParser.cpp">
-      <Filter>Graphics\Parser</Filter>
+      <Filter>Graphics\Drawable\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="LevelSetup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Collision.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D11MathHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ColliderSphere.cpp">
+      <Filter>Physics\Colliders</Filter>
+    </ClCompile>
+    <ClCompile Include="ColliderAABB.cpp">
+      <Filter>Physics\Colliders</Filter>
+    </ClCompile>
+    <ClCompile Include="ColliderPlane.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -234,7 +258,28 @@
       <Filter>ECS</Filter>
     </ClInclude>
     <ClInclude Include="ObjParser.h">
-      <Filter>Graphics\Parser</Filter>
+      <Filter>Graphics\Drawable\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="LevelSetup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Collision.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="ColliderSphere.h">
+      <Filter>Physics\Colliders</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionDataStruct.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="ColliderAABB.h">
+      <Filter>Physics\Colliders</Filter>
+    </ClInclude>
+    <ClInclude Include="ColliderPlane.h">
+      <Filter>Physics\Colliders</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsEngine.h">
+      <Filter>Physics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

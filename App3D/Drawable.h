@@ -18,6 +18,9 @@
 
 #include <unordered_map>
 
+//new
+#include "ColliderAABB.h"
+
 /*Structs that D3D11Engine needs to know about*/
 struct Vertex
 {
@@ -103,13 +106,17 @@ public:
 	void UpdateConstantBuffer(ID3D11DeviceContext* context);
 	void CreateBoundingBoxFromPoints(DirectX::XMVECTOR min, DirectX::XMVECTOR max);
 
+	//now happening: make the new kind of bounding volumes
+	//const ColliderAABB& GetAABB() const;
+
 	//Movement stuff
 	void EditTranslation(float x, float y, float z);
 	void Rotate(float angleX, float angleY, float angleZ);
 
 	/*Getters*/
+	const DirectX::XMFLOAT3& GetPosition() const;
 	DirectX::XMMATRIX World() const;
-	const DirectX::BoundingBox GetBoundingBox() const;
+	const DirectX::BoundingBox& GetBoundingBox() const;
 	const VertexBuffer& GetVertexBuffer() const;
 	void* GetVertexVectorData();
 

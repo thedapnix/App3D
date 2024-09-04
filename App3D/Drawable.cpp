@@ -89,6 +89,11 @@ void Drawable::CreateBoundingBoxFromPoints(DirectX::XMVECTOR min, DirectX::XMVEC
 	m_aabb.Transform(m_aabb, World()); //Transform without transposing the world matrix
 }
 
+//const ColliderAABB& Drawable::GetAABB() const
+//{
+//	
+//}
+
 void Drawable::EditTranslation(float x, float y, float z)
 {
 	m_translate.x += x;
@@ -109,6 +114,11 @@ void Drawable::Rotate(float angleX, float angleY, float angleZ)
 	));
 }
 
+const DirectX::XMFLOAT3& Drawable::GetPosition() const
+{
+	return m_translate;
+}
+
 DirectX::XMMATRIX Drawable::World() const
 {
 	//This feels like a horribly expensive function. I might be wrong though. But if I'm not, consider storing a XMFLOAT4X4 m_world
@@ -117,7 +127,7 @@ DirectX::XMMATRIX Drawable::World() const
 		DirectX::XMMatrixTranslation(m_translate.x, m_translate.y, m_translate.z);
 }
 
-const DirectX::BoundingBox Drawable::GetBoundingBox() const
+const DirectX::BoundingBox& Drawable::GetBoundingBox() const
 {
 	return m_aabb;
 }

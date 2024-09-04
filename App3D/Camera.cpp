@@ -2,14 +2,29 @@
 
 using namespace DirectX;
 
+#define CAMERA_Y_OFFSET 9.0f //Temp: Let the camera collider be offset so technically we're checking for collisions by our "feet", not by our "face"
+
 Camera::Camera()
 {
     SetPosition(m_position);
 
-    //Fov set to a fourth of pi is standard
+    //Fov set to a fourth of pi is standard (where the fuck did I get that from, radians means pi/4 is 45 degrees which is pisslow. Currently more like 70 fov, way better)
     //Aspect ratio set to window width divided by window height
     //Near- and far-z set to arbitrary standard values of 1 and 1000 (near could be 0.1 instead, we'll see what happens)
-    SetLens(0.25f * XM_PI, 800.0f / 600.0f, 1.0f, 1000.0f);
+    SetLens(0.33f * XM_PI, 800.0f / 600.0f, 1.0f, 1000.0f);
+
+    //Bounding Box
+    XMVECTOR vMin = XMVectorSet(-1.0f, -1.0f, -1.0f, 0.0f);
+    XMVECTOR vMax = XMVectorSet( 1.0f,  1.0f,  1.0f, 0.0f);
+    BoundingBox::CreateFromPoints(m_aabb, vMin, vMax);
+
+    //Update position of bounding box (also called any time the camera gets edited, aka m_viewDirty gets set to true and we call UpdateViewMatrix())
+    m_aabb.Center = m_position;
+
+    //Bounding Sphere (alternatively I could just have my own struct with a center point and a radius, the library feels like it's been made obsolete by basic maths)
+    BoundingSphere::CreateFromBoundingBox(m_sphere, m_aabb); //The CreateFromPoints and CreateFromFrustum are super confusing so I'm just going to do this ehe
+    m_sphere.Center = m_position;
+    m_sphere.Center.y -= CAMERA_Y_OFFSET;
 }
 
 DirectX::XMVECTOR Camera::GetPositionVec() const
@@ -20,6 +35,17 @@ DirectX::XMVECTOR Camera::GetPositionVec() const
 DirectX::XMFLOAT3 Camera::GetPosition() const
 {
     return m_position;
+}
+
+DirectX::BoundingSphere Camera::GetBoundingSphere() const
+{
+    return m_sphere;
+}
+
+void Camera::SetBoundingSphereCenter(DirectX::XMFLOAT3 pos)
+{
+    m_sphere.Center = pos;
+    m_sphere.Center.y -= CAMERA_Y_OFFSET;
 }
 
 DirectX::XMVECTOR Camera::GetRight() const
@@ -93,6 +119,16 @@ float Camera::GetFarWindowHeight() const
     return m_farWindowHeight;
 }
 
+float Camera::GetYaw() const
+{
+    return m_yaw;
+}
+
+DirectX::XMVECTOR Camera::GetDefaultLook() const
+{
+    return m_defaultLook;
+}
+
 XMMATRIX Camera::View() const
 {
     return XMLoadFloat4x4(&m_view);
@@ -106,6 +142,7 @@ XMMATRIX Camera::Proj() const
 void Camera::SetPosition(float x, float y, float z)
 {
     m_position = XMFLOAT3(x, y, z);
+
     m_viewDirty = true;
 }
 
@@ -159,7 +196,18 @@ void Camera::SetLens(float fovY, float aspect, float zn, float zf)
     DirectX::XMStoreFloat4x4(&m_proj, P);
 }
 
-void Camera::Strafe(float d)
+//void Camera::Strafe(float d)
+//{
+//    // mPosition += d*mRight
+//    XMVECTOR s = XMVectorReplicate(d);
+//    XMVECTOR r = XMLoadFloat3(&m_right);
+//    XMVECTOR p = XMLoadFloat3(&m_position);
+//    XMStoreFloat3(&m_position, XMVectorMultiplyAdd(s, r, p));
+//
+//    m_viewDirty = true;
+//}
+
+DirectX::XMFLOAT3 Camera::Strafe(float d)
 {
     // mPosition += d*mRight
     XMVECTOR s = XMVectorReplicate(d);
@@ -168,6 +216,11 @@ void Camera::Strafe(float d)
     XMStoreFloat3(&m_position, XMVectorMultiplyAdd(s, r, p));
 
     m_viewDirty = true;
+
+    //new: return directional vector that represents what way the camera is moving
+    XMFLOAT3 toReturn;
+    XMStoreFloat3(&toReturn, r);
+    return toReturn;
 }
 
 void Camera::Walk(float d)
@@ -181,10 +234,39 @@ void Camera::Walk(float d)
     m_viewDirty = true;
 }
 
+//void Camera::PlayerWalk(float d)
+//{
+//    //Maybe we should just take the default vector instead and just multiply by the yaw (TOTAL ANGLE, ACCUMULATE VALUE EVERY PITCH AND YAW), ignoring the pitch, and moving forward?
+//    XMMATRIX temp = XMMatrixRotationY(m_yaw);
+//    XMVECTOR newLook = XMVector3TransformNormal(m_defaultLook, temp);
+//    XMVECTOR pos = XMLoadFloat3(&m_position);
+//    pos += d * newLook;
+//    XMStoreFloat3(&m_position, pos);
+//
+//    m_viewDirty = true;
+//}
+
+DirectX::XMFLOAT3 Camera::PlayerWalk(float d)
+{
+    //Maybe we should just take the default vector instead and just multiply by the yaw (TOTAL ANGLE, ACCUMULATE VALUE EVERY PITCH AND YAW), ignoring the pitch, and moving forward?
+    XMMATRIX temp = XMMatrixRotationY(m_yaw);
+    XMVECTOR newLook = XMVector3TransformNormal(m_defaultLook, temp);
+    XMVECTOR pos = XMLoadFloat3(&m_position);
+    pos += d * newLook;
+    XMStoreFloat3(&m_position, pos);
+
+    m_viewDirty = true;
+
+    XMFLOAT3 toReturn;
+    XMStoreFloat3(&toReturn, newLook); //do I need to get the actual look-vector? probably not
+    return toReturn;
+}
+
 void Camera::Pitch(float angle)
 {
+    m_pitch += angle;
     // Rotate up and look vector about the right vector.
-
+    //(This is for rotating up and down)
     XMMATRIX R = XMMatrixRotationAxis(XMLoadFloat3(&m_right), angle);
 
     XMStoreFloat3(&m_up, XMVector3TransformNormal(XMLoadFloat3(&m_up), R));
@@ -193,9 +275,35 @@ void Camera::Pitch(float angle)
     m_viewDirty = true;
 }
 
+void Camera::PitchFPC(float angle)
+{
+    m_pitch += angle;
+    // Rotate up and look vector about the right vector.
+    //(This is for rotating up and down, specifically using a first person camera)
+    XMMATRIX R = XMMatrixRotationAxis(XMLoadFloat3(&m_right), angle);
+
+    //Clamp????? (god i hate xmvectors and float3s)
+    XMVECTOR tempVec = XMVector3TransformNormal(XMLoadFloat3(&m_look), R);
+    XMFLOAT3 tempF3;
+    XMStoreFloat3(&tempF3, tempVec);
+    if (tempF3.y >= 0.95f && tempF3.y >= m_look.y)
+        return;
+    else if (tempF3.y <= -0.95f && tempF3.y <= m_look.y)
+        return;
+    tempVec = XMLoadFloat3(&tempF3);
+
+    XMStoreFloat3(&m_up, XMVector3TransformNormal(XMLoadFloat3(&m_up), R));
+    //XMStoreFloat3(&m_look, XMVector3TransformNormal(XMLoadFloat3(&m_look), R));
+    XMStoreFloat3(&m_look, tempVec);
+
+    m_viewDirty = true;
+}
+
 void Camera::RotateY(float angle)
 {
+    m_yaw += angle;
     // Rotate the basis vectors about the world y-axis.
+    //(This is for rotating left and right)
 
     XMMATRIX R = XMMatrixRotationY(angle);
 
@@ -257,6 +365,11 @@ void Camera::UpdateViewMatrix()
         DirectX::BoundingFrustum::CreateFromMatrix(m_frustum, Proj());
         DirectX::XMMATRIX invView = DirectX::XMMatrixInverse(NULL, XMLoadFloat4x4(&m_view));
         m_frustum.Transform(m_frustum, invView);
+
+        //Update position of bounding sphere
+        //m_aabb.Center = m_position;
+        m_sphere.Center = m_position;
+        m_sphere.Center.y -= CAMERA_Y_OFFSET;
 
         m_viewDirty = false;
     }

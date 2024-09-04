@@ -3,6 +3,8 @@
 #include <dxgi.h>			//directx driver interface
 #include <d3dcompiler.h>	//compiling shaders
 
+//#include <algorithm> //min and max
+
 using namespace DirectX;
 
 D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height)
@@ -34,10 +36,6 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 
 	//Cube environment mapping setup
 	m_cubeMap = CubeMap(device.Get(), true);
-
-	//Shadowmap setup
-	InitSpotlights();
-	m_shadowMap = ShadowMap(device.Get(), &m_drawables, &m_spotlights);
 
 	//Sampler setup for texture access in shaders
 	InitSampler();
@@ -77,30 +75,60 @@ void D3D11Engine::Update(float dt)
 	if (cubemapIsEnabled)RenderReflectiveObject(dt);
 
 	//PRESENT
-	swapChain->Present(1, 0); //vSync, 1 = enabled, 0 = disabled
+	swapChain->Present(1, 0); //vSync, 1 = enabled, 0 = disabled (or in other terms, fps limit to screen hz or uncap)
 }
 
-void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps, int state)
+void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps, int state, int rawX, int rawY)
 {
-	StartImGuiFrame();
-	m_fpsCounter++;
+	StartImGuiFrame(); //Begin
+
+	m_fpsCounter++; //FPS counter, input from app-class
 	if (shouldUpdateFps)
 	{
 		m_fpsString = std::to_string(m_fpsCounter);
 		m_fpsCounter = 0;
 	}
+
+
 	ImGuiEngineWindow(
 		m_camera.get(), m_fpsString, state,
 		deferredIsEnabled, cullingIsEnabled, billboardingIsEnabled, lodIsEnabled, cubemapIsEnabled,
-		m_drawablesBeingRendered
+		m_drawablesBeingRendered,
+		rawX, rawY
 	);
-	EndImGuiFrame();
+
+	EndImGuiFrame(); //End
 }
 
-void D3D11Engine::MovePlayer(float speed)
+void D3D11Engine::MovePlayerX(float speed)
 {
-	//Remaking my 3d project into an ECS-based Game Engine, one step at a time
+	//Store a temporary position instead of modifying the original
+	XMFLOAT3 tempPos = m_camera->GetPosition();
+	
+	//Identical to the camera Strafe() but we're doing it on tempPos
+	XMVECTOR s = XMVectorReplicate(speed);
+	XMVECTOR r = m_camera->GetRight();
+	XMVECTOR p = XMLoadFloat3(&tempPos);
+	XMStoreFloat3(&tempPos, XMVectorMultiplyAdd(s, r, p));
 
+	//Update position of camera and its bounding volume (Also does collision testing)
+	MovePlayer(tempPos);
+}
+
+void D3D11Engine::MovePlayerZ(float speed)
+{
+	//Store a temporary position instead of modifying the original
+	XMFLOAT3 tempPos = m_camera->GetPosition();
+
+	//Identical to the camera PlayerWalk() but we're doing it on tempPos
+	XMMATRIX temp = XMMatrixRotationY(m_camera->GetYaw());
+	XMVECTOR newLook = XMVector3TransformNormal(m_camera->GetDefaultLook(), temp);
+	XMVECTOR pos = XMLoadFloat3(&tempPos);
+	pos += speed * newLook;
+	XMStoreFloat3(&tempPos, pos);
+
+	//Update position of camera and its bounding volume (Also does collision testing)
+	MovePlayer(tempPos);
 }
 
 Camera& D3D11Engine::GetCamera() const noexcept
@@ -113,6 +141,79 @@ bool D3D11Engine::CreateDrawable(std::string objFileName, DirectX::XMFLOAT3 tran
 	InitDrawableFromFile(objFileName, m_drawables, scale, rotate, translate, m_textures, device.Get());
 
 	return false;
+}
+
+bool D3D11Engine::CreateReflectiveDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate)
+{
+	InitDrawableFromFile(objFileName, m_reflectiveDrawables, scale, rotate, translate, m_textures, device.Get());
+
+	return false;
+}
+
+bool D3D11Engine::MoveDrawable(int i, DirectX::XMFLOAT3 dist)
+{
+	m_drawables.at(i).EditTranslation(dist.x, dist.y, dist.z);
+
+	return false;
+}
+
+bool D3D11Engine::SetupQT()
+{
+	for (const auto& drawable : m_drawables)
+		m_quadTree.AddElement(&drawable, drawable.GetBoundingBox());
+
+	return false;
+}
+
+bool D3D11Engine::CreateLightSpot(DirectX::XMFLOAT3 position, float fov, float rotX, float rotY, DirectX::XMFLOAT3 color)
+{
+	LightData data;
+
+	//Pass in fov as a float between 0 and 1. Bigger number = Wider cone. Default 0.25f
+	//Pass in rotX as a float between -1 to +1. Negative values angle the light to the left, positive values angle the light to the right. Default to 0
+	//Pass in rotY as a float between -1 to +1. Negative values angle the light upwards, positive values angle the light downwards. Default to 0
+
+	data.pos = position;
+	data.fovY = XM_PI * fov;	//Example: Passing in  0.25f would be the same as the previous  " XM_PI / 4.0f "
+	data.rotX = XM_PI * rotX;	//Example: Passing in -0.25f would be the same as the previous  "-XM_PI / 4.0f "
+	data.rotY = XM_PI * rotY;	//Example: Passing in 0.125f would be the same as the previous  " XM_PI / 8.0f "
+	data.col = color;			//Default value {1.0f, 1.0f, 1.0f}
+
+	m_lightDataVec.push_back(data);
+
+	return true;
+}
+
+bool D3D11Engine::CreateLightDir(DirectX::XMFLOAT3 position, float rotX, float rotY, DirectX::XMFLOAT3 color)
+{
+	//Directional light
+	LightData data;
+
+	//PREVIOUSLY
+	//data.pos = XMFLOAT3(-80.0f, 1.0f, -6.0f);
+	//data.fovY = 0.0f;
+	//data.rotX = XM_PIDIV2;
+	//data.rotY = XM_PI / 8.0f;
+	//data.col = DirectX::XMFLOAT3(0.25f, 0.25f, 0.25f);
+
+	//NEW
+	data.pos = position;
+	data.fovY = 0.0f;
+	data.rotX = XM_PI * rotX; //For XM_PI / 2 --> 0.5f
+	data.rotY = XM_PI * rotY; //For XM_PI / 8 --> 0.125f
+	data.col = color; //Since directional lights don't fall off with distance, we manually lower the strength of the light here (got bright white walls earlier)
+
+	m_lightDataVec.push_back(data);
+
+	return true;
+}
+
+bool D3D11Engine::SetupLights()
+{
+	m_spotlights = SpotLights(device.Get(), m_lightDataVec);
+	m_shadowMap = ShadowMap(device.Get(), &m_drawables, &m_spotlights); //"SetupLights()", shadows too while we're at it, but don't tell anyone :3
+
+	return true;
 }
 
 /*RENDER FUNCTIONS*/
@@ -792,10 +893,6 @@ void D3D11Engine::InitSpotlights()
 	//Going to write a bunch of comments here because I'm awful at visualizing 3D by just looking at numbers and pi angles
 	std::vector<LightData> dataVec;
 
-	//fovY: Smaller numbers mean a more narrow field of view
-	//rotX: Angle the light left with negative values, right with positive
-	//rotY: Angle the light up with negative values, down with positive
-
 	//Spotlight in the far left corner angled further in that direction shining light onto boxes
 	LightData data;
 	data.pos = XMFLOAT3(0.0f, 0.0f, 5.0f);
@@ -833,6 +930,61 @@ void D3D11Engine::InitSpotlights()
 	dataVec.push_back(data4);
 
 	m_spotlights = SpotLights(device.Get(), dataVec);
+}
+
+DirectX::XMFLOAT3& D3D11Engine::ClosestPointOnBox(const DirectX::XMFLOAT3& point, const DirectX::BoundingBox& box)
+{
+	//This function should serve to help me figure out where to push out when collisions happen against a box
+	DirectX::XMFLOAT3 toReturn;
+
+	toReturn.x = max((box.Center.x - box.Extents.x), min(point.x, box.Center.x + box.Extents.x));
+	toReturn.y = max((box.Center.y - box.Extents.y), min(point.y, box.Center.y + box.Extents.y));
+	toReturn.z = max((box.Center.z - box.Extents.z), min(point.z, box.Center.z + box.Extents.z));
+
+	return toReturn;
+}
+
+void D3D11Engine::MovePlayer(const DirectX::XMFLOAT3& toMove)
+{
+	//Move the bounding volume instead of the camera itself
+	m_camera->SetBoundingSphereCenter(toMove);
+
+	//Check for collision (Sphere vs AABB right now, add more later if needed)
+	bool didCollide = false;
+	for (auto drawable : m_drawables)
+	{
+		//Get which corner of the box is closest to the sphere
+		XMFLOAT3 closest = ClosestPointOnBox(m_camera->GetBoundingSphere().Center, drawable.GetBoundingBox());
+
+		//Get the distance from that corner to the center of the sphere
+		XMFLOAT3 dist = XmFloat3Subtract(m_camera->GetBoundingSphere().Center, closest);
+
+		//If that distance is lesser than the radius of the sphere, there's an intersection
+		if (XmFloat3Length(dist) < m_camera->GetBoundingSphere().Radius)
+		{
+			didCollide = true;
+
+			//Normalize the distance to get a temporary directional vector
+			XMFLOAT3 push = XmFloat3Norm(dist);
+
+			//Multiply this vector by the radius of the sphere (how far we need to push out)
+			XMFLOAT3 pushMultRad = XmFloat3Multiply(push, m_camera->GetBoundingSphere().Radius);
+
+			//Add the direction of the closest point to walk along that vector
+			XMFLOAT3 newPos = XmFloat3Add(closest, pushMultRad);
+
+			//Adjust for camera y-offset
+			newPos.y += 9.0f;
+
+			//Update positions
+			m_camera->SetPosition(newPos);
+			m_camera->SetBoundingSphereCenter(newPos);
+		}
+	}
+
+	//If no collision happened, just move by updating the camera position with the temp position
+	if (!didCollide)
+		m_camera->SetPosition(toMove);
 }
 
 void D3D11Engine::InitSampler()
@@ -924,4 +1076,3 @@ bool D3D11Engine::InitEntityGraphics(EntityID& entity, DirectX::XMFLOAT3 transla
 
 	return true;
 }
-

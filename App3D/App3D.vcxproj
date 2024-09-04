@@ -164,13 +164,19 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp" />
+    <ClCompile Include="ColliderAABB.cpp" />
+    <ClCompile Include="ColliderPlane.cpp" />
+    <ClCompile Include="ColliderSphere.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Collision.cpp" />
     <ClCompile Include="ConstantBuffer.cpp" />
     <ClCompile Include="CubeMap.cpp" />
     <ClCompile Include="D3D11Engine.cpp" />
+    <ClCompile Include="D3D11MathHelper.cpp" />
     <ClCompile Include="ImGuiHelper.cpp" />
     <ClCompile Include="IndexBuffer.cpp" />
     <ClCompile Include="Keyboard.cpp" />
+    <ClCompile Include="LevelSetup.cpp" />
     <ClCompile Include="Libraries\ImGui\imgui.cpp" />
     <ClCompile Include="Libraries\ImGui\imgui_draw.cpp" />
     <ClCompile Include="Libraries\ImGui\imgui_impl_dx11.cpp" />
@@ -191,7 +197,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h" />
+    <ClInclude Include="ColliderAABB.h" />
+    <ClInclude Include="ColliderSphere.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="ColliderPlane.h" />
+    <ClInclude Include="Collision.h" />
+    <ClInclude Include="CollisionDataStruct.h" />
     <ClInclude Include="ComponentHelper.h" />
     <ClInclude Include="ConstantBuffer.h" />
     <ClInclude Include="CubeMap.h" />
@@ -202,6 +213,7 @@
     <ClInclude Include="IndexBuffer.h" />
     <ClInclude Include="Keyboard.h" />
     <ClInclude Include="Drawable.h" />
+    <ClInclude Include="LevelSetup.h" />
     <ClInclude Include="Libraries\ImGui\imconfig.h" />
     <ClInclude Include="Libraries\ImGui\imgui.h" />
     <ClInclude Include="Libraries\ImGui\imgui_impl_dx11.h" />
@@ -213,6 +225,7 @@
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="ObjParser.h" />
     <ClInclude Include="ParticleSystem.h" />
+    <ClInclude Include="PhysicsEngine.h" />
     <ClInclude Include="QuadTree.h" />
     <ClInclude Include="ShaderResource.h" />
     <ClInclude Include="ShadowMap.h" />

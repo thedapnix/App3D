@@ -1,0 +1,5 @@
+newmtl wood_glow_blue
+Ka wood_glow_blue.png
+Kd wood_glow_blue.png
+Ks wood_glow_blue.png
+Ns 1.0000

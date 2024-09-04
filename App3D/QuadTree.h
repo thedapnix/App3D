@@ -30,9 +30,10 @@ private:
 	std::unique_ptr<Node> m_root;
 	int m_depth = 0;
 
-	static constexpr int maxElements = 8;
-	static constexpr int maxDepth = 4; //For sanity reasons, don't let the tree subdivide forever
-	static constexpr int maxHeight = 100;
+	//Previously: 8, 4, 100 on the following three variables. Need to up these numbers to support more elements in the tree, covering a larger area
+	static constexpr int maxElements = 32;
+	static constexpr int maxDepth = 8; //For sanity reasons, don't let the tree subdivide forever
+	static constexpr int maxHeight = 300;
 	static constexpr int minHeight = -100;
 };
 

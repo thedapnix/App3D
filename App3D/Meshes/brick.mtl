@@ -1,0 +1,5 @@
+newmtl brick
+Ka brick.png
+Kd brick.png
+Ks brick.png
+Ns 1.0000

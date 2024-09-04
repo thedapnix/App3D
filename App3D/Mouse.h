@@ -23,13 +23,22 @@ public:
 
 	void OnPress(HWND& window, int x, int y);
 	void OnRelease();
+	void OnRawDelta(int dx, int dy);
 
-	//hehe x
 	int GetLastPosX() { return m_lastPos.first; }
 	int GetLastPosY() { return m_lastPos.second; }
+
+	int GetLastRawPosX() { return m_lastRawPos.first; }	//new
+	int GetLastRawPosY() { return m_lastRawPos.second; }//
+
 	void SetLastPosX(int x) { m_lastPos.first = x; }
 	void SetLastPosY(int y) { m_lastPos.second = y; }
+
+	void UpdateLastRawPosX(int x) { m_lastRawPos.first += x; }
+	void UpdateLastRawPosY(int y) { m_lastRawPos.second += y; }
+
 private:
 	bool m_lmbPressed = false;
 	std::pair<int, int> m_lastPos;
+	std::pair<int, int> m_lastRawPos; //new
 };

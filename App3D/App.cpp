@@ -3,7 +3,10 @@
 #include "ImGui/imgui_impl_win32.h"  //This imgui section is for allowing imgui access in the window proc function
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-//Macro that allows window to refer to itself via the "this" keyword
+#include "LevelSetup.h"
+
+//What: Store an empty pointer of type "App" and assign it the value of "this" in the App-constructor
+//Why:  Windows static functions like MainWndProc don't allow the use of the "this" keyword, so this is a workaround
 namespace
 {
     App* d3dApp = 0;
@@ -32,7 +35,19 @@ App::App(HINSTANCE hInstance)
     m_keyboard = std::make_unique<Keyboard>();
     m_timer = std::make_unique<Timer>(); //Constructor should also Start()
     m_fpsTimer = std::make_unique<Timer>();
+    m_preattentiveTimer = std::make_unique<Timer>();
     m_engine = std::make_unique<D3D11Engine>(m_hwnd, m_width, m_height);
+
+    //Raw mouse input (not sure I'll need this but fuck it we ball)
+    RAWINPUTDEVICE rid;
+    rid.usUsagePage = 0x01;
+    rid.usUsage = 0x02;
+    rid.dwFlags = 0;
+    rid.hwndTarget = nullptr;
+    if (RegisterRawInputDevices(&rid, 1, sizeof(rid)) == FALSE)
+    {
+        //throw an exception or something idk
+    }
 
     DoSetup();
 }
@@ -64,53 +79,39 @@ int App::Run()
     return (int)msg.wParam;
 }
 
+void App::EnableCursor()
+{
+    m_cursorEnabled = true;
+    ShowCursor();
+}
+
+void App::DisableCursor()
+{
+    m_cursorEnabled = false;
+    HideCursor();
+}
+
+
 void App::DoSetup()
 {
-    /*EXAMPLE SCENE*/
+    m_engine->GetCamera().SetPosition({ 0.0f, 12.0f, 0.0f }); //Previously 5.675 Z
 
-    //Name of the obj file followed by Translate, Scale, Rotate (all of which have default values)
-    m_engine->CreateDrawable("Meshes/ground.obj", { 0.0f, -10.0f,   5.0f });    //Ground part 1
-    m_engine->CreateDrawable("Meshes/ground.obj", { 0.0f, -10.0f, -23.0f });    //Ground part 2
+    SetupLevel1(m_engine.get());    //Motion: X-axis        (B3/B2)
+    //SetupLevel2(m_engine.get());    //Color: Red            (B3)
+    //SetupLevel3(m_engine.get());    //Form: Oblong          (C1)
+    //SetupLevel4(m_engine.get());    //Color: Blue           (B1)
+    //SetupLevel5(m_engine.get());    //Motion: Y-axis        (C1/B1)
+    //SetupLevel6(m_engine.get());    //Form: Sphere          (B2/B3)
+    //SetupLevel7(m_engine.get());    //Motion: Z-axis        (C3)
+    //SetupLevel8(m_engine.get());    //Color: Blue outline   (B3/C3)
+    //SetupLevel9(m_engine.get());    //Form: Parallelepiped  (B1/B2/C1/C2) (aka big skewed cube)
 
-    m_engine->CreateDrawable("Meshes/wall.obj", { 0.0f, -4.0f,  19.0f },    { 15.0f, 5.0f, 1.0f }); //Front wall
-    m_engine->CreateDrawable("Meshes/wall.obj", { 0.0f, -4.0f, -37.0f },    { 15.0f, 5.0f, 1.0f }); //Back wall
+    m_engine->CreateLightSpot({ 0.0f + 540.0f, 5.0f, 5.0f }, 0.75f, 0.0f, 0.35f); //Light on the final grid crate
 
-    m_engine->CreateDrawable("Meshes/wall.obj", { -14.0f, -4.0f,   8.0f },  { 1.0f, 5.0f, 10.0f }); //Left wall part 1
-    m_engine->CreateDrawable("Meshes/wall.obj", { -14.0f, -4.0f, -23.0f },  { 1.0f, 5.0f, 13.0f }); //Left wall part 2
-
-    m_engine->CreateDrawable("Meshes/wall.obj", { 14.0f, -4.0f,   4.0f },   { 1.0f, 5.0f, 14.0f }); //Right wall part 1
-    m_engine->CreateDrawable("Meshes/wall.obj", { 14.0f, -4.0f, -23.0f },   { 1.0f, 5.0f, 13.0f }); //Right wall part 2
-
-    m_engine->CreateDrawable("Meshes/wood_crate.obj", { -10.0f, -7.0f, 15.0f }, { 2.0f, 2.0f, 2.0f });                          //Big box in the corner
-    m_engine->CreateDrawable("Meshes/wood_crate.obj", { -10.0f, -4.0f, 15.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f,  0.45f, 0.0f });  //Smaller box on top
-    m_engine->CreateDrawable("Meshes/wood_crate.obj", { -10.0f, -8.0f, 11.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f });  //Smaller box in front
-
-    //Initialization of the lights happen in d3d11engine, this will be moved here as well
-
-    //InitDrawableFromFile("Meshes/wood_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 5.0f, -3.0f, -33.0f }); //index 11, the spinny boy
-
-    //InitDrawableFromFile("Meshes/cube.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { -5.0f, -8.0f, 16.0f }); //Corner cube with no mtl
-
-    //InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -8.0f, -7.0f }); //Middle of the room cubes, directional light casts shadows too
-    //InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 2.5f, -8.0f, -6.5f }); //Middle of the room cubes, directional light casts shadows too
-
-    //InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -8.0f, -3.0f, -30.0f }); //Floaty shadowboys
-    //InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.25f, 0.25f, 0.25f }, { 0.0f, 0.0f, 0.0f }, { -7.0f, -3.0f, -31.0f });
-    //InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -10.0f, -5.0f, -30.0f });
-    //InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -9.0f, -7.0f, -32.0f });
-    //InitDrawableFromFile("Meshes/metal_crate.obj", m_drawables, { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f }, { -6.0f, -7.0f, -28.0f });
-
-    //InitDrawableFromFile("Meshes/wood_crate.obj", m_reflectiveDrawables, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, -2.5f, 5.0f }); //Mirror cube
-
-    /*ECS SETUP INSTEAD OF DRAWABLES*/
-    //auto player = m_registry.CreateEntity();
-    //InitEntityGraphics(player, {0.0f, 0.0f, 0.0f});
-
-    /*for (const auto& drawable : m_drawables)
-    {
-        m_quadTree.AddElement(&drawable, drawable.GetBoundingBox());
-    }*/
-    //m_quadTree.AddElement(&m_reflectiveDrawables.at(0), m_reflectiveDrawables.at(0).GetBoundingBox());
+    //Call after every drawable and light for a scene has been created to initialize functionality for things like culling and shadows
+    //(find a way to make this automatically happen after the DoSetup() function without needing the user to worry about this stuff?)
+    m_engine->SetupQT();
+    m_engine->SetupLights();
 }
 
 void App::DoFrame(float dt)
@@ -126,7 +127,8 @@ void App::DoFrame(float dt)
         m_fpsShouldUpdate = true;
         m_fpsTimer->Restart();
     }
-    m_engine->ImGuiSceneData(m_engine.get(), m_fpsShouldUpdate, (int)m_currentState);
+
+    m_engine->ImGuiSceneData(m_engine.get(), m_fpsShouldUpdate, (int)m_currentState, m_mouse->GetLastRawPosX(), m_mouse->GetLastRawPosY());
     m_fpsShouldUpdate = false;
 
     /*Render the new scene*/
@@ -135,12 +137,51 @@ void App::DoFrame(float dt)
 
 void App::InterpretKeyboardInput(float dt)
 {
-    if (m_currentState == States::CAMERA_CONTROL)
+    /*State switching using the keys 1, 2, and 3 (No control, FPS player control, free camera control)*/
+#ifdef _DEBUG
+    if (m_keyboard->IsKeyPressed(0x31))
     {
-        if (m_keyboard->IsKeyPressed(VK_SPACE))
+        m_currentState = States::NO_CONTROL;
+    }
+    else if (m_keyboard->IsKeyPressed(0x32))
+    {
+        m_currentState = States::FPC_CONTROL;
+        DisableCursor();
+    }
+    else if (m_keyboard->IsKeyPressed(0x33))
+    {
+        m_currentState = States::GODCAM_CONTROL;
+        EnableCursor();
+    }
+#endif
+
+    /*Player*/
+    if (m_currentState == States::FPC_CONTROL)
+    {
+        if (m_keyboard->IsKeyPressed(0x57)) //W
         {
-            m_currentState = States::PLAYER_CONTROL;
+            m_engine->MovePlayerZ( 0.02f * dt);
         }
+        if (m_keyboard->IsKeyPressed(0x53)) //S
+        {
+            m_engine->MovePlayerZ(-0.02f * dt);
+        }
+
+        if (m_keyboard->IsKeyPressed(0x44)) //D
+        {
+            m_engine->MovePlayerX( 0.02f * dt);
+        }
+        if (m_keyboard->IsKeyPressed(0x41)) //A
+        {
+            m_engine->MovePlayerX(-0.02f * dt);
+        }
+
+
+    }
+
+    /*Camera*/
+    if (m_currentState == States::GODCAM_CONTROL)
+    {
         if (m_keyboard->IsKeyPressed(0x57)) //W
         {
             m_engine->GetCamera().Walk(0.025f * dt);
@@ -164,45 +205,57 @@ void App::InterpretKeyboardInput(float dt)
         }
     }
 
-    /*Player*/
-    if (m_currentState == States::PLAYER_CONTROL)
+    /*None*/
+    else
     {
-        if (m_keyboard->IsKeyPressed(VK_ESCAPE))
-        {
-            m_currentState = States::CAMERA_CONTROL;
-        }
 
-        if (m_keyboard->IsKeyPressed(0x44)) //D
-        {
-            m_engine->MovePlayer(0.1f);
-        }
-        if (m_keyboard->IsKeyPressed(0x41)) //A
-        {
-            m_engine->MovePlayer(-0.1f);
-        }
     }
 }
 
 void App::OnMouseMove(WPARAM btnState, int x, int y)
 {
-    /*Camera*/
-    if (m_currentState == States::CAMERA_CONTROL)
+    //God Camera
+    if ((btnState & MK_LBUTTON) != 0) //If the left mouse button is being held down
     {
-        if ((btnState & MK_LBUTTON) != 0)
-        {
-            // Make each pixel correspond to a quarter of a degree.
-            float dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(x - m_mouse->GetLastPosX()));
-            float dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(y - m_mouse->GetLastPosY()));
+        // Make each pixel correspond to a quarter of a degree.
+        float dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(x - m_mouse->GetLastPosX()));
+        float dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(y - m_mouse->GetLastPosY()));
 
-            m_engine->GetCamera().Pitch(dy);
-            m_engine->GetCamera().RotateY(dx);
-        }
-
-        m_mouse->SetLastPosX(x);
-        m_mouse->SetLastPosY(y);
+        m_engine->GetCamera().Pitch(dy);
+        m_engine->GetCamera().RotateY(dx);
     }
 
-    /*Player (probably won't do anything here)*/
+    m_mouse->SetLastPosX(x);
+    m_mouse->SetLastPosY(y);
+}
+
+void App::OnMouseRawMove(WPARAM btnState, int x, int y)
+{
+    //FPS Camera
+    int prevX = m_mouse->GetLastRawPosX();
+    int prevY = m_mouse->GetLastRawPosY();
+
+    m_mouse->UpdateLastRawPosX(x);  //Increments or decrements
+    m_mouse->UpdateLastRawPosY(y);  //
+
+    // Make each pixel correspond to a quarter of a degree.
+    float dx = DirectX::XMConvertToRadians(0.25f * static_cast<float>(m_mouse->GetLastRawPosX() - prevX));
+    float dy = DirectX::XMConvertToRadians(0.25f * static_cast<float>(m_mouse->GetLastRawPosY() - prevY));
+
+    m_engine->GetCamera().PitchFPC(dy);
+    m_engine->GetCamera().RotateY(dx);
+}
+
+//Both of these are loops that call upon the WinAPI calls with the same name (maybe I should name these differently just to be extra sure the compiler doesn't confuse them)
+void App::HideCursor()
+{
+    while (::ShowCursor(FALSE) >= 0);
+}
+
+//See comment above
+void App::ShowCursor()
+{
+    while (::ShowCursor(TRUE) < 0);
 }
 
 LRESULT App::HandleUserInput(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -226,6 +279,7 @@ LRESULT App::HandleUserInput(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_MOUSEMOVE:
+        if (m_currentState != States::GODCAM_CONTROL) break; //Save time calculating
         OnMouseMove(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
         break;
 
@@ -241,6 +295,33 @@ LRESULT App::HandleUserInput(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_KEYUP:
     case WM_SYSKEYUP:
         m_keyboard->OnKeyReleased(static_cast<unsigned char>(wParam));
+        break;
+
+    case WM_INPUT: //Raw input data, idk why but this has to be after the other cases
+        if (m_currentState != States::FPC_CONTROL) break; //Save time calculating
+        UINT size;
+        //Get size of input data
+        if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, nullptr, &size, sizeof(RAWINPUTHEADER)) == -1) //Fills the size-variable with the bytes required
+        {
+            //throw an exception or something idk
+            break;
+        }
+        rawBuffer.resize(size);
+
+        //Read input data
+        if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, rawBuffer.data(), &size, sizeof(RAWINPUTHEADER)) != size)
+        {
+            //throw an exception or something idk
+            break;
+        }
+
+        //Process input data
+        auto& rid = reinterpret_cast<const RAWINPUT&>(*rawBuffer.data());
+        if (rid.header.dwType == RIM_TYPEMOUSE && (rid.data.mouse.lLastX != 0 || rid.data.mouse.lLastY != 0))
+        {
+            //m_mouse.get()->OnRawDelta(rid.data.mouse.lLastX, rid.data.mouse.lLastY);
+            OnMouseRawMove(wParam, (int)rid.data.mouse.lLastX, (int)rid.data.mouse.lLastY);
+        }
         break;
     }
     return DefWindowProc(hWnd, msg, wParam, lParam);
