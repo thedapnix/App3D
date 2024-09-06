@@ -3,7 +3,7 @@
 //#define STB_IMAGE_IMPLEMENTATION
 //#include "stb_image.h"
 
-Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOAT3 scaling, DirectX::XMFLOAT3 rotation, DirectX::XMFLOAT3 translation)
+Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOAT3 scaling, DirectX::XMFLOAT3 rotation, DirectX::XMFLOAT3 translation, int interact)
 {
 	//Every drawable has a vertex buffer, an index buffer, and a constant buffer
 	m_vertexVectorData = (void*)(data.vData.vector.data());
@@ -43,24 +43,30 @@ Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOA
 			submesh.ambientSRV.Get(), submesh.diffuseSRV.Get(), submesh.specularSRV.Get(), submesh.shininess)
 		);
 	}
+
+	m_interactID = interact;
+	m_isActive = true;
 }
 
 void Drawable::Bind(ID3D11DeviceContext* context, bool isReflective) const
 {
-	//Buffers
-	context->VSSetConstantBuffers(0, 1, m_constantBuffer.GetBufferAddress());
-	
-	ID3D11Buffer* buffer[] = { m_vertexBuffer.GetBuffer() };
-	UINT stride = m_vertexBuffer.GetVertexSize();
-	UINT offset = 0;
-	context->IASetVertexBuffers(0, 1, buffer, &stride, &offset);
-
-	context->IASetIndexBuffer(m_indexBuffer.GetBuffer(), DXGI_FORMAT_R32_UINT, 0);
-
-	for (int i = 0; i < m_submeshes.size(); i++)
+	if (m_isActive)
 	{
-		m_submeshes.at(i).Bind(context, isReflective);
-		m_submeshes.at(i).Draw(context);
+		//Buffers
+		context->VSSetConstantBuffers(0, 1, m_constantBuffer.GetBufferAddress());
+
+		ID3D11Buffer* buffer[] = { m_vertexBuffer.GetBuffer() };
+		UINT stride = m_vertexBuffer.GetVertexSize();
+		UINT offset = 0;
+		context->IASetVertexBuffers(0, 1, buffer, &stride, &offset);
+
+		context->IASetIndexBuffer(m_indexBuffer.GetBuffer(), DXGI_FORMAT_R32_UINT, 0);
+
+		for (int i = 0; i < m_submeshes.size(); i++)
+		{
+			m_submeshes.at(i).Bind(context, isReflective);
+			m_submeshes.at(i).Draw(context);
+		}
 	}
 }
 
@@ -140,4 +146,32 @@ const VertexBuffer& Drawable::GetVertexBuffer() const
 void* Drawable::GetVertexVectorData()
 {
 	return m_vertexVectorData;
+}
+
+bool Drawable::IsInteractible() const
+{
+	return (m_interactID > 0);
+}
+
+int Drawable::GetInteractID() const
+{
+	//Do something depending on which box this is
+	//FOR NOW: HARD-CODE THIS, DON'T WASTE A BUNCH OF TIME WRITING A WHOLE-ASS SYSTEM WITH FUNCTION POINTERS AND WHAT-NOT TO APPLY SCRIPTS TO DRAWABLES, DON'T YOU FUCKING DARE
+
+	return m_interactID;
+}
+
+void Drawable::RemoveInteraction()
+{
+	m_interactID = 0; //Back to 0 bubbis
+}
+
+bool Drawable::IsActive() const
+{
+	return m_isActive;
+}
+
+void Drawable::Destroy()
+{
+	m_isActive = false;
 }

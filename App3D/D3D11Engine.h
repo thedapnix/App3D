@@ -38,12 +38,16 @@ public:
 	void MovePlayerX(float speed);
 	void MovePlayerZ(float speed);
 	Camera& GetCamera() const noexcept;
+	void PlayerInteract();
 
 	//Drawable and culling stuff
-	bool CreateDrawable(std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f });
+	bool CreateDrawable(std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0);
 	bool CreateReflectiveDrawable(std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f });
 	bool MoveDrawable(int i, DirectX::XMFLOAT3 dist);
 	bool SetupQT();
+	void RemoveDrawableInteraction(int id);
+	void DestroyDrawable(int id);
+	int GetDrawableIndexFromInteraction(int interactId);
 
 	//Lights stuff
 	bool CreateLightSpot(DirectX::XMFLOAT3 position, float fov, float rotX, float rotY, DirectX::XMFLOAT3 color = {1.0f, 1.0f, 1.0f});
@@ -100,21 +104,23 @@ private:
 	static constexpr float TEST_COLOR[4] = { 0.1f, 0.5f, 0.1f, 1.0f };
 	std::vector<Drawable> m_drawables;
 	std::vector<Drawable> m_reflectiveDrawables;
+	std::vector<Drawable> m_interactibleDrawables; //added a bit late into implementation so i'm not sure that i want to modify the m_drawables too much right now but let me cook
 	std::vector<LightData> m_lightDataVec;
 	SpotLights m_spotlights;
 	std::unique_ptr<Camera> m_camera;
-	int m_drawablesBeingRendered = 0;
 	GBuffer m_gBuffers[4];
-	float particleVar = 0.0f;
+	float m_particleVar = 0.0f;
 
 	/*ImGui variables*/
-	int m_fpsCounter = 0;
-	std::string m_fpsString = "";
+	int fpsCounter = 0;
+	std::string fpsString = "";
 	bool deferredIsEnabled = false; //Dim the lights baby
 	bool cullingIsEnabled = false;
 	bool billboardingIsEnabled = false;
 	bool cubemapIsEnabled = false;
 	bool lodIsEnabled = false;
+	int drawablesBeingRendered = 0;
+	int selectableDrawables = 0;
 
 	/*Collision stuff*/
 	DirectX::XMFLOAT3& ClosestPointOnBox(const DirectX::XMFLOAT3& point, const DirectX::BoundingBox& box); //Returns the closest point on the box in comparison to a given point

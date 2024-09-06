@@ -65,8 +65,8 @@ void D3D11Engine::Update(float dt)
 		mirrorCube.UpdateConstantBuffer(context.Get());
 	}
 
-	particleVar += dt;
-	m_particles.UpdateConstantBuffer(context.Get(), particleVar);
+	m_particleVar += dt;
+	m_particles.UpdateConstantBuffer(context.Get(), m_particleVar);
 
 	//RENDER
 	RenderDepth(dt);
@@ -82,18 +82,18 @@ void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps,
 {
 	StartImGuiFrame(); //Begin
 
-	m_fpsCounter++; //FPS counter, input from app-class
+	fpsCounter++; //FPS counter, input from app-class
 	if (shouldUpdateFps)
 	{
-		m_fpsString = std::to_string(m_fpsCounter);
-		m_fpsCounter = 0;
+		fpsString = std::to_string(fpsCounter);
+		fpsCounter = 0;
 	}
 
 
 	ImGuiEngineWindow(
-		m_camera.get(), m_fpsString, state,
+		m_camera.get(), fpsString, state,
 		deferredIsEnabled, cullingIsEnabled, billboardingIsEnabled, lodIsEnabled, cubemapIsEnabled,
-		m_drawablesBeingRendered,
+		drawablesBeingRendered, selectableDrawables, 
 		rawX, rawY
 	);
 
@@ -136,16 +136,55 @@ Camera& D3D11Engine::GetCamera() const noexcept
 	return *m_camera;
 }
 
-bool D3D11Engine::CreateDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate)
+void D3D11Engine::PlayerInteract()
 {
-	InitDrawableFromFile(objFileName, m_drawables, scale, rotate, translate, m_textures, device.Get());
+	int n = 0;
+	for (auto drawable : m_quadTree.CheckTree(m_camera->GetSelectionFrustum()))
+	{
+		if (drawable->IsInteractible())
+		{
+			n++;
+			//Get the interact id (yes i know this solution isn't smooth, but i need to make something happen without putting 50 hours into building a function pointer script system)
+			int id = drawable->GetInteractID();
+			
+			switch (id) //Works, now we're free to make interacting with any of the target boxes do what we want it to do :)
+			{
+			case 1:
+				//First blue box opens (removes) the first door
+				DestroyDrawable(GetDrawableIndexFromInteraction(20));
+				DestroyDrawable(GetDrawableIndexFromInteraction(21));
+				break;
+			case 2:
+				//Bla bla
+				break;
+			case 3:
+				//Skibidi
+				break;
+			case 4:
+				//Idk how many of these cases we're making but whoopee doo
+				break;
+			}
+
+			//Once the object has been interacted with, it becomes "used" and cannot be interacted with again (wouldn't want to attempt to remove a door that doesn't exist anymore)
+			RemoveDrawableInteraction(id);
+		}
+	}
+	selectableDrawables = n;
+
+	//Also for funsies: Change views?
+	//m_camera->ChangeFrustum();
+}
+
+bool D3D11Engine::CreateDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact)
+{
+	InitDrawableFromFile(objFileName, m_drawables, scale, rotate, translate, m_textures, device.Get(), interact);
 
 	return false;
 }
 
 bool D3D11Engine::CreateReflectiveDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate)
 {
-	InitDrawableFromFile(objFileName, m_reflectiveDrawables, scale, rotate, translate, m_textures, device.Get());
+	InitDrawableFromFile(objFileName, m_reflectiveDrawables, scale, rotate, translate, m_textures, device.Get(), false); //temp: just put false as interactible here bleh
 
 	return false;
 }
@@ -163,6 +202,35 @@ bool D3D11Engine::SetupQT()
 		m_quadTree.AddElement(&drawable, drawable.GetBoundingBox());
 
 	return false;
+}
+
+void D3D11Engine::RemoveDrawableInteraction(int id)
+{
+	for (auto& drawable : m_drawables)
+	{
+		if (drawable.GetInteractID() == id)
+		{
+			drawable.RemoveInteraction();
+		}
+	}
+}
+
+void D3D11Engine::DestroyDrawable(int id)
+{
+	m_drawables.at(id).Destroy();
+}
+
+int D3D11Engine::GetDrawableIndexFromInteraction(int interactId)
+{
+	for (int i = 0; i < m_drawables.size(); i++)
+	{
+		if (m_drawables.at(i).GetInteractID() == interactId)
+		{
+			return i;
+		}
+	}
+
+	return -1; //As well as some error message if you wanna
 }
 
 bool D3D11Engine::CreateLightSpot(DirectX::XMFLOAT3 position, float fov, float rotX, float rotY, DirectX::XMFLOAT3 color)
@@ -265,7 +333,7 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 				drawable->Bind(context.Get());
 				visibleDrawables++;
 			}
-			m_drawablesBeingRendered = visibleDrawables;
+			drawablesBeingRendered = visibleDrawables;
 		}
 		else
 		{
@@ -273,7 +341,7 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 			{
 				drawable.Bind(context.Get());
 			}
-			m_drawablesBeingRendered = (int)m_drawables.size();
+			drawablesBeingRendered = (int)m_drawables.size();
 		}
 
 		//UNBIND THINGS FOR SANITY REASONS
@@ -484,7 +552,7 @@ void D3D11Engine::DefPassOne(Camera* cam)
 			//drawable->Draw(context.Get());
 			visibleDrawables++;
 		}
-		m_drawablesBeingRendered = visibleDrawables;
+		drawablesBeingRendered = visibleDrawables;
 	}
 	else
 	{
@@ -494,7 +562,7 @@ void D3D11Engine::DefPassOne(Camera* cam)
 			drawable.Bind(context.Get());
 			//drawable.Draw(context.Get());
 		}
-		m_drawablesBeingRendered = (int)m_drawables.size();
+		drawablesBeingRendered = (int)m_drawables.size();
 	}
 
 	//Now that we're done writing data to the render targets, unbind them
@@ -953,6 +1021,10 @@ void D3D11Engine::MovePlayer(const DirectX::XMFLOAT3& toMove)
 	bool didCollide = false;
 	for (auto drawable : m_drawables)
 	{
+		if (drawable.IsActive() != true) //Skip checking for collisions against inactive drawables
+		{
+			continue;
+		}
 		//Get which corner of the box is closest to the sphere
 		XMFLOAT3 closest = ClosestPointOnBox(m_camera->GetBoundingSphere().Center, drawable.GetBoundingBox());
 

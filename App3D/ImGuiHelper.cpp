@@ -53,7 +53,7 @@ void ImGuiWindowMenu(bool& isActive)
 
 void ImGuiEngineWindow(Camera* camera, std::string fps, int state,
 	bool& deferredIsEnabled, bool& cullingIsEnabled, bool& billboardingIsEnabled, bool& lodIsEnabled, bool& cubemapIsEnabled,
-	int drawables,
+	int drawables, int selectableDrawables,
 	int rawX, int rawY)
 {
 	//Setup
@@ -72,6 +72,7 @@ void ImGuiEngineWindow(Camera* camera, std::string fps, int state,
 		ImGui::Text("Camera is looking towards: (%f, %f, %f)", camera->GetLook().x, camera->GetLook().y, camera->GetLook().z);
 		ImGui::Text("----------------------------------");
 		ImGui::Text("Drawables currently being drawn: %d", drawables);
+		ImGui::Text("Drawables currently in range to interact with: %d", selectableDrawables);
 		ImGui::Text("----------------------------------");
 		ImGui::Text("Deferred Rendering: %s", deferredIsEnabled ? "Enabled" : "Disabled");
 		ImGui::Text("Frustum Culling: %s", cullingIsEnabled ? "Enabled" : "Disabled");

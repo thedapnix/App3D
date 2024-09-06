@@ -17,6 +17,12 @@ NOTE ON EVERYTHING THAT'S COMMENTED OUT HERE:
 Not deleting these because they'll be necessary if I decide (in the future) to have functionality for reading ALL KEYS, but right now it's just not needed
 */
 
+struct ReleaseInfo
+{
+	bool wasReleasedThisTick;
+	unsigned char keyCode;
+};
+
 class Keyboard
 {
 public:
@@ -47,6 +53,10 @@ public:
 
 	//Key Events
 	bool IsKeyPressed(unsigned char keyCode);
+	bool IsKeyReleased(unsigned char keyCode);
+
+	void ResetReleaseInfo();
+	ReleaseInfo& GetReleaseInfo();
 
 	//std::optional<Event> ReadKey();
 	//bool KeyIsEmpty();
@@ -78,4 +88,6 @@ private:
 
 	std::queue<Event> m_keyBuffer;
 	//std::queue<char> charBuffer;
+
+	ReleaseInfo m_release;
 };

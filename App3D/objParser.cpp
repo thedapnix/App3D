@@ -84,7 +84,7 @@ bool ParseMaterial(std::string mtlFileName, ParsedData& data, std::unordered_map
 }
 
 bool InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate,
-	std::unordered_map<std::string, ShaderResource>& textures, ID3D11Device* device)
+	std::unordered_map<std::string, ShaderResource>& textures, ID3D11Device* device, int interact)
 {
 	std::ifstream ifs(objFileName);
 	if (!ifs)
@@ -242,7 +242,7 @@ bool InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToF
 
 	bufferData.subMeshVector = parsed.submeshes;
 
-	Drawable cube(device, bufferData, scale, rotate, translate);
+	Drawable cube(device, bufferData, scale, rotate, translate, interact);
 	cube.CreateBoundingBoxFromPoints(vMin, vMax);
 
 	//new: attempt at adding the self-coded Collider

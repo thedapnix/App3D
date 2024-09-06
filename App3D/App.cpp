@@ -5,6 +5,10 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 
 #include "LevelSetup.h"
 
+//To allow for key events happening only once upon releasing a key, change the way keyboard input works
+//Every frame (tick), RESET, then GET input, this way we will now if a key has been released during this iteration
+//
+
 //What: Store an empty pointer of type "App" and assign it the value of "this" in the App-constructor
 //Why:  Windows static functions like MainWndProc don't allow the use of the "this" keyword, so this is a workaround
 namespace
@@ -133,6 +137,9 @@ void App::DoFrame(float dt)
 
     /*Render the new scene*/
     m_engine->Update(dt);
+
+    //This can be set to true by the HandleUserInput() function, and will then be used in the InterpretKeyboardInput() function if it's appropriate
+    m_keyboard->ResetReleaseInfo();
 }
 
 void App::InterpretKeyboardInput(float dt)
@@ -156,6 +163,7 @@ void App::InterpretKeyboardInput(float dt)
 #endif
 
     /*Player*/
+    //Probably want to add another layer of abstraction and let these playermovement and interaction be defined in here, because the app-class isn't as user-friendly as i want it to be lol
     if (m_currentState == States::FPC_CONTROL)
     {
         if (m_keyboard->IsKeyPressed(0x57)) //W
@@ -176,6 +184,10 @@ void App::InterpretKeyboardInput(float dt)
             m_engine->MovePlayerX(-0.02f * dt);
         }
 
+        if (m_keyboard->GetReleaseInfo().keyCode == 0x45 && m_keyboard->GetReleaseInfo().wasReleasedThisTick)
+        {
+            m_engine->PlayerInteract();
+        }
 
     }
 
@@ -288,7 +300,7 @@ LRESULT App::HandleUserInput(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         */
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
-        if (!(lParam & 0x40000000))
+        if (!(lParam & 0x40000000)) //0x40000000 is bit 30, which according to the windows documentation is the important thing when making sure we don't layer keypresses
             m_keyboard->OnKeyPressed(static_cast<unsigned char>(wParam));
         break;
 

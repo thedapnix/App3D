@@ -8,10 +8,13 @@ Camera::Camera()
 {
     SetPosition(m_position);
 
-    //Fov set to a fourth of pi is standard (where the fuck did I get that from, radians means pi/4 is 45 degrees which is pisslow. Currently more like 70 fov, way better)
+    //Fov set to a fourth of pi is standard (where the fuck did I get that from, radians means pi/4 is 45 degrees which is pisslow. Currently more like 60 fov, way better)
     //Aspect ratio set to window width divided by window height
     //Near- and far-z set to arbitrary standard values of 1 and 1000 (near could be 0.1 instead, we'll see what happens)
     SetLens(0.33f * XM_PI, 800.0f / 600.0f, 1.0f, 1000.0f);
+
+    //Smaller fov (4 degrees lol) and clips at a distance of 10 Z
+    SetSelectionLens(0.022f * XM_PI, 800.0f / 600.0f, 1.0f, 10.0f);
 
     //Bounding Box
     XMVECTOR vMin = XMVectorSet(-1.0f, -1.0f, -1.0f, 0.0f);
@@ -179,11 +182,10 @@ void Camera::LookAt(const XMFLOAT3& pos, const XMFLOAT3& target, const XMFLOAT3&
 
 void Camera::SetLens(float fovY, float aspect, float zn, float zf)
 {
-    if (fovY != 0.0f) //Workaround
+    if (fovY != 0.0f) //Safety check
     {
         m_fovY = fovY;
     }
-    //m_fovY = fovY;
     m_aspect = aspect;
 
     m_nearZ = zn;
@@ -194,6 +196,24 @@ void Camera::SetLens(float fovY, float aspect, float zn, float zf)
 
     DirectX::XMMATRIX P = DirectX::XMMatrixPerspectiveFovLH(m_fovY, m_aspect, m_nearZ, m_farZ);
     DirectX::XMStoreFloat4x4(&m_proj, P);
+}
+
+void Camera::SetSelectionLens(float fovY, float aspect, float zn, float zf)
+{
+    if (fovY != 0.0f) //Safety check
+    {
+        m_selectionFovY = fovY;
+    }
+    m_selectionAspect = aspect;
+
+    m_selectionNearZ = zn;
+    m_selectionFarZ = zf;
+
+    m_selectionNearWindowHeight = 2.0f * m_nearZ * tanf(0.5f * m_fovY);
+    m_selectionFarWindowHeight = 2.0f * m_farZ * tanf(0.5f * m_fovY);
+
+    DirectX::XMMATRIX P = DirectX::XMMatrixPerspectiveFovLH(m_selectionFovY, m_selectionAspect, m_selectionNearZ, m_selectionFarZ);
+    DirectX::XMStoreFloat4x4(&m_selectionProj, P);
 }
 
 //void Camera::Strafe(float d)
@@ -363,8 +383,12 @@ void Camera::UpdateViewMatrix()
 
         //Recreate frustum
         DirectX::BoundingFrustum::CreateFromMatrix(m_frustum, Proj());
-        DirectX::XMMATRIX invView = DirectX::XMMatrixInverse(NULL, XMLoadFloat4x4(&m_view));
+        DirectX::XMMATRIX invView = DirectX::XMMatrixInverse(NULL, View());
         m_frustum.Transform(m_frustum, invView);
+
+        //Recreate selection frustum
+        DirectX::BoundingFrustum::CreateFromMatrix(m_selectionFrustum, XMLoadFloat4x4(&m_selectionProj));
+        m_selectionFrustum.Transform(m_selectionFrustum, invView);
 
         //Update position of bounding sphere
         //m_aabb.Center = m_position;
@@ -377,9 +401,18 @@ void Camera::UpdateViewMatrix()
 
 void Camera::UpdateConstantBuffer(ID3D11DeviceContext* context)
 {
-    DirectX::XMStoreFloat4x4(&m_cameraData.view, XMMatrixTranspose(View()));
-    DirectX::XMStoreFloat4x4(&m_cameraData.proj, XMMatrixTranspose(Proj()));
-    DirectX::XMStoreFloat3(&m_cameraData.pos, GetPositionVec());
+    if (m_currentFrustum == 0)
+    {
+        DirectX::XMStoreFloat4x4(&m_cameraData.view, XMMatrixTranspose(View()));
+        DirectX::XMStoreFloat4x4(&m_cameraData.proj, XMMatrixTranspose(Proj()));
+        DirectX::XMStoreFloat3(&m_cameraData.pos, GetPositionVec());
+    }
+    else
+    {
+        DirectX::XMStoreFloat4x4(&m_cameraData.view, XMMatrixTranspose(View()));
+        DirectX::XMStoreFloat4x4(&m_cameraData.proj, XMMatrixTranspose(XMLoadFloat4x4(&m_selectionProj)));
+        DirectX::XMStoreFloat3(&m_cameraData.pos, GetPositionVec());
+    }
 
     D3D11_MAPPED_SUBRESOURCE mapped = {};						                    //Set up the new data for the resource, zero the memory
     context->Map(m_cameraCB.GetBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);   //Disable GPU access to the data we want to change, and get a pointer to the memory containing said data
@@ -397,10 +430,27 @@ const DirectX::BoundingFrustum& Camera::GetFrustum() const
     return m_frustum;
 }
 
+const DirectX::BoundingFrustum& Camera::GetSelectionFrustum() const
+{
+    return m_selectionFrustum;
+}
+
 void Camera::InitConstantBufferAndFrustum(ID3D11Device* device)
 {
     XMStoreFloat4x4(&m_cameraData.view, XMMatrixTranspose(View()));
     XMStoreFloat4x4(&m_cameraData.proj, XMMatrixTranspose(Proj()));
     DirectX::XMStoreFloat3(&m_cameraData.pos, GetPositionVec());
     m_cameraCB.Init(device, &m_cameraData, sizeof(m_cameraData));
+}
+
+void Camera::ChangeFrustum()
+{
+    if (m_currentFrustum == 0) //Regular, change to selection
+    {
+        m_currentFrustum = 1;
+    }
+    else //Selection, change to regular
+    {
+        m_currentFrustum = 0;
+    }
 }

@@ -18,7 +18,7 @@ void StartImGuiFrame();
 
 void ImGuiEngineWindow(Camera* camera, std::string fps, int state,
 	bool& deferredIsEnabled, bool& cullingIsEnabled, bool& billboardingIsEnabled, bool& lodIsEnabled, bool& cubemapIsEnabled,
-	int drawables,
+	int drawables, int selectableDrawables,
 	int rawX, int rawY);
 
 void EndImGuiFrame();

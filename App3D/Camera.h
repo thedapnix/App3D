@@ -68,6 +68,7 @@ public:
 
 	//Frustum
 	void SetLens(float fovY, float aspect, float zn, float zf);
+	void SetSelectionLens(float fovY, float aspect, float zn, float zf);
 
 	/*COMMANDS*/
 	//Strafe and walk a distance d
@@ -89,7 +90,12 @@ public:
 	void UpdateConstantBuffer(ID3D11DeviceContext* context);
 	const ConstantBuffer& GetConstantBuffer() const;
 	const DirectX::BoundingFrustum& GetFrustum() const;
+	const DirectX::BoundingFrustum& GetSelectionFrustum() const; //new
 	void InitConstantBufferAndFrustum(ID3D11Device* device);
+
+	//Faffing about
+	int m_currentFrustum = 0; //0 is regular, 1 is selection
+	void ChangeFrustum();
 
 private:
 	//Coordinate system of the camera relative to world space (starting position)
@@ -113,6 +119,15 @@ private:
 	float m_nearWindowHeight = 0.0f;
 	float m_farWindowHeight = 0.0f;
 
+	//Selection frustum properties (If we're sticking with this solution for selection, make a struct called FrustumInfo that has these instead, then let both frustums have their own version of this struct)
+	float m_selectionNearZ = 0.0f;
+	float m_selectionFarZ = 0.0f;
+	float m_selectionAspect = 0.0f;
+	float m_selectionFovY = 0.0f;
+	float m_selectionNearWindowHeight = 0.0f;
+	float m_selectionFarWindowHeight = 0.0f;
+	DirectX::XMFLOAT4X4 m_selectionProj = Identity4x4(); //Is this needed? Temp
+
 	//boolean to check if we've made changes to the camera
 	bool m_viewDirty = true;
 
@@ -132,6 +147,7 @@ private:
 
 	//Bounding volumes
 	DirectX::BoundingFrustum m_frustum;
+	DirectX::BoundingFrustum m_selectionFrustum; //Smaller version of the view frustum, which aims to more accurately represent "what we're looking at", so we can interact with things
 	DirectX::BoundingBox m_aabb; //Obsolete now because we're using sphere but I'm keeping it just in case
 	DirectX::BoundingSphere m_sphere;
 };
