@@ -94,30 +94,25 @@ struct ParsedData
 	std::unordered_map<std::string, UINT> refs;
 };
 
+enum class Interactions
+{
+	INVALID = 0, //default case
+	DESTROY = 1,
+	//and just add however many interactions you want (currently just using unsigned int because I know my own interactions but this is better in terms of usability)
+};
+
 //Information that the user may like to have access to
 struct DrawableInfo
 {
 	unsigned int interactID = 0;	//An ID that can be referenced in order to know what this thing does (Function pointer magic time?)
 	std::vector<int> interactsWith;	//Indices of the drawables that this drawable affects with its interaction
 	bool isActive = true;			//Lets the engine know whether or not we bother rendering or collision-checking this drawable
-
-	/*
-	Notes on wanting to use function pointers:
-	1. Have a separate cpp file with a bunch of interaction functions (same input parameters)
-		void Func1(int id, int interactsWith) { DoSomething(); }
-		void Func2(int id, int interactsWith) { DoSomethingElse(); }
-	2. Bigboy function that takes in a function pointer as its parameter
-		void Interact(void (*funcPtr)()) 
-		{  
-			functPtr(1, 1); //Example: First crate has interactID 1, and it interacts with the door at drawable index 1
-		}
-	*/
 };
 
 class Drawable
 {
 public:
-	Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOAT3 scaling, DirectX::XMFLOAT3 rotation, DirectX::XMFLOAT3 translation, int interact);
+	Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOAT3 scaling, DirectX::XMFLOAT3 rotation, DirectX::XMFLOAT3 translation, int interact, std::vector<int> interactsWith);
 	~Drawable() = default;
 
 	void Bind(ID3D11DeviceContext* context, bool isReflective = false) const;
@@ -125,9 +120,6 @@ public:
 	void Unbind(ID3D11DeviceContext* context);
 	void UpdateConstantBuffer(ID3D11DeviceContext* context);
 	void CreateBoundingBoxFromPoints(DirectX::XMVECTOR min, DirectX::XMVECTOR max);
-
-	//now happening: make the new kind of bounding volumes
-	//const ColliderAABB& GetAABB() const;
 
 	//Movement stuff
 	void EditTranslation(float x, float y, float z);
@@ -141,9 +133,16 @@ public:
 	void* GetVertexVectorData();
 	bool IsInteractible() const;
 	int GetInteractID() const;
+	DrawableInfo& GetDrawableInfo();
 	void RemoveInteraction();
 	bool IsActive() const;
 	void Destroy();
+
+	//Magic
+	void Interact(int (*funcPtr)(DrawableInfo, std::vector<Drawable>&), std::vector<Drawable>& drawables)
+	{
+		funcPtr(m_drawableInfo, drawables);
+	}
 
 private:
 	struct WorldTransform
@@ -179,9 +178,6 @@ private:
 	DirectX::BoundingBox m_aabb;
 
 	void* m_vertexVectorData;
-
-	int m_interactID;
-	bool m_isActive;
 
 	DrawableInfo m_drawableInfo;
 };

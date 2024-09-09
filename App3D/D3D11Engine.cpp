@@ -5,6 +5,8 @@
 
 //#include <algorithm> //min and max
 
+#include "Interact.h"
+
 using namespace DirectX;
 
 D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height)
@@ -138,53 +140,37 @@ Camera& D3D11Engine::GetCamera() const noexcept
 
 void D3D11Engine::PlayerInteract()
 {
+	
 	int n = 0;
-	for (auto drawable : m_quadTree.CheckTree(m_camera->GetSelectionFrustum()))
-	{
-		if (drawable->IsInteractible())
-		{
-			n++;
-			//Get the interact id (yes i know this solution isn't smooth, but i need to make something happen without putting 50 hours into building a function pointer script system)
-			int id = drawable->GetInteractID();
-			
-			switch (id) //Works, now we're free to make interacting with any of the target boxes do what we want it to do :)
-			{
-			case 1:
-				//First blue box opens (removes) the first door
-				DestroyDrawable(GetDrawableIndexFromInteraction(20));
-				DestroyDrawable(GetDrawableIndexFromInteraction(21));
-				break;
-			case 2:
-				//Bla bla
-				break;
-			case 3:
-				//Skibidi
-				break;
-			case 4:
-				//Idk how many of these cases we're making but whoopee doo
-				break;
-			}
 
-			//Once the object has been interacted with, it becomes "used" and cannot be interacted with again (wouldn't want to attempt to remove a door that doesn't exist anymore)
-			RemoveDrawableInteraction(id);
+	for (auto& drawable : m_drawables)
+	{
+		if (m_camera->GetSelectionFrustum().Intersects(drawable.GetBoundingBox()))
+		{
+			if (drawable.GetInteractID() > 0)
+			{
+				drawable.Interact(InteractionBaseFunc, m_drawables);
+				break; //Only interact with one object at a time
+			}
 		}
 	}
+
 	selectableDrawables = n;
 
 	//Also for funsies: Change views?
 	//m_camera->ChangeFrustum();
 }
 
-bool D3D11Engine::CreateDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact)
+bool D3D11Engine::CreateDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
 {
-	InitDrawableFromFile(objFileName, m_drawables, scale, rotate, translate, m_textures, device.Get(), interact);
+	InitDrawableFromFile(objFileName, m_drawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith);
 
 	return false;
 }
 
 bool D3D11Engine::CreateReflectiveDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate)
 {
-	InitDrawableFromFile(objFileName, m_reflectiveDrawables, scale, rotate, translate, m_textures, device.Get(), false); //temp: just put false as interactible here bleh
+	InitDrawableFromFile(objFileName, m_reflectiveDrawables, scale, rotate, translate, m_textures, device.Get(), false, {}); //temp: just put false as interactible here bleh
 
 	return false;
 }

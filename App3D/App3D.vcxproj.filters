@@ -159,6 +159,9 @@
     <ClCompile Include="ColliderPlane.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Interact.cpp">
+      <Filter>Graphics\Drawable</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h">
@@ -280,6 +283,9 @@
     </ClInclude>
     <ClInclude Include="PhysicsEngine.h">
       <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Interact.h">
+      <Filter>Graphics\Drawable</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

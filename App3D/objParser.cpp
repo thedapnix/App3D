@@ -20,6 +20,7 @@ bool ParseMaterial(std::string mtlFileName, ParsedData& data, std::unordered_map
 	//Read the text file
 	std::string lineStr;
 	std::string current; //NEW
+	int nMaterials = 0;
 	while (std::getline(ifs, lineStr))
 	{
 		std::istringstream lineSS(lineStr);
@@ -27,6 +28,26 @@ bool ParseMaterial(std::string mtlFileName, ParsedData& data, std::unordered_map
 		lineSS >> lineType;
 		if (lineType == "newmtl") //NEW
 		{
+			if (nMaterials != 0)
+			{
+				//Load textures
+				if (textures.count(data.materials[current].ambientData) == 0)
+				{
+					std::string path = "Textures/" + data.materials[current].ambientData;
+					textures[data.materials[current].ambientData].Init(device, path.c_str());
+				}
+				if (textures.count(data.materials[current].diffuseData) == 0)
+				{
+					std::string path = "Textures/" + data.materials[current].diffuseData;
+					textures[data.materials[current].diffuseData].Init(device, path.c_str());
+				}
+				if (textures.count(data.materials[current].specularData) == 0)
+				{
+					std::string path = "Textures/" + data.materials[current].specularData;
+					textures[data.materials[current].specularData].Init(device, path.c_str());
+				}
+			}
+			nMaterials++;
 			lineSS >> current;
 			MaterialData mData;
 
@@ -63,7 +84,7 @@ bool ParseMaterial(std::string mtlFileName, ParsedData& data, std::unordered_map
 		}
 	}
 
-	//Load textures (but only once)
+	//Load textures (but only once) (I'm a bit of a dumb fuck, this would only load the textures of the LAST MATERIAL IN THE FILE)
 	if (textures.count(data.materials[current].ambientData) == 0)
 	{
 		std::string path = "Textures/" + data.materials[current].ambientData;
@@ -84,7 +105,7 @@ bool ParseMaterial(std::string mtlFileName, ParsedData& data, std::unordered_map
 }
 
 bool InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate,
-	std::unordered_map<std::string, ShaderResource>& textures, ID3D11Device* device, int interact)
+	std::unordered_map<std::string, ShaderResource>& textures, ID3D11Device* device, int interact, std::vector<int> interactsWith)
 {
 	std::ifstream ifs(objFileName);
 	if (!ifs)
@@ -242,7 +263,7 @@ bool InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToF
 
 	bufferData.subMeshVector = parsed.submeshes;
 
-	Drawable cube(device, bufferData, scale, rotate, translate, interact);
+	Drawable cube(device, bufferData, scale, rotate, translate, interact, interactsWith);
 	cube.CreateBoundingBoxFromPoints(vMin, vMax);
 
 	//new: attempt at adding the self-coded Collider

@@ -11,8 +11,8 @@ void SetupLevel1(D3D11Engine* engine)
 
     //FRONT WALL
     //Door (elongated metal crate with a small metal sphere as a makeshift doorknob, sue me)
-    engine->CreateDrawable("Meshes/door_metal.obj", { 0.0f, 9.0f, 15.0f }, { 5.0f, 8.0f, 1.0f }, {0.0f, 0.0f, 0.0f}, 20);
-    engine->CreateDrawable("Meshes/sphere_metal.obj", { -2.75f, 9.25f, 13.75f }, { 0.25f, 0.25f, 0.25f }, { 0.0f, 0.0f, 0.0f }, 21);
+    engine->CreateDrawable("Meshes/door_metal.obj", { 0.0f, 9.0f, 15.0f }, { 5.0f, 8.0f, 1.0f });
+    engine->CreateDrawable("Meshes/sphere_metal.obj", { -2.75f, 9.25f, 13.75f }, { 0.25f, 0.25f, 0.25f });
     //Walls surrounding the door (left, then right)
     engine->CreateDrawable("Meshes/wall_brick.obj", { -12.5f, 9.0f, 15.0f }, { 7.5f, 8.0f, 1.0f });
     engine->CreateDrawable("Meshes/wall_brick.obj", { 12.5f,  9.0f, 15.0f }, { 7.5f, 8.0f, 1.0f });
@@ -26,7 +26,7 @@ void SetupLevel1(D3D11Engine* engine)
 
     //Clutter on the left side of the door
     engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f, 3.0f, 10.0f }, { 2.0f, 2.0f, 2.0f });
-    engine->CreateDrawable("Meshes/crate_blue.obj", { -8.0f, 6.0f, 10.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f,  0.45f, 0.0f }, 1);
+    engine->CreateDrawable("Meshes/crate_blue.obj", { -8.0f, 6.0f, 10.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f,  0.45f, 0.0f }, 1, {1, 2});
     engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f, 2.0f,  6.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f });
     engine->CreateDrawable("Meshes/crate_wood.obj", { -5.0f, 2.0f, 10.0f });
     engine->CreateDrawable("Meshes/crate_wood.obj", { -4.0f, 2.0f,  6.0f });

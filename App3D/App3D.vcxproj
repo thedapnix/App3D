@@ -175,6 +175,7 @@
     <ClCompile Include="D3D11MathHelper.cpp" />
     <ClCompile Include="ImGuiHelper.cpp" />
     <ClCompile Include="IndexBuffer.cpp" />
+    <ClCompile Include="Interact.cpp" />
     <ClCompile Include="Keyboard.cpp" />
     <ClCompile Include="LevelSetup.cpp" />
     <ClCompile Include="Libraries\ImGui\imgui.cpp" />
@@ -209,6 +210,7 @@
     <ClInclude Include="D3D11Engine.h" />
     <ClInclude Include="D3D11MathHelper.h" />
     <ClInclude Include="EntityFramework.h" />
+    <ClInclude Include="Interact.h" />
     <ClInclude Include="ImGuiHelper.h" />
     <ClInclude Include="IndexBuffer.h" />
     <ClInclude Include="Keyboard.h" />

@@ -110,7 +110,10 @@ void App::DoSetup()
     //SetupLevel8(m_engine.get());    //Color: Blue outline   (B3/C3)
     //SetupLevel9(m_engine.get());    //Form: Parallelepiped  (B1/B2/C1/C2) (aka big skewed cube)
 
-    m_engine->CreateLightSpot({ 0.0f + 540.0f, 5.0f, 5.0f }, 0.75f, 0.0f, 0.35f); //Light on the final grid crate
+    m_engine->CreateDrawable("Meshes/gun2.obj", { -1.0f, 10.85f, 1.75f }, {2.0f, 2.0f, 2.0f});
+    //m_engine->CreateDrawable("Meshes/donut2.obj", { 0.0f, 10.0f, 0.0f });
+
+    //m_engine->CreateLightSpot({ 0.0f + 540.0f, 5.0f, 5.0f }, 0.75f, 0.0f, 0.35f); //Light on the final grid crate
 
     //Call after every drawable and light for a scene has been created to initialize functionality for things like culling and shadows
     //(find a way to make this automatically happen after the DoSetup() function without needing the user to worry about this stuff?)
