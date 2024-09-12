@@ -122,6 +122,11 @@ float Camera::GetFarWindowHeight() const
     return m_farWindowHeight;
 }
 
+float Camera::GetPitch() const
+{
+    return m_pitch;
+}
+
 float Camera::GetYaw() const
 {
     return m_yaw;
@@ -216,17 +221,6 @@ void Camera::SetSelectionLens(float fovY, float aspect, float zn, float zf)
     DirectX::XMStoreFloat4x4(&m_selectionProj, P);
 }
 
-//void Camera::Strafe(float d)
-//{
-//    // mPosition += d*mRight
-//    XMVECTOR s = XMVectorReplicate(d);
-//    XMVECTOR r = XMLoadFloat3(&m_right);
-//    XMVECTOR p = XMLoadFloat3(&m_position);
-//    XMStoreFloat3(&m_position, XMVectorMultiplyAdd(s, r, p));
-//
-//    m_viewDirty = true;
-//}
-
 DirectX::XMFLOAT3 Camera::Strafe(float d)
 {
     // mPosition += d*mRight
@@ -245,7 +239,6 @@ DirectX::XMFLOAT3 Camera::Strafe(float d)
 
 void Camera::Walk(float d)
 {
-    // mPosition += d*mLook
     XMVECTOR s = XMVectorReplicate(d);
     XMVECTOR l = XMLoadFloat3(&m_look);
     XMVECTOR p = XMLoadFloat3(&m_position);
@@ -253,18 +246,6 @@ void Camera::Walk(float d)
 
     m_viewDirty = true;
 }
-
-//void Camera::PlayerWalk(float d)
-//{
-//    //Maybe we should just take the default vector instead and just multiply by the yaw (TOTAL ANGLE, ACCUMULATE VALUE EVERY PITCH AND YAW), ignoring the pitch, and moving forward?
-//    XMMATRIX temp = XMMatrixRotationY(m_yaw);
-//    XMVECTOR newLook = XMVector3TransformNormal(m_defaultLook, temp);
-//    XMVECTOR pos = XMLoadFloat3(&m_position);
-//    pos += d * newLook;
-//    XMStoreFloat3(&m_position, pos);
-//
-//    m_viewDirty = true;
-//}
 
 DirectX::XMFLOAT3 Camera::PlayerWalk(float d)
 {
@@ -297,9 +278,7 @@ void Camera::Pitch(float angle)
 
 void Camera::PitchFPC(float angle)
 {
-    m_pitch += angle;
-    // Rotate up and look vector about the right vector.
-    //(This is for rotating up and down, specifically using a first person camera)
+    // Rotate up and look vector about the right vector (Rotate up and down)
     XMMATRIX R = XMMatrixRotationAxis(XMLoadFloat3(&m_right), angle);
 
     //Clamp????? (god i hate xmvectors and float3s)
@@ -316,14 +295,15 @@ void Camera::PitchFPC(float angle)
     //XMStoreFloat3(&m_look, XMVector3TransformNormal(XMLoadFloat3(&m_look), R));
     XMStoreFloat3(&m_look, tempVec);
 
+    m_pitch += angle; //Only increment the pitch if we actually did pitch (aka after the clamping up above)
+
     m_viewDirty = true;
 }
 
 void Camera::RotateY(float angle)
 {
     m_yaw += angle;
-    // Rotate the basis vectors about the world y-axis.
-    //(This is for rotating left and right)
+    // Rotate the basis vectors about the world y-axis (Rotate left and right)
 
     XMMATRIX R = XMMatrixRotationY(angle);
 

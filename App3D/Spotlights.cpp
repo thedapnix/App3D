@@ -42,6 +42,11 @@ SpotLights::SpotLights(ID3D11Device* device, const std::vector<LightData>& light
 	InitDepthBuffer(device, 1024, lights.size());
 }
 
+Camera* SpotLights::GetCameraAt(UINT index)
+{
+	return &m_cameras.at(index);
+}
+
 const ConstantBuffer& SpotLights::GetCameraConstantBufferAt(UINT index) const
 {
 	return m_cameras.at(index).GetConstantBuffer();
@@ -124,7 +129,7 @@ void SpotLights::InitDepthBuffer(ID3D11Device* device, UINT resolution, UINT arr
 	hr = device->CreateTexture2D(&desc, NULL, &DST);
 	if (FAILED(hr))
 	{
-		MessageBox(NULL, L"Failed to create depth stencil texture for spotlightlight depth buffer!", L"Error", MB_OK);
+		MessageBox(NULL, L"Failed to create depth stencil texture for spotlight depth buffer!", L"Error", MB_OK);
 		return;
 	}
 

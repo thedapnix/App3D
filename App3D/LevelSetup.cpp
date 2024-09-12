@@ -26,7 +26,7 @@ void SetupLevel1(D3D11Engine* engine)
 
     //Clutter on the left side of the door
     engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f, 3.0f, 10.0f }, { 2.0f, 2.0f, 2.0f });
-    engine->CreateDrawable("Meshes/crate_blue.obj", { -8.0f, 6.0f, 10.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f,  0.45f, 0.0f }, 1, {1, 2});
+    engine->CreateDrawable("Meshes/crate_blue.obj", { -8.0f, 6.0f, 10.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f,  0.45f, 0.0f }, 1, {1, 2}); //interactID 1 = Destroy something, interacts with {1, 2}, aka the door
     engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f, 2.0f,  6.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f });
     engine->CreateDrawable("Meshes/crate_wood.obj", { -5.0f, 2.0f, 10.0f });
     engine->CreateDrawable("Meshes/crate_wood.obj", { -4.0f, 2.0f,  6.0f });
@@ -51,6 +51,7 @@ void SetupLevel1(D3D11Engine* engine)
 
     //Light(s)
     engine->CreateLightSpot({ 0.0f, 17.0f, -5.0f }, 0.75f, 0.0f, 0.5f); //Ceiling in the center of the room pointing straight down onto the floor
+    engine->CreatePovLightSpot({0.0f, 5.0f, -5.0f}, 0.75f, 0.0f, 0.5f); //Make this function be called automatically i guess?
 
     //HALLWAY AFTER FIRST ROOM
     //Floor and ceiling

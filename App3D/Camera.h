@@ -50,6 +50,7 @@ public:
 	float GetFarWindowHeight() const;
 
 	//new
+	float GetPitch() const;
 	float GetYaw() const;
 	DirectX::XMVECTOR GetDefaultLook() const;
 

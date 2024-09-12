@@ -24,7 +24,8 @@ Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOA
 	m_scale = scaling;
 	m_rotate = rotation;
 	m_translate = translation;
-	DirectX::XMStoreFloat4x4(&m_transform.scale, DirectX::XMMatrixTranspose(
+
+	/*DirectX::XMStoreFloat4x4(&m_transform.scale, DirectX::XMMatrixTranspose(
 		DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z)
 	));
 	DirectX::XMStoreFloat4x4(&m_transform.rotate, DirectX::XMMatrixTranspose(
@@ -33,6 +34,10 @@ Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOA
 	DirectX::XMStoreFloat4x4(&m_transform.translate, DirectX::XMMatrixTranspose(
 		DirectX::XMMatrixTranslation(m_translate.x, m_translate.y, m_translate.z)
 	));
+	m_transform.willOrbit = true;*/
+
+	//This right here will change depending on but bear with me
+	CalculateAndTransposeWorld();
 	m_constantBuffer.Init(device, &m_transform, sizeof(m_transform));
 
 	/*Submesh stuff*/
@@ -71,6 +76,28 @@ void Drawable::Bind(ID3D11DeviceContext* context, bool isReflective) const
 	}
 }
 
+void Drawable::BindPov(ID3D11DeviceContext* context, bool isReflective) const
+{
+	if (m_drawableInfo.isActive)
+	{
+		//Buffers
+		context->VSSetConstantBuffers(0, 1, m_constantBuffer.GetBufferAddress());
+
+		ID3D11Buffer* buffer[] = { m_vertexBuffer.GetBuffer() };
+		UINT stride = m_vertexBuffer.GetVertexSize();
+		UINT offset = 0;
+		context->IASetVertexBuffers(0, 1, buffer, &stride, &offset);
+
+		context->IASetIndexBuffer(m_indexBuffer.GetBuffer(), DXGI_FORMAT_R32_UINT, 0);
+
+		for (int i = 0; i < m_submeshes.size(); i++)
+		{
+			m_submeshes.at(i).Bind(context, isReflective);
+			m_submeshes.at(i).Draw(context);
+		}
+	}
+}
+
 void Drawable::Draw(ID3D11DeviceContext* context, UINT index) const
 {
 	m_submeshes.at(index).Draw(context);
@@ -82,8 +109,11 @@ void Drawable::Unbind(ID3D11DeviceContext* context)
 	context->PSSetShaderResources(0, 1, &nullSRV);
 }
 
-void Drawable::UpdateConstantBuffer(ID3D11DeviceContext* context)
+void Drawable::UpdateConstantBuffer(ID3D11DeviceContext* context, bool orbits)
 {
+	//Calculate transform and then transpose
+	CalculateAndTransposeWorld(orbits);
+
 	D3D11_MAPPED_SUBRESOURCE mapped = {};												//Set up the new srtData for the resource, zero the memory
 	context->Map(m_constantBuffer.GetBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);	//Disable GPU access to the srtData we want to change, and get a pointer to its memory
 	memcpy(mapped.pData, &m_transform, sizeof(m_transform));							//Write the new srtData to memory
@@ -96,19 +126,34 @@ void Drawable::CreateBoundingBoxFromPoints(DirectX::XMVECTOR min, DirectX::XMVEC
 	m_aabb.Transform(m_aabb, World()); //Transform without transposing the world matrix
 }
 
-//const ColliderAABB& Drawable::GetAABB() const
-//{
-//	
-//}
+void Drawable::SetPosition(float x, float y, float z)
+{
+	m_translate.x = x;
+	m_translate.y = y;
+	m_translate.z = z;
+	/*DirectX::XMStoreFloat4x4(&m_transform.translate, DirectX::XMMatrixTranspose(
+		DirectX::XMMatrixTranslation(m_translate.x, m_translate.y, m_translate.z)
+	));*/
+}
 
 void Drawable::EditTranslation(float x, float y, float z)
 {
 	m_translate.x += x;
 	m_translate.y += y;
 	m_translate.z += z;
-	DirectX::XMStoreFloat4x4(&m_transform.translate, DirectX::XMMatrixTranspose(
+	/*DirectX::XMStoreFloat4x4(&m_transform.translate, DirectX::XMMatrixTranspose(
 		DirectX::XMMatrixTranslation(m_translate.x, m_translate.y, m_translate.z)
-	));
+	));*/
+}
+
+void Drawable::SetRotation(float angleX, float angleY, float angleZ)
+{
+	m_rotate.x = angleX;
+	m_rotate.y = angleY;
+	m_rotate.z = angleZ;
+	/*DirectX::XMStoreFloat4x4(&m_transform.rotate, DirectX::XMMatrixTranspose(
+		DirectX::XMMatrixRotationX(m_rotate.x) * DirectX::XMMatrixRotationY(m_rotate.y) * DirectX::XMMatrixRotationZ(m_rotate.z)
+	));*/
 }
 
 void Drawable::Rotate(float angleX, float angleY, float angleZ)
@@ -116,9 +161,9 @@ void Drawable::Rotate(float angleX, float angleY, float angleZ)
 	m_rotate.x += angleX;
 	m_rotate.y += angleY;
 	m_rotate.z += angleZ;
-	DirectX::XMStoreFloat4x4(&m_transform.rotate, DirectX::XMMatrixTranspose(
+	/*DirectX::XMStoreFloat4x4(&m_transform.rotate, DirectX::XMMatrixTranspose(
 		DirectX::XMMatrixRotationX(m_rotate.x) * DirectX::XMMatrixRotationY(m_rotate.y) * DirectX::XMMatrixRotationZ(m_rotate.z)
-	));
+	));*/
 }
 
 const DirectX::XMFLOAT3& Drawable::GetPosition() const
@@ -177,4 +222,28 @@ bool Drawable::IsActive() const
 void Drawable::Destroy()
 {
 	m_drawableInfo.isActive = false;
+}
+
+void Drawable::CalculateAndTransposeWorld(bool orbits)
+{
+	DirectX::XMMATRIX world;
+	if (!orbits)
+	{
+		world =
+			DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z) *
+			(DirectX::XMMatrixRotationX(m_rotate.x) * DirectX::XMMatrixRotationY(m_rotate.y) * DirectX::XMMatrixRotationZ(m_rotate.z)) *
+			DirectX::XMMatrixTranslation(m_translate.x, m_translate.y, m_translate.z)
+			;
+	}
+	else
+	{
+		world =
+			DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z) *
+			DirectX::XMMatrixTranslation(m_translate.x, m_translate.y, m_translate.z) *
+			(DirectX::XMMatrixRotationX(m_rotate.x) * DirectX::XMMatrixRotationY(m_rotate.y) * DirectX::XMMatrixRotationZ(m_rotate.z))
+			;
+	}
+	
+	world = DirectX::XMMatrixTranspose(world);
+	DirectX::XMStoreFloat4x4(&m_transform.world, world);
 }

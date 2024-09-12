@@ -35,6 +35,7 @@ public:
 	SpotLights(ID3D11Device* device, const std::vector<LightData>& lights);
 	~SpotLights() = default;
 
+	Camera* GetCameraAt(UINT index);
 	const ConstantBuffer& GetCameraConstantBufferAt(UINT index) const;
 	const UINT& GetLightCount() const;
 	ID3D11ShaderResourceView* GetStructuredBufferSRV() const;

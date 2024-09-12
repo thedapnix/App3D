@@ -5,6 +5,29 @@
 
 //#include <algorithm> //min and max
 
+/*
+It is useful to re-think the terminology of matrices I think:
+World matrix is more like "localToWorld"
+View matrix is more like "worldToView"
+Proj matrix is more like "viewToClip" (this is where window dimensions come into play and cull anything outside of it because we're preparing for this to be the final frame)
+The viewport then transforms from clip space into screen space (which is literally just post-cull, not changing positions) and that's our finished frame
+
+We want to add lighting to the gun (which is drawn in view-space (doesn't perform the view transformation and thus stays in frame at all times in relation to camera position)
+Lights calculate whether they hit something in the pixel shader based off of an objects position in world-space (because the lights are also in world-space)
+Make a separate pixel shader that transforms the lights to be in view-space, and to check against objects positions in view-space as well?
+
+Another idea what I cooked up while in bed thinking about this stuff because programming has become my life:
+Make separate m_drawables and m_spotlights along with this, and make a render-pass that uses the new shaders on only things that are supposed to be in this "pov" render
+This makes sense because when the lights calculate if they hit something, they're calculating against the drawables world position
+	This won't work, since the position of the gun in the world is not where it's expected to be (its world coordinates are written more like an offset from the camera)
+	Thus, we need lights that do the same thing, I just hope this won't fuck with other parts of the light (sure i can fix their position, but what will happen to the cones of the spotlight? i hope it'll be fine)
+
+	
+Optimal would be if I could perform lighting calculations separately, that way I can have different vertex positions depending on what we're doing
+	Placement in the final image? Proj only
+	Performing lighting calculations? Properly transformed
+*/
+
 #include "Interact.h"
 
 using namespace DirectX;
@@ -16,7 +39,8 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 
 	//Base d3d setup
 	InitInterfaces(hWnd);
-	InitViewport();
+	InitViewport(viewport);
+	InitViewport(povViewport);
 	InitRTV();
 	InitDepthStencil();
 	InitUAV(); //deferred
@@ -53,6 +77,9 @@ D3D11Engine::~D3D11Engine()
 
 void D3D11Engine::Update(float dt)
 {
+	//When we pass constant buffers to shaders, it's important that the matrices in them are transposed. They should NOT be transposed before that though
+	//Make the UpdateConstantBuffer() functions transpose and pass?
+
 	//UPDATE CONSTANT BUFFERS
 	m_camera->UpdateConstantBuffer(context.Get());
 
@@ -66,15 +93,23 @@ void D3D11Engine::Update(float dt)
 		mirrorCube.Rotate(0.0f, 0.0003f * dt, 0.0f);
 		mirrorCube.UpdateConstantBuffer(context.Get());
 	}
+	for (auto& drawable : m_povDrawables)
+	{
+		drawable.UpdateConstantBuffer(context.Get(), true);
+	}
 
 	m_particleVar += dt;
 	m_particles.UpdateConstantBuffer(context.Get(), m_particleVar);
 
 	//RENDER
 	RenderDepth(dt);
+	//Render(dt, rtv.Get(), dsv.Get(), &viewport, m_povSpotlights.GetCameraAt(0), CLEAR_COLOR);
 	Render(dt, rtv.Get(), dsv.Get(), &viewport, m_camera.get(), CLEAR_COLOR);
 	if (billboardingIsEnabled) RenderParticles(m_camera.get());
-	if (cubemapIsEnabled)RenderReflectiveObject(dt);
+	if (cubemapIsEnabled) RenderReflectiveObject(dt);
+
+	//The gun is rendered without view transformation, since I'm trying to make it be in view space a la: https://learnopengl.com/img/getting-started/coordinate_systems.png
+	RenderPov(dt, rtv.Get(), dsv.Get(), &povViewport, m_camera.get(), CLEAR_COLOR);
 
 	//PRESENT
 	swapChain->Present(1, 0); //vSync, 1 = enabled, 0 = disabled (or in other terms, fps limit to screen hz or uncap)
@@ -140,7 +175,6 @@ Camera& D3D11Engine::GetCamera() const noexcept
 
 void D3D11Engine::PlayerInteract()
 {
-	
 	int n = 0;
 
 	for (auto& drawable : m_drawables)
@@ -165,21 +199,28 @@ bool D3D11Engine::CreateDrawable(std::string objFileName, DirectX::XMFLOAT3 tran
 {
 	InitDrawableFromFile(objFileName, m_drawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith);
 
-	return false;
+	return true;
 }
 
-bool D3D11Engine::CreateReflectiveDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate)
+bool D3D11Engine::CreateReflectiveDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
 {
-	InitDrawableFromFile(objFileName, m_reflectiveDrawables, scale, rotate, translate, m_textures, device.Get(), false, {}); //temp: just put false as interactible here bleh
+	InitDrawableFromFile(objFileName, m_reflectiveDrawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith); //temp: just put false as interactible here bleh
 
-	return false;
+	return true;
+}
+
+bool D3D11Engine::CreatePovDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
+{
+	InitDrawableFromFile(objFileName, m_povDrawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith);
+
+	return true;
 }
 
 bool D3D11Engine::MoveDrawable(int i, DirectX::XMFLOAT3 dist)
 {
 	m_drawables.at(i).EditTranslation(dist.x, dist.y, dist.z);
 
-	return false;
+	return true;
 }
 
 bool D3D11Engine::SetupQT()
@@ -187,7 +228,7 @@ bool D3D11Engine::SetupQT()
 	for (const auto& drawable : m_drawables)
 		m_quadTree.AddElement(&drawable, drawable.GetBoundingBox());
 
-	return false;
+	return true;
 }
 
 void D3D11Engine::RemoveDrawableInteraction(int id)
@@ -219,6 +260,16 @@ int D3D11Engine::GetDrawableIndexFromInteraction(int interactId)
 	return -1; //As well as some error message if you wanna
 }
 
+std::vector<Drawable>& D3D11Engine::GetDrawables()
+{
+	return m_drawables;
+}
+
+std::vector<Drawable>& D3D11Engine::GetPovDrawables()
+{
+	return m_povDrawables;
+}
+
 bool D3D11Engine::CreateLightSpot(DirectX::XMFLOAT3 position, float fov, float rotX, float rotY, DirectX::XMFLOAT3 color)
 {
 	LightData data;
@@ -234,6 +285,25 @@ bool D3D11Engine::CreateLightSpot(DirectX::XMFLOAT3 position, float fov, float r
 	data.col = color;			//Default value {1.0f, 1.0f, 1.0f}
 
 	m_lightDataVec.push_back(data);
+
+	return true;
+}
+
+bool D3D11Engine::CreatePovLightSpot(DirectX::XMFLOAT3 position, float fov, float rotX, float rotY, DirectX::XMFLOAT3 color)
+{
+	LightData data;
+
+	//Pass in fov as a float between 0 and 1. Bigger number = Wider cone. Default 0.25f
+	//Pass in rotX as a float between -1 to +1. Negative values angle the light to the left, positive values angle the light to the right. Default to 0
+	//Pass in rotY as a float between -1 to +1. Negative values angle the light upwards, positive values angle the light downwards. Default to 0
+
+	data.pos = position;
+	data.fovY = XM_PI * fov;	//Example: Passing in  0.25f would be the same as the previous  " XM_PI / 4.0f "
+	data.rotX = XM_PI * rotX;	//Example: Passing in -0.25f would be the same as the previous  "-XM_PI / 4.0f "
+	data.rotY = XM_PI * rotY;	//Example: Passing in 0.125f would be the same as the previous  " XM_PI / 8.0f "
+	data.col = color;			//Default value {1.0f, 1.0f, 1.0f}
+
+	m_povLightDataVec.push_back(data);
 
 	return true;
 }
@@ -266,6 +336,10 @@ bool D3D11Engine::SetupLights()
 {
 	m_spotlights = SpotLights(device.Get(), m_lightDataVec);
 	m_shadowMap = ShadowMap(device.Get(), &m_drawables, &m_spotlights); //"SetupLights()", shadows too while we're at it, but don't tell anyone :3
+
+	//new (dont bother making pov things cast shadows yet)
+	m_povSpotlights = SpotLights(device.Get(), m_povLightDataVec);
+	m_povShadowMap = ShadowMap(device.Get(), &m_povDrawables, &m_povSpotlights);
 
 	return true;
 }
@@ -327,6 +401,12 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 			{
 				drawable.Bind(context.Get());
 			}
+
+			//temp for testing pov lights (yes sir, the pov light detects that the gun exists within the bounds of what it can "see")
+			/*for (auto& drawable : m_povDrawables)
+			{
+				drawable.Bind(context.Get());
+			}*/
 			drawablesBeingRendered = (int)m_drawables.size();
 		}
 
@@ -465,6 +545,11 @@ void D3D11Engine::RenderReflectiveObject(float dt)
 
 void D3D11Engine::RenderDepth(float dt)
 {
+	/*
+	For future reference: If we want pov-stuff to cast shadows we gotta change VSSetShader to m_shadowMap.GetPovVertexShader() when rendering for all m_povDrawables
+	Probably do more shader stuff than that but I'm not the biggest shader fan, me C++
+	*/
+
 	/*Bind stuff*/
 	context->IASetInputLayout(inputLayout.Get());
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -485,7 +570,26 @@ void D3D11Engine::RenderDepth(float dt)
 		for (auto& drawable : m_drawables)
 		{
 			drawable.Bind(context.Get());
-			//drawable.Draw(context.Get());
+		}
+	}
+
+	//Change binding for the pov lights
+	context->VSSetShader(m_povShadowMap.GetVertexShader(), NULL, 0);
+	context->RSSetViewports(1, m_povShadowMap.GetViewport());
+
+	for (UINT i = 0; i < m_povSpotlights.GetLightCount(); i++)
+	{
+		ID3D11DepthStencilView* dsView = m_povSpotlights.GetDepthStencilViewAt(i);
+		context->ClearDepthStencilView(dsView, D3D11_CLEAR_DEPTH, 1, 0);
+		context->OMSetRenderTargets(0, NULL, dsView); //no rtv, only dsv
+
+		//Some way of getting the camera cb of individual lights
+		ID3D11Buffer* cameraCB = m_povSpotlights.GetCameraConstantBufferAt(i).GetBuffer();
+		context->VSSetConstantBuffers(1, 1, &cameraCB);
+
+		for (auto& drawable : m_povDrawables)
+		{
+			drawable.Bind(context.Get());
 		}
 	}
 
@@ -535,7 +639,6 @@ void D3D11Engine::DefPassOne(Camera* cam)
 		for (auto& drawable : m_quadTree.CheckTree(cam->GetFrustum()))
 		{
 			drawable->Bind(context.Get());
-			//drawable->Draw(context.Get());
 			visibleDrawables++;
 		}
 		drawablesBeingRendered = visibleDrawables;
@@ -546,7 +649,6 @@ void D3D11Engine::DefPassOne(Camera* cam)
 		for (auto& drawable : m_drawables)
 		{
 			drawable.Bind(context.Get());
-			//drawable.Draw(context.Get());
 		}
 		drawablesBeingRendered = (int)m_drawables.size();
 	}
@@ -602,6 +704,73 @@ void D3D11Engine::DefPassTwo(Camera* cam)
 	context->CSSetShaderResources(0, 6, nullSRVs);
 	ID3D11SamplerState* nullSamplers[] = { NULL };
 	context->PSSetSamplers(0, 1, nullSamplers);
+}
+
+void D3D11Engine::RenderPov(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, Camera* cam, const float clear[4])
+{
+	//Renders things directly in relation to the camera view, without projection
+	/*
+	TO-DO:
+	1. UPDATE CAMERA (DONE, BUT DOESN'T HAPPEN IN HERE)
+	2. UPDATE THE POSITION OF THE OBJECT (DONE, ALSO DOESN'T HAPPEN IN HERE)
+	3. PERFORM WORLD TRANSFORMATION TO PLACE IT SOMEWHERE IN THE WORLD OFFSET FROM THE CAMERA (THIS IS WHAT WE ALWAYS DO)
+	4. PERFORM PROJECTION TRANSFORMATION (BUT NOT VIEW) OF THE CAMERA ON THE OBJECT ITSELF
+		IN ORDER TO DO THIS, YOU'LL NEED A NEW SHADER AND A NEW CONSTANT BUFFER
+	*/
+
+	// Clear the back buffer and depth stencil, as well as set viewport and render target (viewport only really needed to set after a resize, and that's disabled so uh)
+	//context->ClearRenderTargetView(rtv, clear);
+	//context->ClearDepthStencilView(dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	context->RSSetViewports(1, viewport);
+	context->OMSetRenderTargets(1, &rtv, dsv);
+
+	//INPUT ASSEMBLER STAGE
+	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);
+	context->IASetInputLayout(inputLayout.Get());
+
+	//SHADER STAGE
+	context->VSSetShader(vertexShader.Get(), NULL, 0);
+	context->PSSetShader(pixelShaderPov.Get(), NULL, 0);
+	context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
+
+	//SHADOWS AND LIGHTING STUFF
+	ID3D11ShaderResourceView* shadowViews[] = { m_povSpotlights.GetStructuredBufferSRV() , m_povSpotlights.GetDepthBufferSRV() }; //Passing in povSpotlights instead of the regular
+	context->PSSetShaderResources(3, 2, shadowViews);
+	context->PSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
+	ID3D11SamplerState* shadowSampler = m_povShadowMap.GetSampler();//Won't be used here, but need to be passed in because the shader expects it
+	context->PSSetSamplers(1, 1, &shadowSampler);					//Same as above
+
+	//TESSELLATION
+	if (lodIsEnabled)context->RSSetState(wireframeRS.Get());
+	else			context->RSSetState(regularRS.Get());
+	context->HSSetShader(hullShader.Get(), NULL, 0);
+	context->DSSetShader(domainShader.Get(), NULL, 0); //This is where coordinates will be transformed but without the view-transformation
+	context->DSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
+	context->HSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
+
+	//DRAW (we'll never cull something like this because it's always intended to be in view of the camera)
+	for (auto& drawable : m_povDrawables)
+	{
+		drawable.Bind(context.Get());
+	}
+
+	//UNBIND THINGS FOR SANITY REASONS
+	context->VSSetShader(NULL, NULL, 0);
+	context->PSSetShader(NULL, NULL, 0);
+	context->HSSetShader(NULL, NULL, 0);
+	context->DSSetShader(NULL, NULL, 0);
+
+	context->HSSetConstantBuffers(0, 0, NULL);
+	context->DSSetConstantBuffers(0, 0, NULL);
+
+	ID3D11RenderTargetView* nullRTV = NULL;
+	context->OMSetRenderTargets(1, &nullRTV, NULL);
+
+	ID3D11ShaderResourceView* nullSRVs[] = { NULL, NULL, NULL, NULL, NULL };
+	context->PSSetShaderResources(0, 5, nullSRVs);
+
+	ID3D11SamplerState* nullSamplers[] = { NULL, NULL };
+	context->PSSetSamplers(0, 2, nullSamplers);
 }
 
 /*INITIALIZERS FOR DIRECTX STUFF*/
@@ -718,14 +887,14 @@ void D3D11Engine::InitRTV()
 	}
 }
 
-void D3D11Engine::InitViewport()
+void D3D11Engine::InitViewport(D3D11_VIEWPORT& vp)
 {
-	viewport.Width = m_windowWidth;
-	viewport.Height = m_windowHeight;
-	viewport.MinDepth = 0;
-	viewport.MaxDepth = 1;
-	viewport.TopLeftX = 0;
-	viewport.TopLeftY = 0;
+	vp.Width = m_windowWidth;
+	vp.Height = m_windowHeight;
+	vp.MinDepth = 0;
+	vp.MaxDepth = 1;
+	vp.TopLeftX = 0;
+	vp.TopLeftY = 0;
 }
 
 void D3D11Engine::InitDepthStencil()
@@ -780,7 +949,8 @@ void D3D11Engine::InitShadersAndInputLayout()
 	Microsoft::WRL::ComPtr<ID3DBlob> 
 		vsBlob, psBlob, errorBlob,
 		dpsBlob, csBlob,			//Deferred
-		hsBlob, dsBlob;				//Tessellation
+		hsBlob, dsBlob, dspBlob,	//Tessellation (new: dspBlob for pov domain shader)
+		pspBlob;					//new: pspBlob for pov pixel shader
 
 	/****************************
 	//////READ SHADER FILES//////
@@ -794,6 +964,12 @@ void D3D11Engine::InitShadersAndInputLayout()
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to read pixel shader!", L"Error", MB_OK);
+	}
+	//new
+	hr = D3DReadFileToBlob(L"../x64/Debug/PixelShaderPov.cso", &pspBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read pixel shader pov!", L"Error", MB_OK);
 	}
 	hr = D3DReadFileToBlob(L"../x64/Debug/DeferredPixelShader.cso", &dpsBlob);
 	if (FAILED(hr))
@@ -821,6 +997,13 @@ void D3D11Engine::InitShadersAndInputLayout()
 		MessageBox(NULL, L"Failed to read domain shader!", L"Error", MB_OK);
 	}
 
+	//new
+	hr = D3DReadFileToBlob(L"../x64/Debug/DomainShaderPov.cso", &dspBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read domain shader pov!", L"Error", MB_OK);
+	}
+
 	/****************************
 	//CREATE SHADERS FROM FILES//
 	****************************/
@@ -842,6 +1025,13 @@ void D3D11Engine::InitShadersAndInputLayout()
 		MessageBox(NULL, L"Failed to create deferred pixel shader!", L"Error", MB_OK);
 		return;
 	}
+	//new
+	hr = device->CreatePixelShader(pspBlob->GetBufferPointer(), pspBlob->GetBufferSize(), NULL, &pixelShaderPov);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create pixel shader pov!", L"Error", MB_OK);
+		return;
+	}
 	hr = device->CreateComputeShader(csBlob->GetBufferPointer(), csBlob->GetBufferSize(), NULL, &computeShader);
 	if (FAILED(hr))
 	{
@@ -858,6 +1048,13 @@ void D3D11Engine::InitShadersAndInputLayout()
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create domain shader!", L"Error", MB_OK);
+		return;
+	}
+	//new
+	hr = device->CreateDomainShader(dspBlob->GetBufferPointer(), dspBlob->GetBufferSize(), NULL, &domainShaderPov);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create domain shader pov!", L"Error", MB_OK);
 		return;
 	}
 

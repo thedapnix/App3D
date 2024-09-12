@@ -30,6 +30,11 @@ ID3D11VertexShader* ShadowMap::GetVertexShader()
 	return vertexShader.Get();
 }
 
+ID3D11VertexShader* ShadowMap::GetVertexShaderPov()
+{
+	return vertexShaderPov.Get();
+}
+
 const D3D11_VIEWPORT* ShadowMap::GetViewport() const
 {
 	return &viewport;
@@ -45,6 +50,7 @@ void ShadowMap::InitShaderAndInputLayout(ID3D11Device* device)
 	HRESULT hr;
 	Microsoft::WRL::ComPtr<ID3DBlob>
 		vsBlob,
+		vspBlob, //new
 		errorBlob;
 
 	hr = D3DReadFileToBlob(L"../x64/Debug/ShadowMapVertexShader.cso", &vsBlob);
@@ -52,11 +58,26 @@ void ShadowMap::InitShaderAndInputLayout(ID3D11Device* device)
 	{
 		MessageBox(NULL, L"Failed to read vertex shader for shadowmap!", L"Error", MB_OK);
 	}
+
+	//new
+	hr = D3DReadFileToBlob(L"../x64/Debug/ShadowMapVertexShaderPov.cso", &vspBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read vertex shader for shadowmap pov!", L"Error", MB_OK);
+	}
 	
 	hr = device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), NULL, &vertexShader);
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create vertex shader for shadowmap!", L"Error", MB_OK);
+		return;
+	}
+
+	//new
+	hr = device->CreateVertexShader(vspBlob->GetBufferPointer(), vspBlob->GetBufferSize(), NULL, &vertexShaderPov);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create vertex shader for shadowmap pov!", L"Error", MB_OK);
 		return;
 	}
 

@@ -42,15 +42,19 @@ public:
 
 	//Drawable and culling stuff
 	bool CreateDrawable(std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
-	bool CreateReflectiveDrawable(std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f });
+	bool CreateReflectiveDrawable(std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
+	bool CreatePovDrawable(std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
 	bool MoveDrawable(int i, DirectX::XMFLOAT3 dist);
 	bool SetupQT();
 	void RemoveDrawableInteraction(int id);
 	void DestroyDrawable(int id);
 	int GetDrawableIndexFromInteraction(int interactId);
+	std::vector<Drawable>& GetDrawables();
+	std::vector<Drawable>& GetPovDrawables();
 
 	//Lights stuff
 	bool CreateLightSpot(DirectX::XMFLOAT3 position, float fov, float rotX, float rotY, DirectX::XMFLOAT3 color = {1.0f, 1.0f, 1.0f});
+	bool CreatePovLightSpot(DirectX::XMFLOAT3 position, float fov, float rotX, float rotY, DirectX::XMFLOAT3 color = { 1.0f, 1.0f, 1.0f });
 	bool CreateLightDir(DirectX::XMFLOAT3 position, float rotX, float rotY, DirectX::XMFLOAT3 color = { 0.25f, 0.25f, 0.25f });
 	bool SetupLights(); //Because of how my current Spotlights class works, going to change this in the future but I shouldn't procastinate too much by just making the engine cool
 
@@ -72,11 +76,12 @@ private:
 	void RenderDepth(float dt);
 	void DefPassOne(Camera* cam);
 	void DefPassTwo(Camera* cam);
+	void RenderPov(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, Camera* cam, const float clear[4]);
 
 	/*Initializers because this constructor would be HUGE otherwise*/
 	//"Regular" stuff
 	void InitInterfaces(const HWND& window);
-	void InitViewport();
+	void InitViewport(D3D11_VIEWPORT& vp);
 	void InitRTV();
 	void InitDepthStencil();
 	void InitShadersAndInputLayout();
@@ -105,8 +110,11 @@ private:
 	std::vector<Drawable> m_drawables;
 	std::vector<Drawable> m_reflectiveDrawables;
 	std::vector<Drawable> m_interactibleDrawables; //added a bit late into implementation so i'm not sure that i want to modify the m_drawables too much right now but let me cook
+	std::vector<Drawable> m_povDrawables;
 	std::vector<LightData> m_lightDataVec;
+	std::vector<LightData> m_povLightDataVec;
 	SpotLights m_spotlights;
+	SpotLights m_povSpotlights;
 	std::unique_ptr<Camera> m_camera;
 	GBuffer m_gBuffers[4];
 	float m_particleVar = 0.0f;
@@ -142,11 +150,13 @@ private:
 
 	//Viewport(s)
 	D3D11_VIEWPORT viewport;
+	D3D11_VIEWPORT povViewport; //Does nothing, but also doesn't break anything so (I want to have pov stuff be its own thing kinda drawn "on top" of the rest of the scene)
 
 	//Shaders + input layout
 	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
 	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
+	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShaderPov;
 
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState;
 
@@ -158,6 +168,7 @@ private:
 	//Tessellation
 	Microsoft::WRL::ComPtr<ID3D11HullShader> hullShader;
 	Microsoft::WRL::ComPtr<ID3D11DomainShader> domainShader;
+	Microsoft::WRL::ComPtr<ID3D11DomainShader> domainShaderPov; //new
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> regularRS;
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> wireframeRS;
 
@@ -166,6 +177,7 @@ private:
 	ParticleSystem m_particles;
 	CubeMap m_cubeMap;
 	ShadowMap m_shadowMap;
+	ShadowMap m_povShadowMap; //(probably don't want to bother making pov things cast shadows? maybe, idk, aaaa)
 	QuadTree<Drawable> m_quadTree;
 
 	/*ECS*/

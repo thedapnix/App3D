@@ -100,7 +100,7 @@ void App::DoSetup()
 {
     m_engine->GetCamera().SetPosition({ 0.0f, 12.0f, 0.0f }); //Previously 5.675 Z
 
-    SetupLevel1(m_engine.get());    //Motion: X-axis        (B3/B2)
+    SetupLevel1(m_engine.get());      //Motion: X-axis        (B3/B2)
     //SetupLevel2(m_engine.get());    //Color: Red            (B3)
     //SetupLevel3(m_engine.get());    //Form: Oblong          (C1)
     //SetupLevel4(m_engine.get());    //Color: Blue           (B1)
@@ -110,7 +110,16 @@ void App::DoSetup()
     //SetupLevel8(m_engine.get());    //Color: Blue outline   (B3/C3)
     //SetupLevel9(m_engine.get());    //Form: Parallelepiped  (B1/B2/C1/C2) (aka big skewed cube)
 
-    m_engine->CreateDrawable("Meshes/gun2.obj", { -1.0f, 10.85f, 1.75f }, {2.0f, 2.0f, 2.0f});
+    /*
+    Camera starting position:   {0.0f, 12.0f, 0.0f}
+    Gun "position":             {-1.0f, -1.15f, 1.75f} //Offset from the camera, so in regular world position this would be {-1.0f, 10.85f, 1.75f}
+
+    The first spotlight we try making is at {0.0f, 17.0f, -5.0f}, so in "pov coordinates" this would be {0.0f, 5.0f, -5.0f} (a little bit above and behind us)
+    */
+    //Offset from the camera by {-1.0f, , -1.15f, +1.75f}
+    //m_engine->CreateDrawable("Meshes/gun2.obj", { -1.0f, 10.85f, 1.75f }, { 5.0f, 5.0f, 5.0f });
+    m_engine->CreatePovDrawable("Meshes/gun2.obj", { -1.0f, -1.15f, 1.75f }, { 2.0f, 2.0f, 2.0f });
+    //m_engine->GetPovDrawables().at(0).SetToOrbit();
     //m_engine->CreateDrawable("Meshes/donut2.obj", { 0.0f, 10.0f, 0.0f });
 
     //m_engine->CreateLightSpot({ 0.0f + 540.0f, 5.0f, 5.0f }, 0.75f, 0.0f, 0.35f); //Light on the final grid crate
@@ -127,6 +136,25 @@ void App::DoFrame(float dt)
     /*Camera stuff*/
     InterpretKeyboardInput(dt);
     m_engine->GetCamera().UpdateViewMatrix();
+
+    //Update gun every frame, let's start by going back to the basics of rotating around a point like we did in hello triangle
+    m_engine->GetPovDrawables().at(0).Rotate(
+        0.0f,
+        0.02f,
+        0.0f
+    );
+
+    m_engine->GetPovDrawables().at(0).SetPosition(
+        0.0f, 
+        12.0f, 
+        2.5f
+    ); //So a slight offset forward
+
+    /*m_engine->GetPovDrawables().at(0).SetRotation(
+        m_engine->GetCamera().GetPitch(),
+        m_engine->GetCamera().GetYaw(),
+        0.0f
+    );*/
 
     /*Imgui stuff (Right now just an fps counter)*/
     if (m_fpsTimer->GetMilisecondsElapsed() > 1000.0f)
