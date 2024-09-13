@@ -1,0 +1,5 @@
+newmtl default
+Ka grey.png
+Kd grey.png
+Ks grey.png
+Ns 1.0000

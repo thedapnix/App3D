@@ -67,9 +67,6 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	//Billboarding setup
 	m_particles = ParticleSystem(device.Get());
 
-	//Cube environment mapping setup
-	m_cubeMap = CubeMap(device.Get(), true);
-
 	//Sampler setup for texture access in shaders
 	InitSampler();
 
@@ -209,6 +206,9 @@ bool D3D11Engine::CreateReflectiveDrawable(std::string objFileName, DirectX::XMF
 {
 	InitDrawableFromFile(objFileName, m_reflectiveDrawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith); //temp: just put false as interactible here bleh
 
+	//Cube environment mapping setup (moved from engine constructor)
+	m_cubeMap = CubeMap(device.Get(), true, m_reflectiveDrawables.at(0).GetPosition());
+
 	return true;
 }
 
@@ -292,25 +292,6 @@ bool D3D11Engine::CreateLightSpot(DirectX::XMFLOAT3 position, float fov, float r
 	return true;
 }
 
-bool D3D11Engine::CreatePovLightSpot(DirectX::XMFLOAT3 position, float fov, float rotX, float rotY, DirectX::XMFLOAT3 color)
-{
-	LightData data;
-
-	//Pass in fov as a float between 0 and 1. Bigger number = Wider cone. Default 0.25f
-	//Pass in rotX as a float between -1 to +1. Negative values angle the light to the left, positive values angle the light to the right. Default to 0
-	//Pass in rotY as a float between -1 to +1. Negative values angle the light upwards, positive values angle the light downwards. Default to 0
-
-	data.pos = position;
-	data.fovY = XM_PI * fov;	//Example: Passing in  0.25f would be the same as the previous  " XM_PI / 4.0f "
-	data.rotX = XM_PI * rotX;	//Example: Passing in -0.25f would be the same as the previous  "-XM_PI / 4.0f "
-	data.rotY = XM_PI * rotY;	//Example: Passing in 0.125f would be the same as the previous  " XM_PI / 8.0f "
-	data.col = color;			//Default value {1.0f, 1.0f, 1.0f}
-
-	m_povLightDataVec.push_back(data);
-
-	return true;
-}
-
 bool D3D11Engine::CreateLightDir(DirectX::XMFLOAT3 position, float rotX, float rotY, DirectX::XMFLOAT3 color)
 {
 	//Directional light
@@ -339,10 +320,6 @@ bool D3D11Engine::SetupLights()
 {
 	m_spotlights = SpotLights(device.Get(), m_lightDataVec);
 	m_shadowMap = ShadowMap(device.Get(), &m_drawables, &m_spotlights); //"SetupLights()", shadows too while we're at it, but don't tell anyone :3
-
-	//new (dont bother making pov things cast shadows yet)
-	m_povSpotlights = SpotLights(device.Get(), m_povLightDataVec);
-	m_povShadowMap = ShadowMap(device.Get(), &m_povDrawables, &m_povSpotlights);
 
 	return true;
 }
@@ -509,6 +486,7 @@ void D3D11Engine::RenderReflectiveObject(float dt)
 			Instead of the "normal" viewport, use the one associated with the reflective object's texture cube
 			Instead of the "normal" camera information, use the one associated with the texture cube side currently being processed
 			*/
+			//Transpose every 
 			Render(dt, m_cubeMap.GetRenderTargetViewAt(i), m_cubeMap.GetDepthStencilView(), m_cubeMap.GetViewport(), m_cubeMap.GetCameraAt(i), CLEAR_COLOR);
 		}
 
@@ -582,25 +560,7 @@ void D3D11Engine::RenderDepth(float dt)
 		}
 	}
 
-	//Change binding for the pov lights
-	context->VSSetShader(m_povShadowMap.GetVertexShader(), NULL, 0);
-	context->RSSetViewports(1, m_povShadowMap.GetViewport());
-
-	for (UINT i = 0; i < m_povSpotlights.GetLightCount(); i++)
-	{
-		ID3D11DepthStencilView* dsView = m_povSpotlights.GetDepthStencilViewAt(i);
-		context->ClearDepthStencilView(dsView, D3D11_CLEAR_DEPTH, 1, 0);
-		context->OMSetRenderTargets(0, NULL, dsView); //no rtv, only dsv
-
-		//Some way of getting the camera cb of individual lights
-		ID3D11Buffer* cameraCB = m_povSpotlights.GetCameraConstantBufferAt(i).GetBuffer();
-		context->VSSetConstantBuffers(1, 1, &cameraCB);
-
-		for (auto& drawable : m_povDrawables)
-		{
-			drawable.Bind(context.Get());
-		}
-	}
+	//Render pov drawable depth too
 
 	/*Unbind stuff*/
 	context->OMSetRenderTargets(0, NULL, NULL);
@@ -662,6 +622,12 @@ void D3D11Engine::DefPassOne(Camera* cam)
 		drawablesBeingRendered = (int)m_drawables.size();
 	}
 
+	//:)
+	for (auto& drawable : m_povDrawables)
+	{
+		drawable.Bind(context.Get());
+	}
+
 	//Now that we're done writing data to the render targets, unbind them
 	ID3D11RenderTargetView* nullRTVs[] = { NULL, NULL, NULL, NULL };
 	context->OMSetRenderTargets(4, nullRTVs, NULL);
@@ -713,73 +679,6 @@ void D3D11Engine::DefPassTwo(Camera* cam)
 	context->CSSetShaderResources(0, 6, nullSRVs);
 	ID3D11SamplerState* nullSamplers[] = { NULL };
 	context->PSSetSamplers(0, 1, nullSamplers);
-}
-
-void D3D11Engine::RenderPov(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, Camera* cam, const float clear[4])
-{
-	//Renders things directly in relation to the camera view, without projection
-	/*
-	TO-DO:
-	1. UPDATE CAMERA (DONE, BUT DOESN'T HAPPEN IN HERE)
-	2. UPDATE THE POSITION OF THE OBJECT (DONE, ALSO DOESN'T HAPPEN IN HERE)
-	3. PERFORM WORLD TRANSFORMATION TO PLACE IT SOMEWHERE IN THE WORLD OFFSET FROM THE CAMERA (THIS IS WHAT WE ALWAYS DO)
-	4. PERFORM PROJECTION TRANSFORMATION (BUT NOT VIEW) OF THE CAMERA ON THE OBJECT ITSELF
-		IN ORDER TO DO THIS, YOU'LL NEED A NEW SHADER AND A NEW CONSTANT BUFFER
-	*/
-
-	// Clear the back buffer and depth stencil, as well as set viewport and render target (viewport only really needed to set after a resize, and that's disabled so uh)
-	//context->ClearRenderTargetView(rtv, clear);
-	//context->ClearDepthStencilView(dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-	context->RSSetViewports(1, viewport);
-	context->OMSetRenderTargets(1, &rtv, dsv);
-
-	//INPUT ASSEMBLER STAGE
-	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);
-	context->IASetInputLayout(inputLayout.Get());
-
-	//SHADER STAGE
-	context->VSSetShader(vertexShader.Get(), NULL, 0);
-	context->PSSetShader(pixelShaderPov.Get(), NULL, 0);
-	context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
-
-	//SHADOWS AND LIGHTING STUFF
-	ID3D11ShaderResourceView* shadowViews[] = { m_povSpotlights.GetStructuredBufferSRV() , m_povSpotlights.GetDepthBufferSRV() }; //Passing in povSpotlights instead of the regular
-	context->PSSetShaderResources(3, 2, shadowViews);
-	context->PSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
-	ID3D11SamplerState* shadowSampler = m_povShadowMap.GetSampler();//Won't be used here, but need to be passed in because the shader expects it
-	context->PSSetSamplers(1, 1, &shadowSampler);					//Same as above
-
-	//TESSELLATION
-	if (lodIsEnabled)context->RSSetState(wireframeRS.Get());
-	else			context->RSSetState(regularRS.Get());
-	context->HSSetShader(hullShader.Get(), NULL, 0);
-	context->DSSetShader(domainShader.Get(), NULL, 0); //This is where coordinates will be transformed but without the view-transformation
-	context->DSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
-	context->HSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
-
-	//DRAW (we'll never cull something like this because it's always intended to be in view of the camera)
-	for (auto& drawable : m_povDrawables)
-	{
-		drawable.Bind(context.Get());
-	}
-
-	//UNBIND THINGS FOR SANITY REASONS
-	context->VSSetShader(NULL, NULL, 0);
-	context->PSSetShader(NULL, NULL, 0);
-	context->HSSetShader(NULL, NULL, 0);
-	context->DSSetShader(NULL, NULL, 0);
-
-	context->HSSetConstantBuffers(0, 0, NULL);
-	context->DSSetConstantBuffers(0, 0, NULL);
-
-	ID3D11RenderTargetView* nullRTV = NULL;
-	context->OMSetRenderTargets(1, &nullRTV, NULL);
-
-	ID3D11ShaderResourceView* nullSRVs[] = { NULL, NULL, NULL, NULL, NULL };
-	context->PSSetShaderResources(0, 5, nullSRVs);
-
-	ID3D11SamplerState* nullSamplers[] = { NULL, NULL };
-	context->PSSetSamplers(0, 2, nullSamplers);
 }
 
 /*INITIALIZERS FOR DIRECTX STUFF*/
@@ -974,12 +873,6 @@ void D3D11Engine::InitShadersAndInputLayout()
 	{
 		MessageBox(NULL, L"Failed to read pixel shader!", L"Error", MB_OK);
 	}
-	//new
-	hr = D3DReadFileToBlob(L"../x64/Debug/PixelShaderPov.cso", &pspBlob);
-	if (FAILED(hr))
-	{
-		MessageBox(NULL, L"Failed to read pixel shader pov!", L"Error", MB_OK);
-	}
 	hr = D3DReadFileToBlob(L"../x64/Debug/DeferredPixelShader.cso", &dpsBlob);
 	if (FAILED(hr))
 	{
@@ -1006,13 +899,6 @@ void D3D11Engine::InitShadersAndInputLayout()
 		MessageBox(NULL, L"Failed to read domain shader!", L"Error", MB_OK);
 	}
 
-	//new
-	hr = D3DReadFileToBlob(L"../x64/Debug/DomainShaderPov.cso", &dspBlob);
-	if (FAILED(hr))
-	{
-		MessageBox(NULL, L"Failed to read domain shader pov!", L"Error", MB_OK);
-	}
-
 	/****************************
 	//CREATE SHADERS FROM FILES//
 	****************************/
@@ -1034,13 +920,6 @@ void D3D11Engine::InitShadersAndInputLayout()
 		MessageBox(NULL, L"Failed to create deferred pixel shader!", L"Error", MB_OK);
 		return;
 	}
-	//new
-	hr = device->CreatePixelShader(pspBlob->GetBufferPointer(), pspBlob->GetBufferSize(), NULL, &pixelShaderPov);
-	if (FAILED(hr))
-	{
-		MessageBox(NULL, L"Failed to create pixel shader pov!", L"Error", MB_OK);
-		return;
-	}
 	hr = device->CreateComputeShader(csBlob->GetBufferPointer(), csBlob->GetBufferSize(), NULL, &computeShader);
 	if (FAILED(hr))
 	{
@@ -1057,13 +936,6 @@ void D3D11Engine::InitShadersAndInputLayout()
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create domain shader!", L"Error", MB_OK);
-		return;
-	}
-	//new
-	hr = device->CreateDomainShader(dspBlob->GetBufferPointer(), dspBlob->GetBufferSize(), NULL, &domainShaderPov);
-	if (FAILED(hr))
-	{
-		MessageBox(NULL, L"Failed to create domain shader pov!", L"Error", MB_OK);
 		return;
 	}
 

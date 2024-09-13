@@ -51,7 +51,6 @@ void SetupLevel1(D3D11Engine* engine)
 
     //Light(s)
     engine->CreateLightSpot({ 0.0f, 17.0f, -5.0f }, 0.75f, 0.0f, 0.5f); //Ceiling in the center of the room pointing straight down onto the floor
-    engine->CreatePovLightSpot({0.0f, 5.0f, -5.0f}, 0.75f, 0.0f, 0.5f); //Make this function be called automatically i guess?
 
     //HALLWAY AFTER FIRST ROOM
     //Floor and ceiling

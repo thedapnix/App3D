@@ -48,13 +48,16 @@ sampler shadowMapSampler : register(s1);
 
 float4 main(PixelShaderInput input) : SV_TARGET
 {
-    float3 ambient = 0.25f;
+    //float3 ambient = 0.25f;
+    float3 ambientAlbedo = ambientTexture.Sample(samplerState, input.uv);
     float4 base = diffuseTexture.Sample(samplerState, input.uv);
     float3 specularAlbedo = specularTexture.Sample(samplerState, input.uv).xyz;
     float specularPower = shininess;
     
-    float3 finalColor = base.xyz * ambient;
-    float3 lighting = 0.0f;
+    //float3 finalColor = base.xyz * ambient;
+    //float3 lighting = 0.0f;
+    
+    float3 finalColour = 0.0f;
     
     //Allow for multiple spotlights
     //https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/sm5-object-structuredbuffer-getdimensions
@@ -132,10 +135,12 @@ float4 main(PixelShaderInput input) : SV_TARGET
         
         if(!isInShadow)
         {
-            lighting += (diffuse + specular) * attenuation;
+            //lighting += (diffuse + specular) * attenuation;
+            finalColour += (diffuse + specular) * attenuation;
         }
     }
-    finalColor += lighting;
+    //finalColour += base * 0.25f;
+    finalColour += ambientAlbedo * 0.25f;
     
-    return float4(finalColor, 1.0f);
+    return float4(finalColour, 1.0f);
 }

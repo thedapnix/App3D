@@ -69,7 +69,7 @@ void main(uint3 DTid : SV_DispatchThreadID) //So the DTid is the index of the sp
         {
             L = spotlights[i].origin - position.xyz;
             float dist = length(L);
-            attenuation = max(0.0f, 1.0f - (dist / 30.0f));
+            attenuation = max(0.0f, 1.0f - (dist / 40.0f));
             L /= dist;
             
             float outerCone = cos(spotlights[i].fov / 2.0f);
@@ -95,7 +95,8 @@ void main(uint3 DTid : SV_DispatchThreadID) //So the DTid is the index of the sp
             finalColour += (diffuse + specular) * attenuation;
         }
     }
-    finalColour += (ambientAlbedo * 0.25f);
+    
+    finalColour += ambientAlbedo * 0.25f;
     
     //Apply the appropriate effect
     backBufferUAV[DTid.xy] = float4(finalColour, 1.0f);

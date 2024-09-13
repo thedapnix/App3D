@@ -25,19 +25,9 @@ Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOA
 	m_rotate = rotation;
 	m_translate = translation;
 
-	/*DirectX::XMStoreFloat4x4(&m_transform.scale, DirectX::XMMatrixTranspose(
-		DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z)
-	));
-	DirectX::XMStoreFloat4x4(&m_transform.rotate, DirectX::XMMatrixTranspose(
-		DirectX::XMMatrixRotationX(m_rotate.x) * DirectX::XMMatrixRotationY(m_rotate.y) * DirectX::XMMatrixRotationZ(m_rotate.z)
-	));
-	DirectX::XMStoreFloat4x4(&m_transform.translate, DirectX::XMMatrixTranspose(
-		DirectX::XMMatrixTranslation(m_translate.x, m_translate.y, m_translate.z)
-	));
-	m_transform.willOrbit = true;*/
-
-	//This right here will change depending on but bear with me
+	//Later on whenever we update constant buffers we will pass in additional information to this function
 	CalculateAndTransposeWorld();
+
 	m_constantBuffer.Init(device, &m_transform, sizeof(m_transform));
 
 	/*Submesh stuff*/

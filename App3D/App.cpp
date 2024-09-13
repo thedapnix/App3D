@@ -119,6 +119,7 @@ void App::DoSetup()
     //Offset from the camera by {-1.0f, , -1.15f, +1.75f}
     //m_engine->CreateDrawable("Meshes/gun2.obj", { -1.0f, 10.85f, 1.75f }, { 5.0f, 5.0f, 5.0f });
     m_engine->CreatePovDrawable("Meshes/gun2.obj", { -1.0f, -1.15f, 1.75f }, { 2.0f, 2.0f, 2.0f });
+    m_engine->CreateReflectiveDrawable("Meshes/default_cube.obj", { 0.0f, 6.0f, 5.0f });
     //m_engine->CreateDrawable("Meshes/donut2.obj", { 0.0f, 10.0f, 0.0f });
 
     //m_engine->CreateLightSpot({ 0.0f + 540.0f, 5.0f, 5.0f }, 0.75f, 0.0f, 0.35f); //Light on the final grid crate

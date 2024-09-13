@@ -56,7 +56,7 @@ CubeMap::CubeMapView::CubeMapView(ID3D11Device* device, UINT width, UINT height,
 	}
 }
 
-CubeMap::CubeMap(ID3D11Device* device, bool hasSRV)
+CubeMap::CubeMap(ID3D11Device* device, bool hasSRV, DirectX::XMFLOAT3 pos)
 {
 	/*Create 6 cameras*/
 	//Projection info
@@ -72,7 +72,7 @@ CubeMap::CubeMap(ID3D11Device* device, bool hasSRV)
 	for (int i = 0; i < 6; i++)
 	{
 		//First, set position
-		m_cameras[i].SetPosition({ 0.0f, -2.5f, 5.0f }); //Pass this in? Set some arbitrary value for now (same as the starting camera)
+		m_cameras[i].SetPosition(pos);
 
 		//Then rotate along the axes, follow ZYX convention, (changes the look-, up-, and right-vectors)
 		m_cameras[i].RotateY(upRotations[i]);
