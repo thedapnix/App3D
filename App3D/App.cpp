@@ -119,7 +119,6 @@ void App::DoSetup()
     //Offset from the camera by {-1.0f, , -1.15f, +1.75f}
     //m_engine->CreateDrawable("Meshes/gun2.obj", { -1.0f, 10.85f, 1.75f }, { 5.0f, 5.0f, 5.0f });
     m_engine->CreatePovDrawable("Meshes/gun2.obj", { -1.0f, -1.15f, 1.75f }, { 2.0f, 2.0f, 2.0f });
-    //m_engine->GetPovDrawables().at(0).SetToOrbit();
     //m_engine->CreateDrawable("Meshes/donut2.obj", { 0.0f, 10.0f, 0.0f });
 
     //m_engine->CreateLightSpot({ 0.0f + 540.0f, 5.0f, 5.0f }, 0.75f, 0.0f, 0.35f); //Light on the final grid crate
@@ -137,24 +136,12 @@ void App::DoFrame(float dt)
     InterpretKeyboardInput(dt);
     m_engine->GetCamera().UpdateViewMatrix();
 
-    //Update gun every frame, let's start by going back to the basics of rotating around a point like we did in hello triangle
-    m_engine->GetPovDrawables().at(0).Rotate(
-        0.0f,
-        0.02f,
-        0.0f
-    );
-
+    //Update gun every frame, let's start by going back to the basics of rotating around a point like we did in hello triangle (PovDrawable position is an offset from the camera)
     m_engine->GetPovDrawables().at(0).SetPosition(
-        0.0f, 
-        12.0f, 
-        2.5f
-    ); //So a slight offset forward
-
-    /*m_engine->GetPovDrawables().at(0).SetRotation(
-        m_engine->GetCamera().GetPitch(),
-        m_engine->GetCamera().GetYaw(),
-        0.0f
-    );*/
+        -1.0f,
+        -1.15f,
+         1.75f
+    );
 
     /*Imgui stuff (Right now just an fps counter)*/
     if (m_fpsTimer->GetMilisecondsElapsed() > 1000.0f)

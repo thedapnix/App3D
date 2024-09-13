@@ -328,14 +328,5 @@
     <FxCompile Include="DeferredPixelShader.hlsl">
       <Filter>Resource Files</Filter>
     </FxCompile>
-    <FxCompile Include="DomainShaderPov.hlsl">
-      <Filter>Resource Files</Filter>
-    </FxCompile>
-    <FxCompile Include="ShadowMapVertexShaderPov.hlsl">
-      <Filter>Resource Files\Shadowmap Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="PixelShaderPov.hlsl">
-      <Filter>Resource Files</Filter>
-    </FxCompile>
   </ItemGroup>
 </Project>

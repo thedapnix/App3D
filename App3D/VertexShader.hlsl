@@ -32,7 +32,6 @@ VertexShaderOutput main(VertexShaderInput input)
     
     pos = mul(pos, world);
     nor = mul(nor, world);
-    
 
     output.worldPosition = pos;
     output.uv = input.uv;

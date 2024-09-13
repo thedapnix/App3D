@@ -109,10 +109,10 @@ void Drawable::Unbind(ID3D11DeviceContext* context)
 	context->PSSetShaderResources(0, 1, &nullSRV);
 }
 
-void Drawable::UpdateConstantBuffer(ID3D11DeviceContext* context, bool orbits)
+void Drawable::UpdateConstantBuffer(ID3D11DeviceContext* context, bool orbits, Camera* camera)
 {
 	//Calculate transform and then transpose
-	CalculateAndTransposeWorld(orbits);
+	CalculateAndTransposeWorld(orbits, camera);
 
 	D3D11_MAPPED_SUBRESOURCE mapped = {};												//Set up the new srtData for the resource, zero the memory
 	context->Map(m_constantBuffer.GetBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);	//Disable GPU access to the srtData we want to change, and get a pointer to its memory
@@ -224,7 +224,7 @@ void Drawable::Destroy()
 	m_drawableInfo.isActive = false;
 }
 
-void Drawable::CalculateAndTransposeWorld(bool orbits)
+void Drawable::CalculateAndTransposeWorld(bool orbits, Camera* camera)
 {
 	DirectX::XMMATRIX world;
 	if (!orbits)
@@ -237,11 +237,24 @@ void Drawable::CalculateAndTransposeWorld(bool orbits)
 	}
 	else
 	{
-		world =
-			DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z) *
-			DirectX::XMMatrixTranslation(m_translate.x, m_translate.y, m_translate.z) *
-			(DirectX::XMMatrixRotationX(m_rotate.x) * DirectX::XMMatrixRotationY(m_rotate.y) * DirectX::XMMatrixRotationZ(m_rotate.z))
-			;
+		if (camera == nullptr)
+		{
+			world =
+				DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z) *
+				DirectX::XMMatrixTranslation(m_translate.x, m_translate.y, m_translate.z) *
+				(DirectX::XMMatrixRotationX(m_rotate.x) * DirectX::XMMatrixRotationY(m_rotate.y) * DirectX::XMMatrixRotationZ(m_rotate.z))
+				;
+		}
+		else //Orbit around the camera, needs to take in its position
+		{
+			//Scale * objectTranslate * rotate * cameraTranslate
+			world =
+				DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z) *
+				DirectX::XMMatrixTranslation(m_translate.x, m_translate.y, m_translate.z) *
+				DirectX::XMMatrixRotationX(camera->GetPitch()) * DirectX::XMMatrixRotationY(camera->GetYaw()) *
+				DirectX::XMMatrixTranslation(camera->GetPosition().x, camera->GetPosition().y, camera->GetPosition().z)
+				;
+		}
 	}
 	
 	world = DirectX::XMMatrixTranspose(world);

@@ -26,6 +26,13 @@ This makes sense because when the lights calculate if they hit something, they'r
 Optimal would be if I could perform lighting calculations separately, that way I can have different vertex positions depending on what we're doing
 	Placement in the final image? Proj only
 	Performing lighting calculations? Properly transformed
+
+
+
+New: Reworked drawables to pass a complete world-transform to shaders, and have it multiply things differently if it's supposed to orbit around a point or not
+To-do: Make the orbitting better, example formula from rasmus:
+Scale * (offset from center) * Rotation X * Rotation Y * (position of center)
+
 */
 
 #include "Interact.h"
@@ -95,7 +102,7 @@ void D3D11Engine::Update(float dt)
 	}
 	for (auto& drawable : m_povDrawables)
 	{
-		drawable.UpdateConstantBuffer(context.Get(), true);
+		drawable.UpdateConstantBuffer(context.Get(), true, m_camera.get()); 
 	}
 
 	m_particleVar += dt;
@@ -103,13 +110,9 @@ void D3D11Engine::Update(float dt)
 
 	//RENDER
 	RenderDepth(dt);
-	//Render(dt, rtv.Get(), dsv.Get(), &viewport, m_povSpotlights.GetCameraAt(0), CLEAR_COLOR);
 	Render(dt, rtv.Get(), dsv.Get(), &viewport, m_camera.get(), CLEAR_COLOR);
 	if (billboardingIsEnabled) RenderParticles(m_camera.get());
 	if (cubemapIsEnabled) RenderReflectiveObject(dt);
-
-	//The gun is rendered without view transformation, since I'm trying to make it be in view space a la: https://learnopengl.com/img/getting-started/coordinate_systems.png
-	RenderPov(dt, rtv.Get(), dsv.Get(), &povViewport, m_camera.get(), CLEAR_COLOR);
 
 	//PRESENT
 	swapChain->Present(1, 0); //vSync, 1 = enabled, 0 = disabled (or in other terms, fps limit to screen hz or uncap)
@@ -401,13 +404,13 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 			{
 				drawable.Bind(context.Get());
 			}
-
-			//temp for testing pov lights (yes sir, the pov light detects that the gun exists within the bounds of what it can "see")
-			/*for (auto& drawable : m_povDrawables)
-			{
-				drawable.Bind(context.Get());
-			}*/
 			drawablesBeingRendered = (int)m_drawables.size();
+		}
+
+		//Pov drawables are never culled so we do this outside the if-else check
+		for (auto& drawable : m_povDrawables)
+		{
+			drawable.Bind(context.Get());
 		}
 
 		//UNBIND THINGS FOR SANITY REASONS
@@ -482,8 +485,15 @@ void D3D11Engine::RenderParticles(Camera* cam)
 
 void D3D11Engine::RenderReflectiveObject(float dt)
 {
-	std::vector<const Drawable*> visibleDrawables = m_quadTree.CheckTree(m_camera->GetFrustum());
+	//Exit out if there are no reflective objects
+	if (m_reflectiveDrawables.size() == 0)
+	{
+		return;
+	}
+
+	//Get the reflective object (This whole stuff is hardcoded right now but bear with me
 	const Drawable* cube = &m_reflectiveDrawables.at(0);
+	std::vector<const Drawable*> visibleDrawables = m_quadTree.CheckTree(m_camera->GetFrustum());
 	if(cullingIsEnabled && std::find(visibleDrawables.begin(), visibleDrawables.end(), cube) == visibleDrawables.end())
 	{
 		return;
@@ -522,7 +532,6 @@ void D3D11Engine::RenderReflectiveObject(float dt)
 		for (auto& drawable : m_reflectiveDrawables)
 		{
 			drawable.Bind(context.Get(), true);
-			//drawable.Draw(context.Get());
 		}
 
 		/*Unbind shaders*/

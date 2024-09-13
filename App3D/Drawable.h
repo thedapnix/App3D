@@ -20,6 +20,7 @@
 
 //new
 #include "ColliderAABB.h"
+#include "Camera.h" //new: orbit
 
 /*Structs that D3D11Engine needs to know about*/
 struct Vertex
@@ -119,7 +120,7 @@ public:
 	void BindPov(ID3D11DeviceContext* context, bool isReflective = false) const;
 	void Draw(ID3D11DeviceContext* context, UINT index) const;
 	void Unbind(ID3D11DeviceContext* context);
-	void UpdateConstantBuffer(ID3D11DeviceContext* context, bool orbits = false);
+	void UpdateConstantBuffer(ID3D11DeviceContext* context, bool orbits = false, Camera* camera = nullptr);
 	void CreateBoundingBoxFromPoints(DirectX::XMVECTOR min, DirectX::XMVECTOR max);
 
 	//Movement stuff
@@ -169,7 +170,7 @@ private:
 	ConstantBuffer m_constantBuffer;
 	ConstantBuffer m_constantBufferShininess;
 	ConstantBuffer m_constantBufferPov; //new
-	void CalculateAndTransposeWorld(bool orbits = false);
+	void CalculateAndTransposeWorld(bool orbits = false, Camera* camera = nullptr);
 
 	std::vector<SubMesh> m_submeshes;
 
