@@ -5,9 +5,9 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 
 #include "LevelSetup.h"
 
-//To allow for key events happening only once upon releasing a key, change the way keyboard input works
-//Every frame (tick), RESET, then GET input, this way we will now if a key has been released during this iteration
-//
+#define POV_OFFSET_X -1.00f
+#define POV_OFFSET_Y -1.10f
+#define POV_OFFSET_Z  1.75f
 
 //What: Store an empty pointer of type "App" and assign it the value of "this" in the App-constructor
 //Why:  Windows static functions like MainWndProc don't allow the use of the "this" keyword, so this is a workaround
@@ -117,8 +117,7 @@ void App::DoSetup()
     The first spotlight we try making is at {0.0f, 17.0f, -5.0f}, so in "pov coordinates" this would be {0.0f, 5.0f, -5.0f} (a little bit above and behind us)
     */
     //Offset from the camera by {-1.0f, , -1.15f, +1.75f}
-    //m_engine->CreateDrawable("Meshes/gun2.obj", { -1.0f, 10.85f, 1.75f }, { 5.0f, 5.0f, 5.0f });
-    m_engine->CreatePovDrawable("Meshes/gun2.obj", { -1.0f, -1.15f, 1.75f }, { 2.0f, 2.0f, 2.0f });
+    m_engine->CreatePovDrawable("Meshes/gun.obj", { POV_OFFSET_X, POV_OFFSET_Y, POV_OFFSET_Z }, { 2.0f, 2.0f, 2.0f });
     m_engine->CreateReflectiveDrawable("Meshes/default_cube.obj", { 0.0f, 6.0f, 5.0f });
     //m_engine->CreateDrawable("Meshes/donut2.obj", { 0.0f, 10.0f, 0.0f });
 
@@ -139,9 +138,9 @@ void App::DoFrame(float dt)
 
     //Update gun every frame, let's start by going back to the basics of rotating around a point like we did in hello triangle (PovDrawable position is an offset from the camera)
     m_engine->GetPovDrawables().at(0).SetPosition(
-        -1.0f,
-        -1.15f,
-         1.75f
+        POV_OFFSET_X,
+        POV_OFFSET_Y,
+        POV_OFFSET_Z
     );
 
     /*Imgui stuff (Right now just an fps counter)*/

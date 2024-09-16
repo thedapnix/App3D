@@ -3,37 +3,7 @@
 #include <dxgi.h>			//directx driver interface
 #include <d3dcompiler.h>	//compiling shaders
 
-//#include <algorithm> //min and max
-
-/*
-It is useful to re-think the terminology of matrices I think:
-World matrix is more like "localToWorld"
-View matrix is more like "worldToView"
-Proj matrix is more like "viewToClip" (this is where window dimensions come into play and cull anything outside of it because we're preparing for this to be the final frame)
-The viewport then transforms from clip space into screen space (which is literally just post-cull, not changing positions) and that's our finished frame
-
-We want to add lighting to the gun (which is drawn in view-space (doesn't perform the view transformation and thus stays in frame at all times in relation to camera position)
-Lights calculate whether they hit something in the pixel shader based off of an objects position in world-space (because the lights are also in world-space)
-Make a separate pixel shader that transforms the lights to be in view-space, and to check against objects positions in view-space as well?
-
-Another idea what I cooked up while in bed thinking about this stuff because programming has become my life:
-Make separate m_drawables and m_spotlights along with this, and make a render-pass that uses the new shaders on only things that are supposed to be in this "pov" render
-This makes sense because when the lights calculate if they hit something, they're calculating against the drawables world position
-	This won't work, since the position of the gun in the world is not where it's expected to be (its world coordinates are written more like an offset from the camera)
-	Thus, we need lights that do the same thing, I just hope this won't fuck with other parts of the light (sure i can fix their position, but what will happen to the cones of the spotlight? i hope it'll be fine)
-
-	
-Optimal would be if I could perform lighting calculations separately, that way I can have different vertex positions depending on what we're doing
-	Placement in the final image? Proj only
-	Performing lighting calculations? Properly transformed
-
-
-
-New: Reworked drawables to pass a complete world-transform to shaders, and have it multiply things differently if it's supposed to orbit around a point or not
-To-do: Make the orbitting better, example formula from rasmus:
-Scale * (offset from center) * Rotation X * Rotation Y * (position of center)
-
-*/
+#define NUMTHREADS 8 //For computeshader
 
 #include "Interact.h"
 
@@ -47,7 +17,7 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	//Base d3d setup
 	InitInterfaces(hWnd);
 	InitViewport(viewport);
-	InitViewport(povViewport);
+	//InitViewport(povViewport);
 	InitRTV();
 	InitDepthStencil();
 	InitUAV(); //deferred
@@ -107,9 +77,10 @@ void D3D11Engine::Update(float dt)
 
 	//RENDER
 	RenderDepth(dt);
-	Render(dt, rtv.Get(), dsv.Get(), &viewport, m_camera.get(), CLEAR_COLOR);
+	//Render(dt, rtv.Get(), dsv.Get(), &viewport, m_camera.get(), CLEAR_COLOR);
+	Render(uav.Get(), dsv.Get(), &viewport, m_camera.get(), CLEAR_COLOR, m_windowWidth, m_windowHeight);
 	if (billboardingIsEnabled) RenderParticles(m_camera.get());
-	if (cubemapIsEnabled) RenderReflectiveObject(dt);
+	if (cubemapIsEnabled) RenderReflectiveObject(m_camera.get());
 
 	//PRESENT
 	swapChain->Present(1, 0); //vSync, 1 = enabled, 0 = disabled (or in other terms, fps limit to screen hz or uncap)
@@ -221,7 +192,7 @@ bool D3D11Engine::CreatePovDrawable(std::string objFileName, DirectX::XMFLOAT3 t
 
 bool D3D11Engine::MoveDrawable(int i, DirectX::XMFLOAT3 dist)
 {
-	m_drawables.at(i).EditTranslation(dist.x, dist.y, dist.z);
+	m_drawables.at(i).Move(dist.x, dist.y, dist.z);
 
 	return true;
 }
@@ -297,14 +268,6 @@ bool D3D11Engine::CreateLightDir(DirectX::XMFLOAT3 position, float rotX, float r
 	//Directional light
 	LightData data;
 
-	//PREVIOUSLY
-	//data.pos = XMFLOAT3(-80.0f, 1.0f, -6.0f);
-	//data.fovY = 0.0f;
-	//data.rotX = XM_PIDIV2;
-	//data.rotY = XM_PI / 8.0f;
-	//data.col = DirectX::XMFLOAT3(0.25f, 0.25f, 0.25f);
-
-	//NEW
 	data.pos = position;
 	data.fovY = 0.0f;
 	data.rotX = XM_PI * rotX; //For XM_PI / 2 --> 0.5f
@@ -325,20 +288,110 @@ bool D3D11Engine::SetupLights()
 }
 
 /*RENDER FUNCTIONS*/
-void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, Camera* cam, const float clear[4])
+//void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, Camera* cam, const float clear[4])
+//{
+//	/*Update buffers and camera frustum here*/
+//	if (deferredIsEnabled)
+//	{
+//		DefPassOne(cam); //Does the same as what's in the else-statement, except to several rendertargets
+//	}
+//	else
+//	{
+//		// Clear the back buffer and depth stencil, as well as set viewport and render target (viewport only really needed to set after a resize, and that's disabled so uh)
+//		context->ClearRenderTargetView(rtv, clear);
+//		context->ClearDepthStencilView(dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+//		context->RSSetViewports(1, viewport);
+//		context->OMSetRenderTargets(1, &rtv, dsv);
+//
+//		//INPUT ASSEMBLER STAGE
+//		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST); //farewell D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST
+//		context->IASetInputLayout(inputLayout.Get());
+//
+//		//SHADER STAGE
+//		context->VSSetShader(vertexShader.Get(), NULL, 0);
+//		context->PSSetShader(pixelShader.Get(), NULL, 0);
+//		context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
+//		
+//		//SHADOWS AND LIGHTING STUFF
+//		ID3D11ShaderResourceView* shadowViews[] = { m_spotlights.GetStructuredBufferSRV() , m_spotlights.GetDepthBufferSRV() };
+//		context->PSSetShaderResources(3, 2, shadowViews);
+//		context->PSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
+//		ID3D11SamplerState* shadowSampler = m_shadowMap.GetSampler();
+//		context->PSSetSamplers(1, 1, &shadowSampler);
+//
+//		//TESSELLATION
+//		if(lodIsEnabled)context->RSSetState(wireframeRS.Get());
+//		else			context->RSSetState(regularRS.Get());
+//		context->HSSetShader(hullShader.Get(), NULL, 0);
+//		context->DSSetShader(domainShader.Get(), NULL, 0);
+//		context->DSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
+//		context->HSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
+//
+//		//DRAW (AND CULL IF ENABLED)
+//		if (cullingIsEnabled)
+//		{
+//			int visibleDrawables = 0;
+//			for (const auto& drawable : m_quadTree.CheckTree(cam->GetFrustum()))
+//			{
+//				drawable->Bind(context.Get());
+//				visibleDrawables++;
+//			}
+//			drawablesBeingRendered = visibleDrawables;
+//		}
+//		else
+//		{
+//			for (auto& drawable : m_drawables)
+//			{
+//				drawable.Bind(context.Get());
+//			}
+//			drawablesBeingRendered = (int)m_drawables.size();
+//		}
+//
+//		//Pov drawables are never culled so we do this outside the if-else check
+//		for (auto& drawable : m_povDrawables)
+//		{
+//			drawable.Bind(context.Get());
+//		}
+//
+//		//UNBIND THINGS FOR SANITY REASONS
+//		context->VSSetShader(NULL, NULL, 0);
+//		context->PSSetShader(NULL, NULL, 0);
+//		context->HSSetShader(NULL, NULL, 0);
+//		context->DSSetShader(NULL, NULL, 0);
+//
+//		context->HSSetConstantBuffers(0, 0, NULL);
+//		context->DSSetConstantBuffers(0, 0, NULL);
+//
+//		ID3D11RenderTargetView* nullRTV = NULL;
+//		context->OMSetRenderTargets(1, &nullRTV, NULL);
+//
+//		ID3D11ShaderResourceView* nullSRVs[] = {NULL, NULL, NULL, NULL, NULL};
+//		context->PSSetShaderResources(0, 5, nullSRVs);
+//
+//		ID3D11SamplerState* nullSamplers[] = {NULL, NULL};
+//		context->PSSetSamplers(0, 2, nullSamplers);
+//	}
+//
+//	if (deferredIsEnabled)
+//	{
+//		DefPassTwo(cam); //Lighting pass, editing the backbuffer using a compute shader
+//	}
+//}
+
+void D3D11Engine::Render(ID3D11UnorderedAccessView* uav, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, Camera* cam, const float clear[4], UINT csX, UINT csY)
 {
 	/*Update buffers and camera frustum here*/
 	if (deferredIsEnabled)
 	{
-		DefPassOne(cam); //Does the same as what's in the else-statement, except to several rendertargets
+		DefPassOne(cam, dsv, viewport); //Does the same as what's in the else-statement, except to several rendertargets
 	}
 	else
 	{
 		// Clear the back buffer and depth stencil, as well as set viewport and render target (viewport only really needed to set after a resize, and that's disabled so uh)
-		context->ClearRenderTargetView(rtv, clear);
+		context->ClearRenderTargetView(rtv.Get(), clear);
 		context->ClearDepthStencilView(dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 		context->RSSetViewports(1, viewport);
-		context->OMSetRenderTargets(1, &rtv, dsv);
+		context->OMSetRenderTargets(1, rtv.GetAddressOf(), dsv); //or &rtv? we'll find out
 
 		//INPUT ASSEMBLER STAGE
 		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST); //farewell D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST
@@ -348,7 +401,7 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		context->VSSetShader(vertexShader.Get(), NULL, 0);
 		context->PSSetShader(pixelShader.Get(), NULL, 0);
 		context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
-		
+
 		//SHADOWS AND LIGHTING STUFF
 		ID3D11ShaderResourceView* shadowViews[] = { m_spotlights.GetStructuredBufferSRV() , m_spotlights.GetDepthBufferSRV() };
 		context->PSSetShaderResources(3, 2, shadowViews);
@@ -357,7 +410,7 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		context->PSSetSamplers(1, 1, &shadowSampler);
 
 		//TESSELLATION
-		if(lodIsEnabled)context->RSSetState(wireframeRS.Get());
+		if (lodIsEnabled)context->RSSetState(wireframeRS.Get());
 		else			context->RSSetState(regularRS.Get());
 		context->HSSetShader(hullShader.Get(), NULL, 0);
 		context->DSSetShader(domainShader.Get(), NULL, 0);
@@ -402,16 +455,16 @@ void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStenc
 		ID3D11RenderTargetView* nullRTV = NULL;
 		context->OMSetRenderTargets(1, &nullRTV, NULL);
 
-		ID3D11ShaderResourceView* nullSRVs[] = {NULL, NULL, NULL, NULL, NULL};
+		ID3D11ShaderResourceView* nullSRVs[] = { NULL, NULL, NULL, NULL, NULL };
 		context->PSSetShaderResources(0, 5, nullSRVs);
 
-		ID3D11SamplerState* nullSamplers[] = {NULL, NULL};
+		ID3D11SamplerState* nullSamplers[] = { NULL, NULL };
 		context->PSSetSamplers(0, 2, nullSamplers);
 	}
 
 	if (deferredIsEnabled)
 	{
-		DefPassTwo(cam); //Lighting pass, editing the backbuffer using a compute shader
+		DefPassTwo(cam, uav, csX, csY); //Lighting pass, editing the backbuffer using a compute shader
 	}
 }
 
@@ -458,10 +511,17 @@ void D3D11Engine::RenderParticles(Camera* cam)
 	//Unbind shader and constant buffer
 	context->CSSetShader(NULL, NULL, 0);
 	context->CSSetConstantBuffers(0, 0, NULL);
+
+	//Everything is unbound when we exit RenderParticles()
 }
 
-void D3D11Engine::RenderReflectiveObject(float dt)
+void D3D11Engine::RenderReflectiveObject(Camera* cam)
 {
+	//Uses deferred rendering via a "trick" where the pixel shader modifies the w-component and we check for it in the compute shader. 
+	//Check the previous version of the engine if you want to instead forward render the cube itself to an rtv (it's probably smarter than using shader hacks, tricky bugs to fix)
+		//If you're going to do that, keep having the views of the cube be deferred and pass in uav instead of rtv, but make the cube itself be forward renderred
+	//Alternatively: Try using a structured buffer like the particle system does, if you dare to try and git gud with shaders :)
+
 	//Exit out if there are no reflective objects
 	if (m_reflectiveDrawables.size() == 0)
 	{
@@ -470,13 +530,16 @@ void D3D11Engine::RenderReflectiveObject(float dt)
 
 	//Get the reflective object (This whole stuff is hardcoded right now but bear with me
 	const Drawable* cube = &m_reflectiveDrawables.at(0);
-	std::vector<const Drawable*> visibleDrawables = m_quadTree.CheckTree(m_camera->GetFrustum());
-	if(cullingIsEnabled && std::find(visibleDrawables.begin(), visibleDrawables.end(), cube) == visibleDrawables.end())
+	std::vector<const Drawable*> visibleDrawables = m_quadTree.CheckTree(cam->GetFrustum());
+	if (cullingIsEnabled && std::find(visibleDrawables.begin(), visibleDrawables.end(), cube) == visibleDrawables.end())
 	{
 		return;
 	}
 	else
 	{
+		//Get the cubemap resolutions x and y
+		UINT x = m_cubeMap.GetResolutionX();
+		UINT y = m_cubeMap.GetResolutionY();
 		for (int i = 0; i < 6; i++)
 		{
 			/*Cookbook notes
@@ -486,13 +549,11 @@ void D3D11Engine::RenderReflectiveObject(float dt)
 			Instead of the "normal" viewport, use the one associated with the reflective object's texture cube
 			Instead of the "normal" camera information, use the one associated with the texture cube side currently being processed
 			*/
-			//Transpose every 
-			Render(dt, m_cubeMap.GetRenderTargetViewAt(i), m_cubeMap.GetDepthStencilView(), m_cubeMap.GetViewport(), m_cubeMap.GetCameraAt(i), CLEAR_COLOR);
+			Render(m_cubeMap.GetUnorderedAccessViewAt(i), m_cubeMap.GetDepthStencilView(), m_cubeMap.GetViewport(), m_cubeMap.GetCameraAt(i), CLEAR_COLOR, x, y);
 		}
 
-		/*Copy the Render() function but remove stuff we're not interested in here*/
+		/*FIRST PASS*/
 		context->RSSetViewports(1, &viewport);
-		context->OMSetRenderTargets(1, rtv.GetAddressOf(), dsv.Get());
 
 		/*Input Assembler Stage*/
 		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST); //return of trianglelist, because we're just doing old-school vertex+pixel shader, no other fancy shaders
@@ -500,43 +561,58 @@ void D3D11Engine::RenderReflectiveObject(float dt)
 
 		/*Shader Stage*/
 		context->VSSetShader(m_cubeMap.GetVertexShader(), NULL, 0);
-		context->VSSetConstantBuffers(1, 1, m_camera->GetConstantBuffer().GetBufferAddress());
+		context->VSSetConstantBuffers(1, 1, cam->GetConstantBuffer().GetBufferAddress());
 
 		context->PSSetShader(m_cubeMap.GetPixelShader(), NULL, 0);
 		context->PSSetShaderResources(0, 1, m_cubeMap.GetShaderResourceViewAddress());
 		context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
-		context->PSSetConstantBuffers(0, 1, m_camera->GetConstantBuffer().GetBufferAddress());
+		context->PSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
+
+		//Clear and set rtv, only one buffer
+		context->ClearRenderTargetView(m_gBuffers[0].rtv.Get(), CLEAR_COLOR);
+		context->OMSetRenderTargets(1, m_gBuffers[0].rtv.GetAddressOf(), dsv.Get());
 
 		for (auto& drawable : m_reflectiveDrawables)
 		{
 			drawable.Bind(context.Get(), true);
 		}
 
-		/*Unbind shaders*/
+		/*UNBIND*/
 		//Vertex shader
 		context->VSSetShader(NULL, NULL, 0);
-		context->VSSetConstantBuffers(0, 0, NULL);
+		context->VSSetConstantBuffers(1, 0, NULL); //1, 0, NULL
 		//Pixel shader
 		context->PSSetShader(NULL, NULL, 0);
 		context->PSSetConstantBuffers(0, 0, NULL);
 		ID3D11ShaderResourceView* nullSRV = NULL;
-		context->PSSetShaderResources(0, 0, &nullSRV);
+		context->PSSetShaderResources(0, 1, &nullSRV); //&nullSRV
 		ID3D11SamplerState* nullSampler = NULL;
 		context->PSSetSamplers(0, 0, &nullSampler);
-
-		/*Unbind rtv*/
+		//RTV
 		ID3D11RenderTargetView* nullRTV = NULL;
 		context->OMSetRenderTargets(1, &nullRTV, NULL);
+
+
+		/*SECOND PASS*/
+		//BIND
+		context->CSSetShader(computeShaderCM.Get(), NULL, 0);
+		ID3D11ShaderResourceView* srv = m_gBuffers[0].srv.Get(); //Get the texture that we wrote to the rtv, using the srv, and pass it in to the compute shader
+		context->CSSetShaderResources(0, 1, &srv);
+		context->CSSetUnorderedAccessViews(0, 1, uav.GetAddressOf(), NULL);
+
+		//DISPATCH
+		context->Dispatch(m_windowWidth / NUMTHREADS, m_windowHeight / NUMTHREADS, 1); //Match the compute shader numthreads, [8, 8, 1]
+
+		//UNBIND
+		ID3D11UnorderedAccessView* nullUav = NULL;
+		context->CSSetUnorderedAccessViews(0, 1, &nullUav, NULL);
+		context->CSSetShader(NULL, NULL, 0);
+		context->CSSetShaderResources(0, 0, NULL);
 	}
 }
 
 void D3D11Engine::RenderDepth(float dt)
 {
-	/*
-	For future reference: If we want pov-stuff to cast shadows we gotta change VSSetShader to m_shadowMap.GetPovVertexShader() when rendering for all m_povDrawables
-	Probably do more shader stuff than that but I'm not the biggest shader fan, me C++
-	*/
-
 	/*Bind stuff*/
 	context->IASetInputLayout(inputLayout.Get());
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -558,31 +634,38 @@ void D3D11Engine::RenderDepth(float dt)
 		{
 			drawable.Bind(context.Get());
 		}
-	}
 
-	//Render pov drawable depth too
+		//Just slapping this in here (actually no I'm not lol, it works but it looks goofy since there isn't a character holding the gun it's just floating around xd)
+		/*for (auto& drawable : m_povDrawables)
+		{
+			drawable.Bind(context.Get());
+		}*/
+
+		context->VSSetConstantBuffers(1, 0, NULL); //unbind the camera cb
+	}
 
 	/*Unbind stuff*/
 	context->OMSetRenderTargets(0, NULL, NULL);
 	context->VSSetShader(NULL, NULL, 0);
-	context->VSSetConstantBuffers(0, 0, NULL);
+
+	//Everything is unbound when we exit the RenderDepth() function
 }
 
 /*DEFERRED RENDERING PASSES*/
-void D3D11Engine::DefPassOne(Camera* cam)
+void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport)
 {
 	//Deferred rendering splits rendering into 3 parts: A geometry pass, a draw pass, and a lighting pass
 
 	///////////////////////////////////////////////////////////////////////////////
 	//GEOMETRY PASS, FILL OUR GBUFFERS WITH DATA
+	context->ClearDepthStencilView(dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0.0f);
 	context->ClearRenderTargetView(m_gBuffers[0].rtv.Get(), CLEAR_COLOR);
 	context->ClearRenderTargetView(m_gBuffers[1].rtv.Get(), CLEAR_COLOR);
 	context->ClearRenderTargetView(m_gBuffers[2].rtv.Get(), CLEAR_COLOR);
 	context->ClearRenderTargetView(m_gBuffers[3].rtv.Get(), CLEAR_COLOR);
-	context->ClearDepthStencilView(dsv.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0.0f);
-	context->RSSetViewports(1, &viewport);
+	context->RSSetViewports(1, viewport);
 	ID3D11RenderTargetView* rtvArr[] = { m_gBuffers[0].rtv.Get(), m_gBuffers[1].rtv.Get(), m_gBuffers[2].rtv.Get(), m_gBuffers[3].rtv.Get() }; //Create an array of render target views and fill it with the rtv's from our gbuffers
-	context->OMSetRenderTargets(4, rtvArr, dsv.Get()); //When render targets are bound to the output merger (if I understand correctly), they are sent to the pixel shader where they get filled with data yes?
+	context->OMSetRenderTargets(4, rtvArr, dsv); //When render targets are bound to the output merger (if I understand correctly), they are sent to the pixel shader where they get filled with data yes?
 
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);
 	context->IASetInputLayout(inputLayout.Get());
@@ -628,31 +711,32 @@ void D3D11Engine::DefPassOne(Camera* cam)
 		drawable.Bind(context.Get());
 	}
 
-	//Now that we're done writing data to the render targets, unbind them
+	//Now that we're done writing data to the render targets, unbind them (4 because gbuffers)
 	ID3D11RenderTargetView* nullRTVs[] = { NULL, NULL, NULL, NULL };
 	context->OMSetRenderTargets(4, nullRTVs, NULL);
 
+	//VS and PS
 	context->VSSetShader(NULL, NULL, 0);
 	context->PSSetShader(NULL, NULL, 0);
-	context->HSSetShader(NULL, NULL, 0);
-	context->DSSetShader(NULL, NULL, 0);
-
-	context->HSSetConstantBuffers(0, 0, NULL);
-	context->DSSetConstantBuffers(0, 0, NULL);
-
-	ID3D11ShaderResourceView* nullSRVs[] = { NULL, NULL, NULL };
-	context->PSSetShaderResources(0, 3, nullSRVs);
-
 	ID3D11SamplerState* nullSamplers[] = { NULL };
 	context->PSSetSamplers(0, 1, nullSamplers);
+
+	//HS and DS
+	context->HSSetShader(NULL, NULL, 0);
+	context->DSSetShader(NULL, NULL, 0);
+	ID3D11Buffer* nullBuff[] = { NULL };
+	context->HSSetConstantBuffers(0, 1, nullBuff); //just have these as NULL, nothing changes no matter how much shit i re-write xd
+	context->DSSetConstantBuffers(0, 1, nullBuff);
+
+	//Everything is unbound when we exit DefPassOne()
 }
 
-void D3D11Engine::DefPassTwo(Camera* cam)
+void D3D11Engine::DefPassTwo(Camera* cam, ID3D11UnorderedAccessView* uav, UINT csX, UINT csY)
 {
 	///////////////////////////////////////////////////////////////////////////////
 	//LIGHTING PASS, USE COMPUTE SHADER TO EDIT THE BACKBUFFER AND DO LIGHTING COMPUTATIONS
-	ID3D11RenderTargetView* nullRtv = NULL;
-	context->OMSetRenderTargets(1, &nullRtv, NULL);
+	//ID3D11RenderTargetView* nullRtv = NULL;
+	//context->OMSetRenderTargets(1, &nullRtv, NULL);
 
 	context->CSSetShader(computeShader.Get(), NULL, 0);
 
@@ -665,9 +749,9 @@ void D3D11Engine::DefPassTwo(Camera* cam)
 	context->CSSetSamplers(0, 1, &shadowSampler);
 
 	//Use unordered access view to edit the backbuffer
-	context->ClearUnorderedAccessViewFloat(uav.Get(), CLEAR_COLOR);
-	context->CSSetUnorderedAccessViews(0, 1, uav.GetAddressOf(), NULL); //Last value matters in case of "append consume" buffers, but I've only heard of that, I've *no idea* what it means
-	context->Dispatch(m_windowWidth / 8, m_windowHeight / 8, 1);		//In order to make our Dispatch cover the entire window, we group threads by the width and height of the 
+	context->ClearUnorderedAccessViewFloat(uav, CLEAR_COLOR);
+	context->CSSetUnorderedAccessViews(0, 1, &uav, NULL);		//Last value matters in case of "append consume" buffers, but I've only heard of that, I've *no idea* what it means
+	context->Dispatch(csX / NUMTHREADS, csY / NUMTHREADS, 1);	//In order to make our Dispatch cover the entire window, we group threads by the width and height of the 
 	//window divided by 8 (as 8x8 is defined in compute shader)
 
 	//UNBIND
@@ -678,8 +762,44 @@ void D3D11Engine::DefPassTwo(Camera* cam)
 	ID3D11ShaderResourceView* nullSRVs[] = { NULL, NULL, NULL, NULL, NULL, NULL };
 	context->CSSetShaderResources(0, 6, nullSRVs);
 	ID3D11SamplerState* nullSamplers[] = { NULL };
-	context->PSSetSamplers(0, 1, nullSamplers);
+	context->CSSetSamplers(0, 1, nullSamplers); //old bug spotted, I've been doing PSSetSamplers this whole time (hasn't caused any noticeable issues but not proper unbind)
+
+	//Everything is unbound when we exit DefPassTwo()
 }
+
+//void D3D11Engine::DefPassTwo(Camera* cam)
+//{
+//	///////////////////////////////////////////////////////////////////////////////
+//	//LIGHTING PASS, USE COMPUTE SHADER TO EDIT THE BACKBUFFER AND DO LIGHTING COMPUTATIONS
+//	ID3D11RenderTargetView* nullRtv = NULL;
+//	context->OMSetRenderTargets(1, &nullRtv, NULL);
+//
+//	context->CSSetShader(computeShader.Get(), NULL, 0);
+//
+//	ID3D11ShaderResourceView* srvArr[] = { m_gBuffers[0].srv.Get(), m_gBuffers[1].srv.Get(), m_gBuffers[2].srv.Get(), m_gBuffers[3].srv.Get(),
+//	 m_spotlights.GetStructuredBufferSRV() , m_spotlights.GetDepthBufferSRV() }; //shadows
+//	context->CSSetShaderResources(0, 6, srvArr);
+//
+//	context->CSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
+//	ID3D11SamplerState* shadowSampler = m_shadowMap.GetSampler();
+//	context->CSSetSamplers(0, 1, &shadowSampler);
+//
+//	//Use unordered access view to edit the backbuffer
+//	context->ClearUnorderedAccessViewFloat(uav.Get(), CLEAR_COLOR);
+//	context->CSSetUnorderedAccessViews(0, 1, uav.GetAddressOf(), NULL); //Last value matters in case of "append consume" buffers, but I've only heard of that, I've *no idea* what it means
+//	context->Dispatch(m_windowWidth / 8, m_windowHeight / 8, 1);		//In order to make our Dispatch cover the entire window, we group threads by the width and height of the 
+//	//window divided by 8 (as 8x8 is defined in compute shader)
+//
+//	//UNBIND
+//	context->CSSetShader(NULL, NULL, 0);
+//	context->CSSetConstantBuffers(0, 0, NULL);
+//	ID3D11UnorderedAccessView* nullUav = NULL;
+//	context->CSSetUnorderedAccessViews(0, 1, &nullUav, NULL);
+//	ID3D11ShaderResourceView* nullSRVs[] = { NULL, NULL, NULL, NULL, NULL, NULL };
+//	context->CSSetShaderResources(0, 6, nullSRVs);
+//	ID3D11SamplerState* nullSamplers[] = { NULL };
+//	context->PSSetSamplers(0, 1, nullSamplers);
+//}
 
 /*INITIALIZERS FOR DIRECTX STUFF*/
 void D3D11Engine::InitRasterizerStates()
@@ -735,8 +855,8 @@ void D3D11Engine::InitInterfaces(const HWND& window)
 	*/
 	DXGI_SWAP_CHAIN_DESC desc;
 	ZeroMemory(&desc, sizeof(desc));
-	desc.BufferDesc.Width = 0;
-	desc.BufferDesc.Height = 0;
+	desc.BufferDesc.Width = 0;	//window width?
+	desc.BufferDesc.Height = 0; //window height???
 	desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; //DXGI_FORMAT_B8G8R8A8_UNORM;
 	desc.BufferDesc.RefreshRate.Numerator = 0;
 	desc.BufferDesc.RefreshRate.Denominator = 1; //previously 0
@@ -855,44 +975,53 @@ void D3D11Engine::InitShadersAndInputLayout()
 {
 	HRESULT hr;
 	Microsoft::WRL::ComPtr<ID3DBlob> 
-		vsBlob, psBlob, errorBlob,
-		dpsBlob, csBlob,			//Deferred
-		hsBlob, dsBlob, dspBlob,	//Tessellation (new: dspBlob for pov domain shader)
-		pspBlob;					//new: pspBlob for pov pixel shader
+		vsBlob, psBlob, errorBlob,	//Vertex Shader, Pixel Shader (specifically for forward rendering), Error Catcher (which I don't even use but hey, I *can*)
+		dpsBlob, csBlob,			//Deferred (Pixel Shader, Compute Shader)
+		hsBlob, dsBlob,				//Tessellation (Hull Shader, Domain Shader)
+		cscBlob;					//Cubemap (Compute Shader)
 
 	/****************************
 	//////READ SHADER FILES//////
 	****************************/
+	//Vertex shader
 	hr = D3DReadFileToBlob(L"../x64/Debug/VertexShader.cso", &vsBlob);
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to read vertex shader!", L"Error", MB_OK);
 	}
+	//Forward pixel shader
 	hr = D3DReadFileToBlob(L"../x64/Debug/PixelShader.cso", &psBlob);
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to read pixel shader!", L"Error", MB_OK);
 	}
+	//Deferred pixel shader
 	hr = D3DReadFileToBlob(L"../x64/Debug/DeferredPixelShader.cso", &dpsBlob);
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to read deferred pixel shader!", L"Error", MB_OK);
 	}
-
+	//Deferred compute shader
 	hr = D3DCompileFromFile(L"ComputeShader.hlsl", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "cs_5_0", D3DCOMPILE_DEBUG, 0, &csBlob, &errorBlob);
-
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to read compute shader!", L"Error", MB_OK);
 		return;
 	}
-
+	//Cubemap compute shader (not quite accurate name, but it's currently only being used to render the cubemap cube)
+	hr = D3DCompileFromFile(L"CubeMapComputeShader.hlsl", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "cs_5_0", D3DCOMPILE_DEBUG, 0, &cscBlob, &errorBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read cube map compute shader!", L"Error", MB_OK);
+		return;
+	}
+	//Hull shader
 	hr = D3DReadFileToBlob(L"../x64/Debug/HullShader.cso", &hsBlob);
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to read hull shader!", L"Error", MB_OK);
 	}
-
+	//Domain shader
 	hr = D3DReadFileToBlob(L"../x64/Debug/DomainShader.cso", &dsBlob);
 	if (FAILED(hr))
 	{
@@ -902,36 +1031,49 @@ void D3D11Engine::InitShadersAndInputLayout()
 	/****************************
 	//CREATE SHADERS FROM FILES//
 	****************************/
+	//Vertex shader
 	hr = device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), NULL, &vertexShader);
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create vertex shader!", L"Error", MB_OK);
 		return;
 	}
+	//Forward pixel shader
 	hr = device->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(), NULL, &pixelShader);
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create pixel shader!", L"Error", MB_OK);
 		return;
 	}
+	//Deferred pixel shader
 	hr = device->CreatePixelShader(dpsBlob->GetBufferPointer(), dpsBlob->GetBufferSize(), NULL, &deferredPixelShader);
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create deferred pixel shader!", L"Error", MB_OK);
 		return;
 	}
+	//Deferred compute shader
 	hr = device->CreateComputeShader(csBlob->GetBufferPointer(), csBlob->GetBufferSize(), NULL, &computeShader);
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create compute shader!", L"Error", MB_OK);
 		return;
 	}
+	//Cubemap compute shader
+	hr = device->CreateComputeShader(cscBlob->GetBufferPointer(), cscBlob->GetBufferSize(), NULL, &computeShaderCM);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create cube map compute shader!", L"Error", MB_OK);
+		return;
+	}
+	//Hull shader
 	hr = device->CreateHullShader(hsBlob->GetBufferPointer(), hsBlob->GetBufferSize(), NULL, &hullShader);
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create hull shader!", L"Error", MB_OK);
 		return;
 	}
+	//Domain shader
 	hr = device->CreateDomainShader(dsBlob->GetBufferPointer(), dsBlob->GetBufferSize(), NULL, &domainShader);
 	if (FAILED(hr))
 	{
@@ -971,11 +1113,22 @@ void D3D11Engine::InitUAV()
 		MessageBox(NULL, L"Failed to get backbuffer!", L"Error", MB_OK);
 	}
 
-	hr = device->CreateUnorderedAccessView(backBuffer.Get(), NULL, uav.GetAddressOf());
+	//I haven't been setting up descriptors for uav or anything????? (not that it mattered xd)
+	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
+	ZeroMemory(&uavDesc, sizeof(uavDesc));
+	uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+	uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2DARRAY;
+	uavDesc.Texture2DArray.ArraySize = 1;
+	uavDesc.Texture2DArray.FirstArraySlice = 0;
+	uavDesc.Texture2DArray.MipSlice = 0;
+
+	hr = device->CreateUnorderedAccessView(backBuffer.Get(), &uavDesc, &uav); //&uavDesc was previously NULL (I think I &uav here instead of uav.GetAddressOf())
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create unordered access view!", L"Error", MB_OK);
 	}
+
+	//backBuffer is automatically released since it's wrapped in a ComPtr
 }
 
 void D3D11Engine::InitGraphicsBuffer(GBuffer(&gbuf)[4])

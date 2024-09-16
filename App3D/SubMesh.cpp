@@ -22,13 +22,26 @@ void SubMesh::Bind(ID3D11DeviceContext* context, bool isReflective) const
 	{
 		ID3D11ShaderResourceView* views[] = { ambientSRV.Get(), diffuseSRV.Get(), specularSRV.Get() };
 		context->PSSetShaderResources(0, 3, views);
+
+		context->PSSetConstantBuffers(1, 1, m_constantBufferShininess.GetBufferAddress());
 	}
 
 	//Shine cb
-	context->PSSetConstantBuffers(1, 1, m_constantBufferShininess.GetBufferAddress());
+	//context->PSSetConstantBuffers(1, 1, m_constantBufferShininess.GetBufferAddress());
 }
 
 void SubMesh::Draw(ID3D11DeviceContext* context) const
 {
 	context->DrawIndexed(m_indexCount, m_startIndex, 0);
+}
+
+void SubMesh::Unbind(ID3D11DeviceContext* context, bool isReflective) const
+{
+	if (!isReflective)
+	{
+		ID3D11ShaderResourceView* views[] = { NULL, NULL, NULL };
+		context->PSSetShaderResources(0, 3, views);
+	}
+
+	context->PSSetConstantBuffers(1, 0, NULL); //Probably not that important but ah
 }

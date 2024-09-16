@@ -69,12 +69,14 @@ private:
 
 	/*PRIVATE FUNCTIONS*/
 	/*Render functions*/
-	void Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, Camera* cam, const float clear[4]);
+	//void Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, Camera* cam, const float clear[4]);
+	void Render(ID3D11UnorderedAccessView* uav, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, Camera* cam, const float clear[4], UINT csX, UINT csY);
 	void RenderParticles(Camera* cam);
-	void RenderReflectiveObject(float dt);
+	void RenderReflectiveObject(Camera* cam);
 	void RenderDepth(float dt);
-	void DefPassOne(Camera* cam);
-	void DefPassTwo(Camera* cam);
+	void DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport);
+	//void DefPassTwo(Camera* cam);
+	void DefPassTwo(Camera* cam, ID3D11UnorderedAccessView* uav, UINT csX, UINT csY);
 
 	/*Initializers because this constructor would be HUGE otherwise*/
 	//"Regular" stuff
@@ -121,7 +123,7 @@ private:
 	bool deferredIsEnabled = true;
 	bool cullingIsEnabled = false;
 	bool billboardingIsEnabled = false;
-	bool cubemapIsEnabled = false;
+	bool cubemapIsEnabled = true;
 	bool lodIsEnabled = false;
 	int drawablesBeingRendered = 0;
 	int selectableDrawables = 0;
@@ -158,6 +160,7 @@ private:
 	//Deferred rendering
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> deferredPixelShader;
 	Microsoft::WRL::ComPtr<ID3D11ComputeShader> computeShader;
+	Microsoft::WRL::ComPtr<ID3D11ComputeShader> computeShaderCM; //new: cubemap gets its own compute shader
 	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> uav;
 
 	//Tessellation

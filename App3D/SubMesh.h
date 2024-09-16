@@ -15,6 +15,7 @@ public:
 
 	void Bind(ID3D11DeviceContext* context, bool isReflective) const;
 	void Draw(ID3D11DeviceContext* context) const;
+	void Unbind(ID3D11DeviceContext* context, bool isReflective = false) const;
 
 private:
 	__declspec(align(16)) struct ShininessCB

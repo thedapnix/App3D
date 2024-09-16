@@ -20,7 +20,6 @@ Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOA
 		data.iData.count,
 		(uint32_t*)(data.iData.vector.data()));
 
-	//Quoted stackoverflow answer to the question on which order we do world matrix multiplications: "Usually it is scale, then rotation and lastly translation."
 	m_scale = scaling;
 	m_rotate = rotation;
 	m_translate = translation;
@@ -62,46 +61,15 @@ void Drawable::Bind(ID3D11DeviceContext* context, bool isReflective) const
 		{
 			m_submeshes.at(i).Bind(context, isReflective);
 			m_submeshes.at(i).Draw(context);
+			m_submeshes.at(i).Unbind(context, isReflective);
 		}
+		context->VSSetConstantBuffers(0, 0, NULL);
 	}
-}
-
-void Drawable::BindPov(ID3D11DeviceContext* context, bool isReflective) const
-{
-	if (m_drawableInfo.isActive)
-	{
-		//Buffers
-		context->VSSetConstantBuffers(0, 1, m_constantBuffer.GetBufferAddress());
-
-		ID3D11Buffer* buffer[] = { m_vertexBuffer.GetBuffer() };
-		UINT stride = m_vertexBuffer.GetVertexSize();
-		UINT offset = 0;
-		context->IASetVertexBuffers(0, 1, buffer, &stride, &offset);
-
-		context->IASetIndexBuffer(m_indexBuffer.GetBuffer(), DXGI_FORMAT_R32_UINT, 0);
-
-		for (int i = 0; i < m_submeshes.size(); i++)
-		{
-			m_submeshes.at(i).Bind(context, isReflective);
-			m_submeshes.at(i).Draw(context);
-		}
-	}
-}
-
-void Drawable::Draw(ID3D11DeviceContext* context, UINT index) const
-{
-	m_submeshes.at(index).Draw(context);
-}
-
-void Drawable::Unbind(ID3D11DeviceContext* context)
-{
-	ID3D11ShaderResourceView* nullSRV = NULL;
-	context->PSSetShaderResources(0, 1, &nullSRV);
 }
 
 void Drawable::UpdateConstantBuffer(ID3D11DeviceContext* context, bool orbits, Camera* camera)
 {
-	//Calculate transform and then transpose
+	//Calculate transform (might have been altered during frame) and then transpose before sending to shaders
 	CalculateAndTransposeWorld(orbits, camera);
 
 	D3D11_MAPPED_SUBRESOURCE mapped = {};												//Set up the new srtData for the resource, zero the memory
@@ -121,19 +89,13 @@ void Drawable::SetPosition(float x, float y, float z)
 	m_translate.x = x;
 	m_translate.y = y;
 	m_translate.z = z;
-	/*DirectX::XMStoreFloat4x4(&m_transform.translate, DirectX::XMMatrixTranspose(
-		DirectX::XMMatrixTranslation(m_translate.x, m_translate.y, m_translate.z)
-	));*/
 }
 
-void Drawable::EditTranslation(float x, float y, float z)
+void Drawable::Move(float x, float y, float z)
 {
 	m_translate.x += x;
 	m_translate.y += y;
 	m_translate.z += z;
-	/*DirectX::XMStoreFloat4x4(&m_transform.translate, DirectX::XMMatrixTranspose(
-		DirectX::XMMatrixTranslation(m_translate.x, m_translate.y, m_translate.z)
-	));*/
 }
 
 void Drawable::SetRotation(float angleX, float angleY, float angleZ)
@@ -141,9 +103,6 @@ void Drawable::SetRotation(float angleX, float angleY, float angleZ)
 	m_rotate.x = angleX;
 	m_rotate.y = angleY;
 	m_rotate.z = angleZ;
-	/*DirectX::XMStoreFloat4x4(&m_transform.rotate, DirectX::XMMatrixTranspose(
-		DirectX::XMMatrixRotationX(m_rotate.x) * DirectX::XMMatrixRotationY(m_rotate.y) * DirectX::XMMatrixRotationZ(m_rotate.z)
-	));*/
 }
 
 void Drawable::Rotate(float angleX, float angleY, float angleZ)
@@ -151,9 +110,6 @@ void Drawable::Rotate(float angleX, float angleY, float angleZ)
 	m_rotate.x += angleX;
 	m_rotate.y += angleY;
 	m_rotate.z += angleZ;
-	/*DirectX::XMStoreFloat4x4(&m_transform.rotate, DirectX::XMMatrixTranspose(
-		DirectX::XMMatrixRotationX(m_rotate.x) * DirectX::XMMatrixRotationY(m_rotate.y) * DirectX::XMMatrixRotationZ(m_rotate.z)
-	));*/
 }
 
 const DirectX::XMFLOAT3& Drawable::GetPosition() const
@@ -216,8 +172,13 @@ void Drawable::Destroy()
 
 void Drawable::CalculateAndTransposeWorld(bool orbits, Camera* camera)
 {
+	//World transform differs depending on if its rotation is supposed to be around its own axis, rolling around another objects axis, or orbitting another object with an offset
+
+	//"Normally"	->	scale * rotate * translate
+	//"Rolling"		->	scale * translate * rotate
+	//"Orbiting"	->	scale * selfTranslate * otherRotate * otherTranslate
 	DirectX::XMMATRIX world;
-	if (!orbits)
+	if (!orbits) //"normal" world transform
 	{
 		world =
 			DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z) *
@@ -227,7 +188,7 @@ void Drawable::CalculateAndTransposeWorld(bool orbits, Camera* camera)
 	}
 	else
 	{
-		if (camera == nullptr)
+		if (camera == nullptr) //Dirty assumption for now: If we're not passing in the pointer to a camera that we're supposed to orbit, we do the "rolling" world transform
 		{
 			world =
 				DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z) *
@@ -235,9 +196,8 @@ void Drawable::CalculateAndTransposeWorld(bool orbits, Camera* camera)
 				(DirectX::XMMatrixRotationX(m_rotate.x) * DirectX::XMMatrixRotationY(m_rotate.y) * DirectX::XMMatrixRotationZ(m_rotate.z))
 				;
 		}
-		else //Orbit around the camera, needs to take in its position
+		else //"orbiting" world transform
 		{
-			//Scale * objectTranslate * rotate * cameraTranslate
 			world =
 				DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z) *
 				DirectX::XMMatrixTranslation(m_translate.x, m_translate.y, m_translate.z) *
@@ -247,6 +207,7 @@ void Drawable::CalculateAndTransposeWorld(bool orbits, Camera* camera)
 		}
 	}
 	
+	//We only ever call this function before we're about to enter Render()-function, so we transpose the world-matrix before passing it to shaders
 	world = DirectX::XMMatrixTranspose(world);
 	DirectX::XMStoreFloat4x4(&m_transform.world, world);
 }

@@ -328,5 +328,8 @@
     <FxCompile Include="DeferredPixelShader.hlsl">
       <Filter>Resource Files</Filter>
     </FxCompile>
+    <FxCompile Include="CubeMapComputeShader.hlsl">
+      <Filter>Resource Files\Cubemap Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

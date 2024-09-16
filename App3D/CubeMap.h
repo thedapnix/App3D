@@ -15,7 +15,7 @@ This is not strictly necessary however, and adjustments to get a more desirable 
 
 class CubeMap
 {
-private: //Will this need to be public? We'll find out
+private:
 	class CubeMapView //The view of every virtual camera
 	{
 	public:
@@ -23,12 +23,14 @@ private: //Will this need to be public? We'll find out
 		CubeMapView(ID3D11Device* device, UINT width, UINT height, bool hasSRV);
 		~CubeMapView() = default;
 
-		ID3D11RenderTargetView* GetRenderTargetViewAt(int index) { return rtvs.at(index).Get(); }
+		//ID3D11RenderTargetView* GetRenderTargetViewAt(int index) { return rtvs.at(index).Get(); }
+		ID3D11UnorderedAccessView* GetUnorderedAccessViewAt(int index) { return uavs.at(index).Get(); }
 		ID3D11ShaderResourceView* const *GetShaderResourceViewAddress() { return srv.GetAddressOf(); }
 		ID3D11ShaderResourceView* GetShaderResourceView() { return srv.Get(); }
 	private:
 		Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
-		std::vector<Microsoft::WRL::ComPtr<ID3D11RenderTargetView>> rtvs;
+		//std::vector<Microsoft::WRL::ComPtr<ID3D11RenderTargetView>> rtvs;
+		std::vector<Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView>> uavs;
 		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv;
 	};
 public:
@@ -36,7 +38,8 @@ public:
 	CubeMap(ID3D11Device* device, bool hasSRV, DirectX::XMFLOAT3 pos);
 	~CubeMap() = default;
 
-	ID3D11RenderTargetView* GetRenderTargetViewAt(int index);
+	//ID3D11RenderTargetView* GetRenderTargetViewAt(int index);
+	ID3D11UnorderedAccessView* GetUnorderedAccessViewAt(int index);
 	ID3D11DepthStencilView* GetDepthStencilView();
 	D3D11_VIEWPORT* GetViewport();
 	Camera* GetCameraAt(int index);
@@ -44,6 +47,8 @@ public:
 	ID3D11PixelShader* GetPixelShader();
 	ID3D11ShaderResourceView* const *GetShaderResourceViewAddress();
 	ID3D11ShaderResourceView* GetShaderResourceView();
+	UINT GetResolutionX();
+	UINT GetResolutionY();
 
 private:
 	//Note the comment in CubeMapView constructor: "Texture cube is 6 textures combined in a cubic pattern, where we let indices 0-1 be positive and negative X, 2-3 be Y, 4-5 be Z"

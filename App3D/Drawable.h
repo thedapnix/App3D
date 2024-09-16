@@ -116,16 +116,13 @@ public:
 	Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOAT3 scaling, DirectX::XMFLOAT3 rotation, DirectX::XMFLOAT3 translation, int interact, std::vector<int> interactsWith);
 	~Drawable() = default;
 
-	void Bind(ID3D11DeviceContext* context, bool isReflective = false) const;
-	void BindPov(ID3D11DeviceContext* context, bool isReflective = false) const;
-	void Draw(ID3D11DeviceContext* context, UINT index) const;
-	void Unbind(ID3D11DeviceContext* context);
+	void Bind(ID3D11DeviceContext* context, bool isReflective = false) const; //More like Bind, Draw, and Unbind, but hey
 	void UpdateConstantBuffer(ID3D11DeviceContext* context, bool orbits = false, Camera* camera = nullptr);
 	void CreateBoundingBoxFromPoints(DirectX::XMVECTOR min, DirectX::XMVECTOR max);
 
 	//Movement stuff
 	void SetPosition(float x, float y, float z);
-	void EditTranslation(float x, float y, float z);
+	void Move(float x, float y, float z);
 	void SetRotation(float angleX, float angleY, float angleZ);
 	void Rotate(float angleX, float angleY, float angleZ);
 
@@ -151,11 +148,6 @@ public:
 private:
 	__declspec(align(16)) struct WorldTransform
 	{
-		/*DirectX::XMFLOAT4X4 scale;
-		DirectX::XMFLOAT4X4 rotate;
-		DirectX::XMFLOAT4X4 translate;
-
-		bool willOrbit;*/ //Most of the time, we multiply scale * rotate * translate. HOWEVER, if something is supposed to orbit around something else, translate BEFORE rotation
 		DirectX::XMFLOAT4X4 world;
 	};
 	__declspec(align(16)) struct ShininessCB
@@ -169,7 +161,7 @@ private:
 	ShininessCB m_shineCB;
 	ConstantBuffer m_constantBuffer;
 	ConstantBuffer m_constantBufferShininess;
-	ConstantBuffer m_constantBufferPov; //new
+	//ConstantBuffer m_constantBufferPov; //new
 	void CalculateAndTransposeWorld(bool orbits = false, Camera* camera = nullptr);
 
 	std::vector<SubMesh> m_submeshes;

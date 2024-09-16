@@ -1,22 +1,32 @@
-# Blender 4.2.1 LTS MTL File: 'None'
+# Blender 4.2.1 LTS MTL File: 'untitled.blend'
 # www.blender.org
 
 newmtl Material
 Ns 250.000000
-Ka 1.000000 1.000000 1.000000
-Kd 0.800000 0.800000 0.800000
-Ks 0.500000 0.500000 0.500000
-Ke 0.000000 0.000000 0.000000
+Ka light_grey.png
+Kd light_grey.png
+Ks light_grey.png
+Ke light_grey.png
 Ni 1.450000
 d 1.000000
 illum 2
 
-newmtl Material.001
+newmtl Material2
 Ns 250.000000
-Ka 1.000000 1.000000 1.000000
-Kd 0.800000 0.800000 0.800000
-Ks 0.500000 0.500000 0.500000
-Ke 0.000000 0.000000 0.000000
+Ka grey.png
+Kd grey.png
+Ks grey.png
+Ke grey.png
 Ni 1.450000
+d 1.000000
+illum 2
+
+newmtl Material3
+Ns 250.000000
+Ka dark_grey.png
+Kd dark_grey.png
+Ks dark_grey.png
+Ke dark_grey.png
+Ni 1.500000
 d 1.000000
 illum 2
