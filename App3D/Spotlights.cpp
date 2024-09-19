@@ -14,6 +14,8 @@ SpotLights::SpotLights(ID3D11Device* device, const std::vector<LightData>& light
 		float upRotation = lights.at(i).rotY;
 		float rightRotation = lights.at(i).rotX;
 
+		//if(lights.at(i).rad != 0.0f) //Point light, we don't set up a camera and give it a direction (useful for shadows cast by light being sent in one direction, but should a point-light instead have 4 virtual cameras to calculate shadows? that's rough)
+
 		//Create virtual camera with the data we have
 		m_cameras.push_back(Camera());
 		m_cameras.at(i).SetPosition(lights.at(i).pos);
@@ -33,6 +35,7 @@ SpotLights::SpotLights(ID3D11Device* device, const std::vector<LightData>& light
 		buf.rotation.x = lights.at(i).rotX;
 		buf.rotation.y = lights.at(i).rotY;
 		buf.fov = fovY;
+		buf.rad = lights.at(i).rad;
 		m_lightBuffers.push_back(buf);
 	}
 	

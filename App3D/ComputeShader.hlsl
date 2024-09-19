@@ -25,6 +25,9 @@ struct SpotLight
     float2 rotation;
     
     float fov;
+    float rad;
+    
+    float3 padding; //Padding my beloved :))))))
 };
 
 StructuredBuffer<SpotLight> spotlights : register(t4);
@@ -49,6 +52,8 @@ void main(uint3 DTid : SV_DispatchThreadID) //So the DTid is the index of the sp
     spotlights.GetDimensions(count, stride);
     for (int i = 0; i < count; i++)
     {
+        //Since shadow cameras look in a specific direction, they're not compatible with point lights. Potentially I could make point lights have 4 shadow cameras but not right now
+        bool isPointLight = false; //new: temp to disable shadows with point lights
         bool isInShadow = false;
         float4 ndcPos = mul(position, spotlights[i].view);
         ndcPos = mul(ndcPos, spotlights[i].proj);
@@ -63,13 +68,13 @@ void main(uint3 DTid : SV_DispatchThreadID) //So the DTid is the index of the sp
         }
         
         float3 L = 0;
-        float attenuation = 1.0f;
+        float attenuation = 1.0f; //Set this to 0.25f instead of setting the color weaker on the C++ side? Should have the same effect, but move work from CPU to GPU
         
-        if (spotlights[i].fov != 0.0f)
+        if (spotlights[i].fov != 0.0f) //Spotlight
         {
             L = spotlights[i].origin - position.xyz;
             float dist = length(L);
-            attenuation = max(0.0f, 1.0f - (dist / 40.0f));
+            attenuation = max(0.0f, 1.0f - (dist / 40.0f)); //40.0f represents the range of the spotlight, consider passing this in from the structured buffer, hence letting spotlights pass in their range and point lights pass in their radius?
             L /= dist;
             
             float outerCone = cos(spotlights[i].fov / 2.0f);
@@ -79,7 +84,22 @@ void main(uint3 DTid : SV_DispatchThreadID) //So the DTid is the index of the sp
         }
         else
         {
-            L = -spotlights[i].direction;
+            if(spotlights[i].rad == 0.0f) //Directional light
+            {
+                L = -spotlights[i].direction;
+            }
+            else //Point light
+            {
+                isPointLight = true;
+                //Same as with spotlights, get vector from light to pixel
+                L = spotlights[i].origin - position.xyz;
+                float dist = length(L); //Get distance of vector
+                
+                //Calculate attenuation using 2 * pi * rad instead of using a cone with a certain reach and fov? (nah just use radius and ignore shadow calcs)
+                attenuation = max(0.0f, 1.0f - (dist / spotlights[i].rad));
+                
+                L /= dist; //Normalize vector
+            }
         }
 
         float nDotL = saturate(dot(normal, L));
@@ -90,7 +110,7 @@ void main(uint3 DTid : SV_DispatchThreadID) //So the DTid is the index of the sp
         float3 H = normalize(L + V);
         float3 specular = pow(saturate(dot(normal, H)), shininess) * spotlights[i].colour * specularAlbedo * nDotL; //removed: saturate
         
-        if (!isInShadow)
+        if (!isInShadow || isPointLight) //|| isPointLight
         {
             finalColour += (diffuse + specular) * attenuation;
         }

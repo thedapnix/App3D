@@ -11,6 +11,7 @@ struct LightData
 	float rotX = 0.0f;
 	float rotY = 0.0f;
 	float fovY = 0.0f;
+	float rad = 0.0f; //new
 };
 
 __declspec(align(16)) struct LightBuffer
@@ -25,7 +26,8 @@ __declspec(align(16)) struct LightBuffer
 
 	DirectX::XMFLOAT2 rotation;
 
-	float fov;
+	float fov; //Check against this in shaders. if fov is greater than 0, it's a spotlight, otherwise it's a directional light
+	float rad; //New: If fov is 0, also check to see if radius is greater than 0. In that case, it's a point light
 };
 
 class SpotLights

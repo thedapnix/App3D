@@ -137,6 +137,8 @@ public:
 	DrawableInfo& GetDrawableInfo();
 	void RemoveInteraction();
 	bool IsActive() const;
+	void SetReflective();
+	bool IsReflective() const;
 	void Destroy();
 
 	//Magic
@@ -181,4 +183,5 @@ private:
 	void* m_vertexVectorData;
 
 	DrawableInfo m_drawableInfo;
+	bool m_isReflective; //Need to access this when we do culling with cubemaps
 };

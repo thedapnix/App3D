@@ -165,6 +165,16 @@ bool Drawable::IsActive() const
 	return m_drawableInfo.isActive;
 }
 
+void Drawable::SetReflective()
+{
+	m_isReflective = true;
+}
+
+bool Drawable::IsReflective() const
+{
+	return m_isReflective;
+}
+
 void Drawable::Destroy()
 {
 	m_drawableInfo.isActive = false;

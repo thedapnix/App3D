@@ -1,8 +1,9 @@
 #include "CubeMap.h"
 #include <d3dcompiler.h>
 
-#define RESOLUTION_X 1024 //probably don't have to define both since i'm doing cubes but who knows later on huh
-#define RESOLUTION_Y 1024 //anyway, feel free to raise these if you want higher resolution reflections. just mind the hit to performance
+//Needs to be evenly divisible by 64, and not be larger than the dimensions of the window (in our case 1024, 768)
+#define RESOLUTION_X 704 //probably don't have to define both huh
+#define RESOLUTION_Y 704
 
 CubeMap::CubeMapView::CubeMapView(ID3D11Device* device, UINT width, UINT height, bool hasSRV)
 {
@@ -109,19 +110,17 @@ CubeMap::CubeMap(ID3D11Device* device, bool hasSRV, DirectX::XMFLOAT3 pos)
 
 	/*Create depth buffer and set viewport dimensions, both of these are supposed to match the size of a texture cube side. How do I get that? No clue. Set some arbitrary value for now*/
 	//Rather than width and height, these values represent the resolution of our reflections. The current reflections are pretty jagged, but bumping these up makes them look better
-	UINT cubeWidth = RESOLUTION_X;
-	UINT cubeHeight = RESOLUTION_Y;
 	InitDepthBuffer(device, 1024, 768); //Depth buffer shouldn't be cube dimensions, they should be screen, but don't worry, it won't fix anything :)
 
-	viewport.Width = cubeWidth;
-	viewport.Height = cubeHeight;
+	viewport.Width = RESOLUTION_X;
+	viewport.Height = RESOLUTION_Y;
 	viewport.MinDepth = 0;
 	viewport.MaxDepth = 1;
 	viewport.TopLeftX = 0;
 	viewport.TopLeftY = 0;
 
 	//Create the thing that stores what the cube side will be reflecting
-	m_cubeMapView = CubeMapView(device, cubeWidth, cubeHeight, hasSRV);
+	m_cubeMapView = CubeMapView(device, RESOLUTION_X, RESOLUTION_Y, hasSRV);
 
 	//
 	InitShaders(device);

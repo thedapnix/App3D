@@ -5,6 +5,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 
 #include "LevelSetup.h"
 
+//Offsets from the camera position to the pov-gun, remains constant as it will always follow the camera using matrix magic
 #define POV_OFFSET_X -1.00f
 #define POV_OFFSET_Y -1.10f
 #define POV_OFFSET_Z  1.75f
@@ -95,33 +96,53 @@ void App::DisableCursor()
     HideCursor();
 }
 
+void App::ContainCursor(bool clip)
+{
+    //Plain and simple?
+    if (!clip)
+    {
+        ClipCursor(NULL);
+        return;
+    }
+
+    //Setup an area that we want to confine the cursor within
+    RECT newRect;
+
+    //if (m_windowIsDirty) //If we've moved the window, move the rect to align with it
+    //{
+        //GetWindowRect(m_hwnd, &newRect);
+    //}
+    //else //Otherwise, just set it to be the previous values
+    //{
+        //newRect = m_windowRect;  
+    //}
+
+    //We're not checking whether or not we NEED to get a new rect, nor do we call this function again if the window is ever moved while we're containing the cursor
+    //This is fine since if the cursor is being contained, that means we can't really move the window anyway (you *CAN* but don't be a prick, I can make it idiot-proof later)
+    GetWindowRect(m_hwnd, &newRect); //Might just not bother with the above, if just calling GetWindowRect() isn't an expensive call
+
+    newRect.left += 0.25f * m_width;
+    newRect.right -= 0.25f * m_width;
+    newRect.top += 0.25f * m_height;
+    newRect.bottom -= 0.25f * m_height;
+    
+    ClipCursor(&newRect); //Don't allow the cursor to leave these bounds (rawData still works, which is why we use this for fps controls)
+}
+
 
 void App::DoSetup()
 {
-    m_engine->GetCamera().SetPosition({ 0.0f, 12.0f, 0.0f }); //Previously 5.675 Z
+    m_engine->GetCamera().SetPosition({ 0.0f, 12.0f, 0.0f });
 
-    SetupLevel1(m_engine.get());      //Motion: X-axis        (B3/B2)
-    //SetupLevel2(m_engine.get());    //Color: Red            (B3)
-    //SetupLevel3(m_engine.get());    //Form: Oblong          (C1)
-    //SetupLevel4(m_engine.get());    //Color: Blue           (B1)
-    //SetupLevel5(m_engine.get());    //Motion: Y-axis        (C1/B1)
-    //SetupLevel6(m_engine.get());    //Form: Sphere          (B2/B3)
-    //SetupLevel7(m_engine.get());    //Motion: Z-axis        (C3)
-    //SetupLevel8(m_engine.get());    //Color: Blue outline   (B3/C3)
-    //SetupLevel9(m_engine.get());    //Form: Parallelepiped  (B1/B2/C1/C2) (aka big skewed cube)
+    SetupLevel1(m_engine.get());
 
-    /*
-    Camera starting position:   {0.0f, 12.0f, 0.0f}
-    Gun "position":             {-1.0f, -1.15f, 1.75f} //Offset from the camera, so in regular world position this would be {-1.0f, 10.85f, 1.75f}
+    //Gun (remove for now ehe)
+    //m_engine->CreatePovDrawable("Meshes/gun.obj", { POV_OFFSET_X, POV_OFFSET_Y, POV_OFFSET_Z }, { 2.0f, 2.0f, 2.0f });
 
-    The first spotlight we try making is at {0.0f, 17.0f, -5.0f}, so in "pov coordinates" this would be {0.0f, 5.0f, -5.0f} (a little bit above and behind us)
-    */
-    //Offset from the camera by {-1.0f, , -1.15f, +1.75f}
-    m_engine->CreatePovDrawable("Meshes/gun.obj", { POV_OFFSET_X, POV_OFFSET_Y, POV_OFFSET_Z }, { 2.0f, 2.0f, 2.0f });
-    m_engine->CreateReflectiveDrawable("Meshes/default_cube.obj", { 0.0f, 6.0f, 5.0f });
-    //m_engine->CreateDrawable("Meshes/donut2.obj", { 0.0f, 10.0f, 0.0f });
-
-    //m_engine->CreateLightSpot({ 0.0f + 540.0f, 5.0f, 5.0f }, 0.75f, 0.0f, 0.35f); //Light on the final grid crate
+    //Cubemap(s) I'm just limit testing cool shit
+    m_engine->CreateReflectiveDrawable("Meshes/default_sphere.obj", { -17.5f, 10.0f, 55.0f }, {2.0f, 2.0f, 2.0f}); //Big floating sphere in the big room, between the purple and cyan light
+    m_engine->CreateReflectiveDrawable("Meshes/default_sphere.obj", { 7.0f, 6.0f, 11.0f }); //should be on top of the {7.0f, 3.0f, 11.0f} box, since default sphere is a unit -1 to +1 sphere
+    //Accidentally just found out that I can try to have fun with portals by having two reflective objects that use the same cubemap
 
     //Call after every drawable and light for a scene has been created to initialize functionality for things like culling and shadows
     //(find a way to make this automatically happen after the DoSetup() function without needing the user to worry about this stuff?)
@@ -137,11 +158,11 @@ void App::DoFrame(float dt)
     m_engine->GetCamera().UpdateViewMatrix();
 
     //Update gun every frame, let's start by going back to the basics of rotating around a point like we did in hello triangle (PovDrawable position is an offset from the camera)
-    m_engine->GetPovDrawables().at(0).SetPosition(
+    /*m_engine->GetPovDrawables().at(0).SetPosition(
         POV_OFFSET_X,
         POV_OFFSET_Y,
         POV_OFFSET_Z
-    );
+    );*/
 
     /*Imgui stuff (Right now just an fps counter)*/
     if (m_fpsTimer->GetMilisecondsElapsed() > 1000.0f)
@@ -167,15 +188,20 @@ void App::InterpretKeyboardInput(float dt)
     if (m_keyboard->IsKeyPressed(0x31))
     {
         m_currentState = States::NO_CONTROL;
+        m_cursorContained = false;
     }
     else if (m_keyboard->IsKeyPressed(0x32))
     {
         m_currentState = States::FPC_CONTROL;
+        m_cursorContained = true;
+        ContainCursor(true);
         DisableCursor();
     }
     else if (m_keyboard->IsKeyPressed(0x33))
     {
         m_currentState = States::GODCAM_CONTROL;
+        m_cursorContained = false;
+        ContainCursor(false);
         EnableCursor();
     }
 #endif
@@ -186,20 +212,20 @@ void App::InterpretKeyboardInput(float dt)
     {
         if (m_keyboard->IsKeyPressed(0x57)) //W
         {
-            m_engine->MovePlayerZ( 0.02f * dt);
+            m_engine->MovePlayerZ( m_playerSpeed * dt);
         }
         if (m_keyboard->IsKeyPressed(0x53)) //S
         {
-            m_engine->MovePlayerZ(-0.02f * dt);
+            m_engine->MovePlayerZ( -m_playerSpeed * dt);
         }
 
         if (m_keyboard->IsKeyPressed(0x44)) //D
         {
-            m_engine->MovePlayerX( 0.02f * dt);
+            m_engine->MovePlayerX( m_playerSpeed * dt);
         }
         if (m_keyboard->IsKeyPressed(0x41)) //A
         {
-            m_engine->MovePlayerX(-0.02f * dt);
+            m_engine->MovePlayerX(-m_playerSpeed * dt);
         }
 
         if (m_keyboard->GetReleaseInfo().keyCode == 0x45 && m_keyboard->GetReleaseInfo().wasReleasedThisTick)
@@ -309,7 +335,14 @@ LRESULT App::HandleUserInput(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_MOUSEMOVE:
-        if (m_currentState != States::GODCAM_CONTROL) break; //Save time calculating
+        if (m_currentState != States::GODCAM_CONTROL) break;
+        //const POINTS pts = MAKEPOINTS(lParam); //Get the x- and y-coordinates of the mouse 
+        //(nah, this doesn't work with raw movement, only for things like clicking and dragging outside the window bounds and making sure stuff still works, 
+        //which is still important, but not what i'm looking for right now)
+        //if (pts.x >= 0 && pts.x < m_width && pts.y >= 0 && pts.y < m_height)
+        //{
+        //    OnMouseMove(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+        //}
         OnMouseMove(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
         break;
 
@@ -375,12 +408,25 @@ bool App::InitWindow()
     RegisterClassEx(&wc);
 
     //Create window
-    RECT wr = {};
-    wr.left = 100;
-    wr.right = m_width + wr.left;
-    wr.top = 100;
-    wr.bottom = m_height + wr.top;
-    AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE); //Our width and height doesn't include the borders
+    //RECT wr = {};
+    RECT adjustedRect;
+    UINT offsetX = 125;
+    UINT offsetY = 100;
+
+    //Setup the "regular" rect used for containing the cursor within the bounds of the window
+    m_windowRect.left = 0;
+    m_windowRect.right = m_width;
+    m_windowRect.top = 0;
+    m_windowRect.bottom = m_height;
+
+    //Setup the adjusted rect for window creation
+    adjustedRect = m_windowRect;
+    adjustedRect.left += offsetX;
+    adjustedRect.right += offsetX;
+    adjustedRect.top += offsetY;
+    adjustedRect.bottom += offsetY;
+
+    AdjustWindowRect(&adjustedRect, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE); //Our width and height doesn't include the borders
 
     m_hwnd = CreateWindowEx(
         0,															// Optional window styles.

@@ -104,7 +104,7 @@ bool ParseMaterial(std::string mtlFileName, ParsedData& data, std::unordered_map
 	return true;
 }
 
-bool InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate,
+int InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate,
 	std::unordered_map<std::string, ShaderResource>& textures, ID3D11Device* device, int interact, std::vector<int> interactsWith)
 {
 	std::ifstream ifs(objFileName);
@@ -279,5 +279,5 @@ bool InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToF
 
 	vecToFill.push_back(cube);
 
-	return true;
+	return (int)vecToFill.size() + 1; //Return the size + 1 (aka index last element, aka the element we just put in, aka the element we're most probably interested in modifying when we create something)
 }

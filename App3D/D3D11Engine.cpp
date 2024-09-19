@@ -62,10 +62,10 @@ void D3D11Engine::Update(float dt)
 	{
 		drawable.UpdateConstantBuffer(context.Get());
 	}
-	for (auto& mirrorCube : m_reflectiveDrawables)
+	for (auto& drawable : m_reflectiveDrawables)
 	{
-		mirrorCube.Rotate(0.0f, 0.0003f * dt, 0.0f);
-		mirrorCube.UpdateConstantBuffer(context.Get());
+		//drawable.Rotate(0.0f, 0.0003f * dt, 0.0f);
+		drawable.UpdateConstantBuffer(context.Get());
 	}
 	for (auto& drawable : m_povDrawables)
 	{
@@ -78,9 +78,16 @@ void D3D11Engine::Update(float dt)
 	//RENDER
 	RenderDepth(dt);
 	//Render(dt, rtv.Get(), dsv.Get(), &viewport, m_camera.get(), CLEAR_COLOR);
-	Render(uav.Get(), dsv.Get(), &viewport, m_camera.get(), CLEAR_COLOR, m_windowWidth, m_windowHeight);
+	Render(uav.Get(), dsv.Get(), &viewport, m_camera.get(), CLEAR_COLOR, m_windowWidth / NUMTHREADS, m_windowHeight / NUMTHREADS); //Dispatch (128, 96, 1)
+	//Render(uav.Get(), dsv.Get(), &viewport, m_cubeMap.GetCameraAt(0), CLEAR_COLOR, m_windowWidth, m_windowHeight);
 	if (billboardingIsEnabled) RenderParticles(m_camera.get());
-	if (cubemapIsEnabled) RenderReflectiveObject(m_camera.get());
+	if (cubemapIsEnabled)
+	{
+		for (int i = 0; i < m_reflectiveDrawables.size(); i++)
+		{
+			RenderReflectiveObject(m_camera.get(), &m_cubeMaps.at(i), i);
+		}
+	}
 
 	//PRESENT
 	swapChain->Present(1, 0); //vSync, 1 = enabled, 0 = disabled (or in other terms, fps limit to screen hz or uncap)
@@ -175,10 +182,19 @@ bool D3D11Engine::CreateDrawable(std::string objFileName, DirectX::XMFLOAT3 tran
 
 bool D3D11Engine::CreateReflectiveDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
 {
-	InitDrawableFromFile(objFileName, m_reflectiveDrawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith); //temp: just put false as interactible here bleh
+	int index = InitDrawableFromFile(objFileName, m_reflectiveDrawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith); //temp: just put false as interactible here bleh
+
+	if (m_reflectiveDrawables.size() == 1)
+	{
+		m_reflectiveDrawables.at(0).SetReflective();
+	}
+	else //2 lol
+	{
+		m_reflectiveDrawables.at(1).SetReflective();
+	}
 
 	//Cube environment mapping setup (moved from engine constructor)
-	m_cubeMap = CubeMap(device.Get(), true, m_reflectiveDrawables.at(0).GetPosition());
+	m_cubeMaps.push_back(CubeMap(device.Get(), true, translate)); //previously m_reflectiveDrawables.at(0).GetPosition() instead of just passing in translate, but that's silly
 
 	return true;
 }
@@ -201,6 +217,14 @@ bool D3D11Engine::SetupQT()
 {
 	for (const auto& drawable : m_drawables)
 		m_quadTree.AddElement(&drawable, drawable.GetBoundingBox());
+
+	//Danger zone
+	for (const auto& drawable : m_reflectiveDrawables)
+		m_quadTree.AddElement(&drawable, drawable.GetBoundingBox());
+
+	//So uh... when i add the drawable into the quadtree, m_isReflective is true
+	//But when I try to check that in the render function, we don't go through??????????
+	//Fucking EXCUSE ME??????????
 
 	return true;
 }
@@ -279,8 +303,26 @@ bool D3D11Engine::CreateLightDir(DirectX::XMFLOAT3 position, float rotX, float r
 	return true;
 }
 
+bool D3D11Engine::CreateLightPoint(DirectX::XMFLOAT3 position, float rad, DirectX::XMFLOAT3 color)
+{
+	LightData data;
+
+	data.pos = position;
+	data.fovY = 0.0f;
+	data.rotX = 0.0f;
+	data.rotY = 0.0f; //Hack: aim upwards
+	data.col = color;
+	data.rad = rad; //new, no need to add it to the others though, it's defaulted to 0.0f. Check against this value in shaders, and if it's greater than 0 then it's a point light
+
+	m_lightDataVec.push_back(data);
+
+	return true;
+}
+
 bool D3D11Engine::SetupLights()
 {
+	//Rename in the future, this will be called any time i want to make adjustments to lights to align the vectors in the engine with those in the light- and shadow-classes
+
 	m_spotlights = SpotLights(device.Get(), m_lightDataVec);
 	m_shadowMap = ShadowMap(device.Get(), &m_drawables, &m_spotlights); //"SetupLights()", shadows too while we're at it, but don't tell anyone :3
 
@@ -288,102 +330,12 @@ bool D3D11Engine::SetupLights()
 }
 
 /*RENDER FUNCTIONS*/
-//void D3D11Engine::Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, Camera* cam, const float clear[4])
-//{
-//	/*Update buffers and camera frustum here*/
-//	if (deferredIsEnabled)
-//	{
-//		DefPassOne(cam); //Does the same as what's in the else-statement, except to several rendertargets
-//	}
-//	else
-//	{
-//		// Clear the back buffer and depth stencil, as well as set viewport and render target (viewport only really needed to set after a resize, and that's disabled so uh)
-//		context->ClearRenderTargetView(rtv, clear);
-//		context->ClearDepthStencilView(dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-//		context->RSSetViewports(1, viewport);
-//		context->OMSetRenderTargets(1, &rtv, dsv);
-//
-//		//INPUT ASSEMBLER STAGE
-//		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST); //farewell D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST
-//		context->IASetInputLayout(inputLayout.Get());
-//
-//		//SHADER STAGE
-//		context->VSSetShader(vertexShader.Get(), NULL, 0);
-//		context->PSSetShader(pixelShader.Get(), NULL, 0);
-//		context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
-//		
-//		//SHADOWS AND LIGHTING STUFF
-//		ID3D11ShaderResourceView* shadowViews[] = { m_spotlights.GetStructuredBufferSRV() , m_spotlights.GetDepthBufferSRV() };
-//		context->PSSetShaderResources(3, 2, shadowViews);
-//		context->PSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
-//		ID3D11SamplerState* shadowSampler = m_shadowMap.GetSampler();
-//		context->PSSetSamplers(1, 1, &shadowSampler);
-//
-//		//TESSELLATION
-//		if(lodIsEnabled)context->RSSetState(wireframeRS.Get());
-//		else			context->RSSetState(regularRS.Get());
-//		context->HSSetShader(hullShader.Get(), NULL, 0);
-//		context->DSSetShader(domainShader.Get(), NULL, 0);
-//		context->DSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
-//		context->HSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
-//
-//		//DRAW (AND CULL IF ENABLED)
-//		if (cullingIsEnabled)
-//		{
-//			int visibleDrawables = 0;
-//			for (const auto& drawable : m_quadTree.CheckTree(cam->GetFrustum()))
-//			{
-//				drawable->Bind(context.Get());
-//				visibleDrawables++;
-//			}
-//			drawablesBeingRendered = visibleDrawables;
-//		}
-//		else
-//		{
-//			for (auto& drawable : m_drawables)
-//			{
-//				drawable.Bind(context.Get());
-//			}
-//			drawablesBeingRendered = (int)m_drawables.size();
-//		}
-//
-//		//Pov drawables are never culled so we do this outside the if-else check
-//		for (auto& drawable : m_povDrawables)
-//		{
-//			drawable.Bind(context.Get());
-//		}
-//
-//		//UNBIND THINGS FOR SANITY REASONS
-//		context->VSSetShader(NULL, NULL, 0);
-//		context->PSSetShader(NULL, NULL, 0);
-//		context->HSSetShader(NULL, NULL, 0);
-//		context->DSSetShader(NULL, NULL, 0);
-//
-//		context->HSSetConstantBuffers(0, 0, NULL);
-//		context->DSSetConstantBuffers(0, 0, NULL);
-//
-//		ID3D11RenderTargetView* nullRTV = NULL;
-//		context->OMSetRenderTargets(1, &nullRTV, NULL);
-//
-//		ID3D11ShaderResourceView* nullSRVs[] = {NULL, NULL, NULL, NULL, NULL};
-//		context->PSSetShaderResources(0, 5, nullSRVs);
-//
-//		ID3D11SamplerState* nullSamplers[] = {NULL, NULL};
-//		context->PSSetSamplers(0, 2, nullSamplers);
-//	}
-//
-//	if (deferredIsEnabled)
-//	{
-//		DefPassTwo(cam); //Lighting pass, editing the backbuffer using a compute shader
-//	}
-//}
-
-void D3D11Engine::Render(ID3D11UnorderedAccessView* uav, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, Camera* cam, const float clear[4], UINT csX, UINT csY)
+void D3D11Engine::Render(ID3D11UnorderedAccessView* uav, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, Camera* cam, const float clear[4], UINT csX, UINT csY, bool isReflection)
 {
 	/*Update buffers and camera frustum here*/
 	if (deferredIsEnabled)
 	{
-		DefPassOne(cam, dsv, viewport); //Does the same as what's in the else-statement, except to several rendertargets
+		DefPassOne(cam, dsv, viewport, isReflection); //Does the same as what's in the else-statement, except to several rendertargets
 	}
 	else
 	{
@@ -418,13 +370,20 @@ void D3D11Engine::Render(ID3D11UnorderedAccessView* uav, ID3D11DepthStencilView*
 		context->HSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
 
 		//DRAW (AND CULL IF ENABLED)
-		if (cullingIsEnabled)
+		if (cullingIsEnabled && !isReflection)
 		{
 			int visibleDrawables = 0;
-			for (const auto& drawable : m_quadTree.CheckTree(cam->GetFrustum()))
+			for (const auto& drawable : m_quadTree.CheckTree(cam->GetFrustum())) //Oh wait I get it. I render the shit cube here before I even do RenderReflectiveObject. I need to skip rendering that here, and then render it there, WHILE making sure it's in the quadtree so I can do culling checks against the box itself
 			{
-				drawable->Bind(context.Get());
-				visibleDrawables++;
+				if (drawable->IsReflective())
+				{
+					int test = 69;
+				}
+				else
+				{
+					drawable->Bind(context.Get());
+					visibleDrawables++;
+				}
 			}
 			drawablesBeingRendered = visibleDrawables;
 		}
@@ -515,22 +474,14 @@ void D3D11Engine::RenderParticles(Camera* cam)
 	//Everything is unbound when we exit RenderParticles()
 }
 
-void D3D11Engine::RenderReflectiveObject(Camera* cam)
+void D3D11Engine::RenderReflectiveObject(Camera* cam, CubeMap* cubeMap, int index)
 {
-	//Uses deferred rendering via a "trick" where the pixel shader modifies the w-component and we check for it in the compute shader. 
-	//Check the previous version of the engine if you want to instead forward render the cube itself to an rtv (it's probably smarter than using shader hacks, tricky bugs to fix)
-		//If you're going to do that, keep having the views of the cube be deferred and pass in uav instead of rtv, but make the cube itself be forward renderred
-	//Alternatively: Try using a structured buffer like the particle system does, if you dare to try and git gud with shaders :)
+	//Deferred rendering the 6 "sides", forward rendering the object itself onto the rtv
 
-	//Exit out if there are no reflective objects
-	if (m_reflectiveDrawables.size() == 0)
-	{
-		return;
-	}
-
-	//Get the reflective object (This whole stuff is hardcoded right now but bear with me
-	const Drawable* cube = &m_reflectiveDrawables.at(0);
 	std::vector<const Drawable*> visibleDrawables = m_quadTree.CheckTree(cam->GetFrustum());
+	const Drawable* cube = &m_reflectiveDrawables.at(index);
+	
+	//Exit out if we can't see the cube
 	if (cullingIsEnabled && std::find(visibleDrawables.begin(), visibleDrawables.end(), cube) == visibleDrawables.end())
 	{
 		return;
@@ -538,8 +489,14 @@ void D3D11Engine::RenderReflectiveObject(Camera* cam)
 	else
 	{
 		//Get the cubemap resolutions x and y
-		UINT x = m_cubeMap.GetResolutionX();
-		UINT y = m_cubeMap.GetResolutionY();
+		UINT x = cubeMap->GetResolutionX();
+		UINT y = cubeMap->GetResolutionY();
+
+		x /= NUMTHREADS;
+		y /= NUMTHREADS;
+
+		//This results in the dispatch call (128, 128, 1)
+
 		for (int i = 0; i < 6; i++)
 		{
 			/*Cookbook notes
@@ -549,67 +506,147 @@ void D3D11Engine::RenderReflectiveObject(Camera* cam)
 			Instead of the "normal" viewport, use the one associated with the reflective object's texture cube
 			Instead of the "normal" camera information, use the one associated with the texture cube side currently being processed
 			*/
-			Render(m_cubeMap.GetUnorderedAccessViewAt(i), m_cubeMap.GetDepthStencilView(), m_cubeMap.GetViewport(), m_cubeMap.GetCameraAt(i), CLEAR_COLOR, x, y);
+			//Render(dt, m_cubeMap.GetRenderTargetViewAt(i), m_cubeMap.GetDepthStencilView(), m_cubeMap.GetViewport(), m_cubeMap.GetCameraAt(i), CLEAR_COLOR);
+			Render(cubeMap->GetUnorderedAccessViewAt(i), cubeMap->GetDepthStencilView(), cubeMap->GetViewport(), cubeMap->GetCameraAt(i), CLEAR_COLOR, x, y, true);
 		}
 
-		/*FIRST PASS*/
+		/*Copy the Render() function but remove stuff we're not interested in here*/
 		context->RSSetViewports(1, &viewport);
+		context->OMSetRenderTargets(1, rtv.GetAddressOf(), dsv.Get());
 
 		/*Input Assembler Stage*/
 		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST); //return of trianglelist, because we're just doing old-school vertex+pixel shader, no other fancy shaders
 		context->IASetInputLayout(inputLayout.Get());
 
 		/*Shader Stage*/
-		context->VSSetShader(m_cubeMap.GetVertexShader(), NULL, 0);
-		context->VSSetConstantBuffers(1, 1, cam->GetConstantBuffer().GetBufferAddress());
+		context->VSSetShader(cubeMap->GetVertexShader(), NULL, 0);
+		context->VSSetConstantBuffers(1, 1, m_camera->GetConstantBuffer().GetBufferAddress());
 
-		context->PSSetShader(m_cubeMap.GetPixelShader(), NULL, 0);
-		context->PSSetShaderResources(0, 1, m_cubeMap.GetShaderResourceViewAddress());
+		context->PSSetShader(cubeMap->GetPixelShader(), NULL, 0);
+		context->PSSetShaderResources(0, 1, cubeMap->GetShaderResourceViewAddress());
 		context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
-		context->PSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
+		context->PSSetConstantBuffers(0, 1, m_camera->GetConstantBuffer().GetBufferAddress());
 
-		//Clear and set rtv, only one buffer
-		context->ClearRenderTargetView(m_gBuffers[0].rtv.Get(), CLEAR_COLOR);
-		context->OMSetRenderTargets(1, m_gBuffers[0].rtv.GetAddressOf(), dsv.Get());
-
-		for (auto& drawable : m_reflectiveDrawables)
+		/*for (auto& drawable : m_reflectiveDrawables)
 		{
 			drawable.Bind(context.Get(), true);
-		}
+		}*/
+		//oowweeee
+		m_reflectiveDrawables.at(index).Bind(context.Get(), true);
 
-		/*UNBIND*/
+		/*Unbind shaders*/
 		//Vertex shader
 		context->VSSetShader(NULL, NULL, 0);
-		context->VSSetConstantBuffers(1, 0, NULL); //1, 0, NULL
+		context->VSSetConstantBuffers(0, 0, NULL);
 		//Pixel shader
 		context->PSSetShader(NULL, NULL, 0);
 		context->PSSetConstantBuffers(0, 0, NULL);
 		ID3D11ShaderResourceView* nullSRV = NULL;
-		context->PSSetShaderResources(0, 1, &nullSRV); //&nullSRV
+		context->PSSetShaderResources(0, 0, &nullSRV);
 		ID3D11SamplerState* nullSampler = NULL;
 		context->PSSetSamplers(0, 0, &nullSampler);
-		//RTV
+
+		/*Unbind rtv*/
 		ID3D11RenderTargetView* nullRTV = NULL;
 		context->OMSetRenderTargets(1, &nullRTV, NULL);
-
-
-		/*SECOND PASS*/
-		//BIND
-		context->CSSetShader(computeShaderCM.Get(), NULL, 0);
-		ID3D11ShaderResourceView* srv = m_gBuffers[0].srv.Get(); //Get the texture that we wrote to the rtv, using the srv, and pass it in to the compute shader
-		context->CSSetShaderResources(0, 1, &srv);
-		context->CSSetUnorderedAccessViews(0, 1, uav.GetAddressOf(), NULL);
-
-		//DISPATCH
-		context->Dispatch(m_windowWidth / NUMTHREADS, m_windowHeight / NUMTHREADS, 1); //Match the compute shader numthreads, [8, 8, 1]
-
-		//UNBIND
-		ID3D11UnorderedAccessView* nullUav = NULL;
-		context->CSSetUnorderedAccessViews(0, 1, &nullUav, NULL);
-		context->CSSetShader(NULL, NULL, 0);
-		context->CSSetShaderResources(0, 0, NULL);
 	}
 }
+
+//void D3D11Engine::RenderReflectiveObject(Camera* cam)
+//{
+//	//Uses deferred rendering via a "trick" where the pixel shader modifies the w-component and we check for it in the compute shader. 
+//	//Check the previous version of the engine if you want to instead forward render the cube itself to an rtv (it's probably smarter than using shader hacks, tricky bugs to fix)
+//		//If you're going to do that, keep having the views of the cube be deferred and pass in uav instead of rtv, but make the cube itself be forward renderred
+//	//Alternatively: Try using a structured buffer like the particle system does, if you dare to try and git gud with shaders :)
+//
+//	//Exit out if there are no reflective objects
+//	if (m_reflectiveDrawables.size() == 0)
+//	{
+//		return;
+//	}
+//
+//	//Get the reflective object (This whole stuff is hardcoded right now but bear with me
+//	const Drawable* cube = &m_reflectiveDrawables.at(0);
+//	std::vector<const Drawable*> visibleDrawables = m_quadTree.CheckTree(cam->GetFrustum());
+//	if (cullingIsEnabled && std::find(visibleDrawables.begin(), visibleDrawables.end(), cube) == visibleDrawables.end())
+//	{
+//		return;
+//	}
+//	else
+//	{
+//		//Get the cubemap resolutions x and y
+//		UINT x = m_cubeMap.GetResolutionX();
+//		UINT y = m_cubeMap.GetResolutionY();
+//		for (int i = 0; i < 6; i++)
+//		{
+//			/*Cookbook notes
+//			Perform your normal rendering logic here, rendering each relevant(from the reflective object's perspective) object in the scene
+//			Instead of the "normal" render target (potentially the back buffer), render to the one associated with the texture cube side currently being processed
+//			Instead of the "normal" depth stencil, use the one associated with the reflective object's texture cube
+//			Instead of the "normal" viewport, use the one associated with the reflective object's texture cube
+//			Instead of the "normal" camera information, use the one associated with the texture cube side currently being processed
+//			*/
+//			Render(m_cubeMap.GetUnorderedAccessViewAt(i), m_cubeMap.GetDepthStencilView(), m_cubeMap.GetViewport(), m_cubeMap.GetCameraAt(i), CLEAR_COLOR, x, y);
+//		}
+//
+//		/*FIRST PASS*/
+//		context->RSSetViewports(1, &viewport);
+//
+//		/*Input Assembler Stage*/
+//		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST); //return of trianglelist, because we're just doing old-school vertex+pixel shader, no other fancy shaders
+//		context->IASetInputLayout(inputLayout.Get());
+//
+//		/*Shader Stage*/
+//		context->VSSetShader(m_cubeMap.GetVertexShader(), NULL, 0);
+//		context->VSSetConstantBuffers(1, 1, cam->GetConstantBuffer().GetBufferAddress());
+//
+//		context->PSSetShader(m_cubeMap.GetPixelShader(), NULL, 0);
+//		context->PSSetShaderResources(0, 1, m_cubeMap.GetShaderResourceViewAddress());
+//		context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
+//		context->PSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
+//
+//		//Clear and set rtv, only one buffer
+//		context->ClearRenderTargetView(m_gBuffers[0].rtv.Get(), CLEAR_COLOR);
+//		context->OMSetRenderTargets(1, m_gBuffers[0].rtv.GetAddressOf(), dsv.Get());
+//
+//		for (auto& drawable : m_reflectiveDrawables)
+//		{
+//			drawable.Bind(context.Get(), true);
+//		}
+//
+//		/*UNBIND*/
+//		//Vertex shader
+//		context->VSSetShader(NULL, NULL, 0);
+//		context->VSSetConstantBuffers(1, 0, NULL); //1, 0, NULL
+//		//Pixel shader
+//		context->PSSetShader(NULL, NULL, 0);
+//		context->PSSetConstantBuffers(0, 0, NULL);
+//		ID3D11ShaderResourceView* nullSRV = NULL;
+//		context->PSSetShaderResources(0, 1, &nullSRV); //&nullSRV
+//		ID3D11SamplerState* nullSampler = NULL;
+//		context->PSSetSamplers(0, 0, &nullSampler);
+//		//RTV
+//		ID3D11RenderTargetView* nullRTV = NULL;
+//		context->OMSetRenderTargets(1, &nullRTV, NULL);
+//
+//
+//		/*SECOND PASS*/
+//		//BIND
+//		context->CSSetShader(computeShaderCM.Get(), NULL, 0);
+//		ID3D11ShaderResourceView* srv = m_gBuffers[0].srv.Get(); //Get the texture that we wrote to the rtv, using the srv, and pass it in to the compute shader
+//		context->CSSetShaderResources(0, 1, &srv);
+//		context->CSSetUnorderedAccessViews(0, 1, uav.GetAddressOf(), NULL);
+//
+//		//DISPATCH
+//		context->Dispatch(m_windowWidth / NUMTHREADS, m_windowHeight / NUMTHREADS, 1); //Match the compute shader numthreads, [8, 8, 1]
+//
+//		//UNBIND
+//		ID3D11UnorderedAccessView* nullUav = NULL;
+//		context->CSSetUnorderedAccessViews(0, 1, &nullUav, NULL);
+//		context->CSSetShader(NULL, NULL, 0);
+//		context->CSSetShaderResources(0, 0, NULL);
+//	}
+//}
 
 void D3D11Engine::RenderDepth(float dt)
 {
@@ -652,7 +689,7 @@ void D3D11Engine::RenderDepth(float dt)
 }
 
 /*DEFERRED RENDERING PASSES*/
-void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport)
+void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, bool isReflection)
 {
 	//Deferred rendering splits rendering into 3 parts: A geometry pass, a draw pass, and a lighting pass
 
@@ -685,22 +722,43 @@ void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIE
 
 	//This right here is why deferred rendering is better with multiple lights, but worse with multiple drawables
 	//We're drawing all our drawables onto all 3 render targets
-	if (cullingIsEnabled)
+	if (cullingIsEnabled && !isReflection) //Skip culling the reflected views
 	{
 		int visibleDrawables = 0;
 		for (auto& drawable : m_quadTree.CheckTree(cam->GetFrustum()))
 		{
-			drawable->Bind(context.Get());
-			visibleDrawables++;
+			if (drawable->IsReflective())
+			{
+				int test = 69;
+			}
+			else
+			{
+				drawable->Bind(context.Get());
+				visibleDrawables++;
+			}
+			//drawable->Bind(context.Get());
+			//visibleDrawables++;
 		}
+
 		drawablesBeingRendered = visibleDrawables;
 	}
 	else
 	{
 		//Per drawable: bind vertex and index buffers, then draw them
+		int idx = 0;
 		for (auto& drawable : m_drawables)
 		{
+			//Hyper hard-coded but I'm just testing stuff (Edit: It works, I actually just encountered a thing, knew what it was immediately, and fixed it first try, GOD)
+			if (idx == 30 || idx == 48 || idx == 49) //L j a e m p
+			{
+				context->RSSetState(nonBackfaceCullRS.Get());
+			}
+			else if (idx == 31 || idx == 50)
+			{
+				context->RSSetState(regularRS.Get());
+			}
 			drawable.Bind(context.Get());
+			idx++;
 		}
 		drawablesBeingRendered = (int)m_drawables.size();
 	}
@@ -741,7 +799,7 @@ void D3D11Engine::DefPassTwo(Camera* cam, ID3D11UnorderedAccessView* uav, UINT c
 	context->CSSetShader(computeShader.Get(), NULL, 0);
 
 	ID3D11ShaderResourceView* srvArr[] = { m_gBuffers[0].srv.Get(), m_gBuffers[1].srv.Get(), m_gBuffers[2].srv.Get(), m_gBuffers[3].srv.Get(),
-	 m_spotlights.GetStructuredBufferSRV() , m_spotlights.GetDepthBufferSRV() }; //shadows
+	m_spotlights.GetStructuredBufferSRV() , m_spotlights.GetDepthBufferSRV() }; //shadows
 	context->CSSetShaderResources(0, 6, srvArr);
 
 	context->CSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
@@ -751,7 +809,7 @@ void D3D11Engine::DefPassTwo(Camera* cam, ID3D11UnorderedAccessView* uav, UINT c
 	//Use unordered access view to edit the backbuffer
 	context->ClearUnorderedAccessViewFloat(uav, CLEAR_COLOR);
 	context->CSSetUnorderedAccessViews(0, 1, &uav, NULL);		//Last value matters in case of "append consume" buffers, but I've only heard of that, I've *no idea* what it means
-	context->Dispatch(csX / NUMTHREADS, csY / NUMTHREADS, 1);	//In order to make our Dispatch cover the entire window, we group threads by the width and height of the 
+	context->Dispatch(csX, csY, 1);								//In order to make our Dispatch cover the entire window, we group threads by the width and height of the window
 	//window divided by 8 (as 8x8 is defined in compute shader)
 
 	//UNBIND
@@ -845,6 +903,28 @@ void D3D11Engine::InitRasterizerStates()
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create wireframe rasterizer state!", L"Error", MB_OK);
+	}
+
+
+	//New: 
+	D3D11_RASTERIZER_DESC nonCullDesc;
+	ZeroMemory(&nonCullDesc, sizeof(nonCullDesc));
+	nonCullDesc.AntialiasedLineEnable = false;
+	nonCullDesc.CullMode = D3D11_CULL_MODE::D3D11_CULL_NONE; //Diff
+	nonCullDesc.DepthBias = 0;
+	nonCullDesc.DepthBiasClamp = 0;
+	nonCullDesc.DepthClipEnable = true;
+	nonCullDesc.FillMode = D3D11_FILL_MODE::D3D11_FILL_SOLID;
+	nonCullDesc.FrontCounterClockwise = false;
+	nonCullDesc.MultisampleEnable = false;
+	nonCullDesc.ScissorEnable = false;
+	nonCullDesc.SlopeScaledDepthBias = 0;
+
+	hr = device->CreateRasterizerState(&nonCullDesc, nonBackfaceCullRS.GetAddressOf());
+
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create non-cull rasterizer state!", L"Error", MB_OK);
 	}
 }
 

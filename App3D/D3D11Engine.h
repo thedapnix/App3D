@@ -55,6 +55,7 @@ public:
 	//Lights stuff
 	bool CreateLightSpot(DirectX::XMFLOAT3 position, float fov, float rotX, float rotY, DirectX::XMFLOAT3 color = {1.0f, 1.0f, 1.0f});
 	bool CreateLightDir(DirectX::XMFLOAT3 position, float rotX, float rotY, DirectX::XMFLOAT3 color = { 0.25f, 0.25f, 0.25f });
+	bool CreateLightPoint(DirectX::XMFLOAT3 position, float rad, DirectX::XMFLOAT3 color = { 1.0f, 1.0f, 1.0f });
 	bool SetupLights(); //Because of how my current Spotlights class works, going to change this in the future but I shouldn't procastinate too much by just making the engine cool
 
 private:
@@ -70,12 +71,11 @@ private:
 	/*PRIVATE FUNCTIONS*/
 	/*Render functions*/
 	//void Render(float dt, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, Camera* cam, const float clear[4]);
-	void Render(ID3D11UnorderedAccessView* uav, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, Camera* cam, const float clear[4], UINT csX, UINT csY);
+	void Render(ID3D11UnorderedAccessView* uav, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, Camera* cam, const float clear[4], UINT csX, UINT csY, bool isReflection = false);
 	void RenderParticles(Camera* cam);
-	void RenderReflectiveObject(Camera* cam);
+	void RenderReflectiveObject(Camera* cam, CubeMap* cubeMap, int index);
 	void RenderDepth(float dt);
-	void DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport);
-	//void DefPassTwo(Camera* cam);
+	void DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, bool isReflection = false);
 	void DefPassTwo(Camera* cam, ID3D11UnorderedAccessView* uav, UINT csX, UINT csY);
 
 	/*Initializers because this constructor would be HUGE otherwise*/
@@ -168,11 +168,12 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11DomainShader> domainShader;
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> regularRS;
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> wireframeRS;
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState> nonBackfaceCullRS; //new: attempt at fixing hollowed out cone object (lamp cone) not being visible from below, because i assume it gets backface culled
 
 	//Clearly there came a time where I started making actual classes instead of bloating this D3D11Engine class. Will I rewrite things?
 	//Guhhh...?
 	ParticleSystem m_particles;
-	CubeMap m_cubeMap; //Make this into a vector if we want several reflective objects (we don't really though, cubemaps have no place other than technical testing)
+	std::vector<CubeMap> m_cubeMaps;
 	ShadowMap m_shadowMap;
 	QuadTree<Drawable> m_quadTree;
 
