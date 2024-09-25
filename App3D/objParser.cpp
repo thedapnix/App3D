@@ -279,5 +279,5 @@ int InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToFi
 
 	vecToFill.push_back(cube);
 
-	return (int)vecToFill.size() + 1; //Return the size + 1 (aka index last element, aka the element we just put in, aka the element we're most probably interested in modifying when we create something)
+	return (int)vecToFill.size() - 1; //Return the size - 1 (aka index last element, aka the element we just put in, aka the element we're most probably interested in modifying when we create something)
 }

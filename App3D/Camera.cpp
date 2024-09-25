@@ -4,6 +4,8 @@ using namespace DirectX;
 
 #define CAMERA_Y_OFFSET 9.0f //Temp: Let the camera collider be offset so technically we're checking for collisions by our "feet", not by our "face"
 
+//camera hitbox is at 3.0f, and reached up and down between 2.0f and 4.0f
+
 Camera::Camera()
 {
     SetPosition(m_position);
@@ -11,7 +13,7 @@ Camera::Camera()
     //Fov set to a fourth of pi is standard (where the fuck did I get that from, radians means pi/4 is 45 degrees which is pisslow. Currently more like 60 fov, way better)
     //Aspect ratio set to window width divided by window height
     //Near- and far-z set to arbitrary standard values of 1 and 1000 (near could be 0.1 instead, we'll see what happens)
-    SetLens(0.33f * XM_PI, 800.0f / 600.0f, 1.0f, 1000.0f);
+    SetLens(0.33f * XM_PI, 800.0f / 600.0f, 1.0f, 175.0f);
 
     //Smaller fov (4 degrees lol) and clips at a distance of 10 Z
     SetSelectionLens(0.022f * XM_PI, 800.0f / 600.0f, 1.0f, 10.0f);

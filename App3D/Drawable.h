@@ -132,14 +132,20 @@ public:
 	const DirectX::BoundingBox& GetBoundingBox() const;
 	const VertexBuffer& GetVertexBuffer() const;
 	void* GetVertexVectorData();
+
+	/*Interaction stuff*/
 	bool IsInteractible() const;
 	int GetInteractID() const;
 	DrawableInfo& GetDrawableInfo();
 	void RemoveInteraction();
 	bool IsActive() const;
-	void SetReflective();
-	bool IsReflective() const;
 	void Destroy();
+
+	/*Rendering stuff*/
+	void SetReflective(bool set = true);
+	bool IsReflective() const;
+	void SetConcave(bool set = true);
+	bool IsConcave() const;
 
 	//Magic
 	void Interact(int (*funcPtr)(DrawableInfo, std::vector<Drawable>&), std::vector<Drawable>& drawables)
@@ -183,5 +189,8 @@ private:
 	void* m_vertexVectorData;
 
 	DrawableInfo m_drawableInfo;
-	bool m_isReflective; //Need to access this when we do culling with cubemaps
+
+	//Variables for drawables with specific rendering qualities
+	bool m_isReflective;//Need to access this when we do culling with cubemaps
+	bool m_isConcave;	//Need to access this when we choose which rasterizer state to use when rendering objects, so as to not to perform backface culling on concave objects
 };

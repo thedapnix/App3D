@@ -165,14 +165,24 @@ bool Drawable::IsActive() const
 	return m_drawableInfo.isActive;
 }
 
-void Drawable::SetReflective()
+void Drawable::SetReflective(bool set)
 {
-	m_isReflective = true;
+	m_isReflective = set;
 }
 
 bool Drawable::IsReflective() const
 {
 	return m_isReflective;
+}
+
+void Drawable::SetConcave(bool set)
+{
+	m_isConcave = set;
+}
+
+bool Drawable::IsConcave() const
+{
+	return m_isConcave;
 }
 
 void Drawable::Destroy()

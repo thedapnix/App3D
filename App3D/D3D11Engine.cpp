@@ -184,14 +184,17 @@ bool D3D11Engine::CreateReflectiveDrawable(std::string objFileName, DirectX::XMF
 {
 	int index = InitDrawableFromFile(objFileName, m_reflectiveDrawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith); //temp: just put false as interactible here bleh
 
-	if (m_reflectiveDrawables.size() == 1)
-	{
-		m_reflectiveDrawables.at(0).SetReflective();
-	}
-	else //2 lol
-	{
-		m_reflectiveDrawables.at(1).SetReflective();
-	}
+	//if (m_reflectiveDrawables.size() == 1)
+	//{
+	//	m_reflectiveDrawables.at(0).SetReflective();
+	//}
+	//else //2 lol
+	//{
+	//	m_reflectiveDrawables.at(1).SetReflective();
+	//}
+
+	//Should be a little bit more stylish than the abomination above
+	m_reflectiveDrawables.at(index).SetReflective();
 
 	//Cube environment mapping setup (moved from engine constructor)
 	m_cubeMaps.push_back(CubeMap(device.Get(), true, translate)); //previously m_reflectiveDrawables.at(0).GetPosition() instead of just passing in translate, but that's silly
@@ -202,6 +205,15 @@ bool D3D11Engine::CreateReflectiveDrawable(std::string objFileName, DirectX::XMF
 bool D3D11Engine::CreatePovDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
 {
 	InitDrawableFromFile(objFileName, m_povDrawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith);
+
+	return true;
+}
+
+bool D3D11Engine::CreateConcaveDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
+{
+	int index = InitDrawableFromFile(objFileName, m_drawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith);
+
+	m_drawables.at(index).SetConcave(); //A concave drawable shouldn't be backface culled like regular ones, since we're supposed to be able to see "inside" of them
 
 	return true;
 }
@@ -727,17 +739,17 @@ void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIE
 		int visibleDrawables = 0;
 		for (auto& drawable : m_quadTree.CheckTree(cam->GetFrustum()))
 		{
-			if (drawable->IsReflective())
+			if (drawable->IsConcave()) //L j a e m p
 			{
-				int test = 69;
+				context->RSSetState(nonBackfaceCullRS.Get());
 			}
 			else
 			{
-				drawable->Bind(context.Get());
-				visibleDrawables++;
+				context->RSSetState(regularRS.Get());
 			}
-			//drawable->Bind(context.Get());
-			//visibleDrawables++;
+			drawable->Bind(context.Get());
+			visibleDrawables++;
+			
 		}
 
 		drawablesBeingRendered = visibleDrawables;
@@ -745,20 +757,17 @@ void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIE
 	else
 	{
 		//Per drawable: bind vertex and index buffers, then draw them
-		int idx = 0;
 		for (auto& drawable : m_drawables)
 		{
-			//Hyper hard-coded but I'm just testing stuff (Edit: It works, I actually just encountered a thing, knew what it was immediately, and fixed it first try, GOD)
-			if (idx == 30 || idx == 48 || idx == 49) //L j a e m p
+			if (drawable.IsConcave()) //L j a e m p
 			{
 				context->RSSetState(nonBackfaceCullRS.Get());
 			}
-			else if (idx == 31 || idx == 50)
+			else
 			{
 				context->RSSetState(regularRS.Get());
 			}
 			drawable.Bind(context.Get());
-			idx++;
 		}
 		drawablesBeingRendered = (int)m_drawables.size();
 	}

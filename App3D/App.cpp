@@ -140,8 +140,8 @@ void App::DoSetup()
     //m_engine->CreatePovDrawable("Meshes/gun.obj", { POV_OFFSET_X, POV_OFFSET_Y, POV_OFFSET_Z }, { 2.0f, 2.0f, 2.0f });
 
     //Cubemap(s) I'm just limit testing cool shit
-    m_engine->CreateReflectiveDrawable("Meshes/default_sphere.obj", { -17.5f, 10.0f, 55.0f }, {2.0f, 2.0f, 2.0f}); //Big floating sphere in the big room, between the purple and cyan light
-    m_engine->CreateReflectiveDrawable("Meshes/default_sphere.obj", { 7.0f, 6.0f, 11.0f }); //should be on top of the {7.0f, 3.0f, 11.0f} box, since default sphere is a unit -1 to +1 sphere
+    //m_engine->CreateReflectiveDrawable("Meshes/default_sphere.obj", { -17.5f, 10.0f, 55.0f }, {2.0f, 2.0f, 2.0f}); //Big floating sphere in the big room, between the purple and cyan light
+    //m_engine->CreateReflectiveDrawable("Meshes/default_sphere.obj", { 7.0f, 6.0f, 11.0f }); //should be on top of the {7.0f, 3.0f, 11.0f} box, since default sphere is a unit -1 to +1 sphere
     //Accidentally just found out that I can try to have fun with portals by having two reflective objects that use the same cubemap
 
     //Call after every drawable and light for a scene has been created to initialize functionality for things like culling and shadows

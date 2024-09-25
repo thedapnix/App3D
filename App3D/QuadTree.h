@@ -6,8 +6,10 @@
 #include <DirectXMath.h>
 #include <DirectXCollision.h>
 
-//Liberal use of quoting the cookbook here because I'm not a big fan of trees
-//Crashes if I try having function definitions in a cpp file. Love templates.
+/*
+Currently only does frustum culling
+Could be made wayyy better by adding occlusion culling (the frustum can technically see it, but another object is in front of it, blocking sight)
+*/
 
 template<typename T>
 class QuadTree

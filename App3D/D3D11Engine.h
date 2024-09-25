@@ -41,9 +41,14 @@ public:
 	void PlayerInteract();
 
 	//Drawable and culling stuff
-	bool CreateDrawable(std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
-	bool CreateReflectiveDrawable(std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
-	bool CreatePovDrawable(std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
+	bool CreateDrawable(			std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, 
+		DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
+	bool CreateReflectiveDrawable(	std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, 
+		DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
+	bool CreatePovDrawable(			std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, 
+		DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
+	bool CreateConcaveDrawable(		std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, 
+		DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
 	bool MoveDrawable(int i, DirectX::XMFLOAT3 dist);
 	bool SetupQT();
 	void RemoveDrawableInteraction(int id);
@@ -121,7 +126,7 @@ private:
 	int fpsCounter = 0;
 	std::string fpsString = "";
 	bool deferredIsEnabled = true;
-	bool cullingIsEnabled = false;
+	bool cullingIsEnabled = true;
 	bool billboardingIsEnabled = false;
 	bool cubemapIsEnabled = true;
 	bool lodIsEnabled = false;
