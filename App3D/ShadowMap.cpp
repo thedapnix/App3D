@@ -53,19 +53,22 @@ void ShadowMap::InitShaderAndInputLayout(ID3D11Device* device)
 		vspBlob, //new
 		errorBlob;
 
+#ifdef _DEBUG
 	hr = D3DReadFileToBlob(L"../x64/Debug/ShadowMapVertexShader.cso", &vsBlob);
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to read vertex shader for shadowmap!", L"Error", MB_OK);
 	}
+#endif
 
-	//new
-	hr = D3DReadFileToBlob(L"../x64/Debug/ShadowMapVertexShaderPov.cso", &vspBlob);
+#ifndef _DEBUG
+	hr = D3DReadFileToBlob(L"CSO/ShadowMapVertexShader.cso", &vsBlob);
 	if (FAILED(hr))
 	{
-		MessageBox(NULL, L"Failed to read vertex shader for shadowmap pov!", L"Error", MB_OK);
+		MessageBox(NULL, L"Failed to read vertex shader for shadowmap!", L"Error", MB_OK);
 	}
-	
+#endif
+
 	hr = device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), NULL, &vertexShader);
 	if (FAILED(hr))
 	{
@@ -73,13 +76,18 @@ void ShadowMap::InitShaderAndInputLayout(ID3D11Device* device)
 		return;
 	}
 
-	//new
+	//Pretty sure both of these are scrapped?
+	/*hr = D3DReadFileToBlob(L"../x64/Debug/ShadowMapVertexShaderPov.cso", &vspBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read vertex shader for shadowmap pov!", L"Error", MB_OK);
+	}
 	hr = device->CreateVertexShader(vspBlob->GetBufferPointer(), vspBlob->GetBufferSize(), NULL, &vertexShaderPov);
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create vertex shader for shadowmap pov!", L"Error", MB_OK);
 		return;
-	}
+	}*/
 
 	//Create Input Layout using data from our vsBlob, copied from D3D11Engine
 	//D3D11_INPUT_ELEMENT_DESC inputElementDesc[1] =

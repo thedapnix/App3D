@@ -1,0 +1,12 @@
+# Blender 4.2.1 LTS MTL File: 'clutter.blend'
+# www.blender.org
+
+newmtl Material
+Ns 250.000000
+Kd wood.png
+Ka wood.png
+Ks wood.png
+Ke wood.png
+Ni 1.450000
+d 1.000000
+illum 2

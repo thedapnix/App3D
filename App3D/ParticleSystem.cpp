@@ -139,6 +139,8 @@ void ParticleSystem::InitShaders(ID3D11Device* device)
 	/****************************
 	//////READ SHADER FILES//////
 	****************************/
+
+#ifdef _DEBUG
 	hr = D3DReadFileToBlob(L"../x64/Debug/ParticleVertexShader.cso", &vsBlob);
 	if (FAILED(hr))
 	{
@@ -149,20 +151,49 @@ void ParticleSystem::InitShaders(ID3D11Device* device)
 	{
 		MessageBox(NULL, L"Failed to read pixel shader for particle system!", L"Error", MB_OK);
 	}
-
-	hr = D3DCompileFromFile(L"ParticleComputeShader.hlsl", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "cs_5_0", D3DCOMPILE_DEBUG, 0, &csBlob, &errorBlob);
-
-	if (FAILED(hr))
-	{
-		MessageBox(NULL, L"Failed to read compute shader for particle system!", L"Error", MB_OK);
-		return;
-	}
-
 	hr = D3DReadFileToBlob(L"../x64/Debug/ParticleGeometryShader.cso", &gsBlob);
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to read geometry shader for particle system!", L"Error", MB_OK);
 	}
+	hr = D3DReadFileToBlob(L"../x64/Debug/ParticleComputeShader.cso", &csBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read compute shader for particle system!", L"Error", MB_OK);
+		return;
+	}
+#endif
+
+#ifndef _DEBUG //Running the exe
+	hr = D3DReadFileToBlob(L"CSO/ParticleVertexShader.cso", &vsBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read vertex shader for particle system!", L"Error", MB_OK);
+	}
+	hr = D3DReadFileToBlob(L"CSO/ParticlePixelShader.cso", &psBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read pixel shader for particle system!", L"Error", MB_OK);
+	}
+	hr = D3DReadFileToBlob(L"CSO/ParticleGeometryShader.cso", &gsBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read geometry shader for particle system!", L"Error", MB_OK);
+	}
+	hr = D3DReadFileToBlob(L"CSO/ParticleComputeShader.cso", &csBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read compute shader for particle system!", L"Error", MB_OK);
+		return;
+	}
+#endif
+
+	/*hr = D3DCompileFromFile(L"ParticleComputeShader.hlsl", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "cs_5_0", D3DCOMPILE_DEBUG, 0, &csBlob, &errorBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read compute shader for particle system!", L"Error", MB_OK);
+		return;
+	}*/
 
 	/****************************
 	//CREATE SHADERS FROM FILES//
@@ -179,16 +210,16 @@ void ParticleSystem::InitShaders(ID3D11Device* device)
 		MessageBox(NULL, L"Failed to create pixel shader for particle system!", L"Error", MB_OK);
 		return;
 	}
-	hr = device->CreateComputeShader(csBlob->GetBufferPointer(), csBlob->GetBufferSize(), NULL, &computeShader);
-	if (FAILED(hr))
-	{
-		MessageBox(NULL, L"Failed to create compute shader for particle system!", L"Error", MB_OK);
-		return;
-	}
 	hr = device->CreateGeometryShader(gsBlob->GetBufferPointer(), gsBlob->GetBufferSize(), NULL, &geometryShader);
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create geometry shader for particle system!", L"Error", MB_OK);
+		return;
+	}
+	hr = device->CreateComputeShader(csBlob->GetBufferPointer(), csBlob->GetBufferSize(), NULL, &computeShader);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create compute shader for particle system!", L"Error", MB_OK);
 		return;
 	}
 }

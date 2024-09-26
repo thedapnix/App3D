@@ -10,10 +10,9 @@ void SetupLevel1(D3D11Engine* engine)
     engine->CreateDrawable("Meshes/ground_stone.obj", { 0.0f, 18.0f, -5.0f }, { 2.0f, 1.0f, 2.0f });
 
     //FRONT WALL
-    //Door (elongated metal crate with a small metal sphere as a makeshift doorknob, sue me)
+    //Door (elongated metal crate with a small metal sphere as a makeshift doorknob, sue me) and walls surrounding it (left, then right)
     engine->CreateDrawable("Meshes/door_metal.obj", { 0.0f, 9.0f, 15.0f }, { 5.0f, 8.0f, 1.0f });
     engine->CreateDrawable("Meshes/sphere_metal.obj", { -2.75f, 9.25f, 13.75f }, { 0.25f, 0.25f, 0.25f });
-    //Walls surrounding the door (left, then right)
     engine->CreateDrawable("Meshes/wall_brick.obj", { -12.5f, 9.0f, 15.0f }, { 7.5f, 8.0f, 1.0f });
     engine->CreateDrawable("Meshes/wall_brick.obj", { 12.5f,  9.0f, 15.0f }, { 7.5f, 8.0f, 1.0f });
 
@@ -27,11 +26,11 @@ void SetupLevel1(D3D11Engine* engine)
     //Light(s)
     //Ceiling in the center of the room pointing straight down onto the floor (Lamp mesh, point light lighting up the mesh, and spotlight pointing down to the ground)
     engine->CreateConcaveDrawable("Meshes/lamp.obj", { 0.0f, 16.75f, -5.0f });
-    engine->CreateLightPoint({ 0.0f, 17.75f, -5.0f }, 3.0f, { 1.0f, 1.0f, 0.0f });  //Doesn't light if it's *below* the lamp and lights upwards, then it just hits the roof... 
+    engine->CreateLightPoint({ 0.0f, 17.75f, -5.0f }, 3.0f, { 1.0f, 1.0f, 0.5f });  //Doesn't light if it's *below* the lamp and lights upwards, then it just hits the roof... 
                                                                                     //This is a workaround but not good. Thoughts:
                                                                                     //Hollowed out cone so we don't have downwards/inwards facing normals
                                                                                     //Thus, we don't connect when we do nDotL in the shader (L = distance vec from light to pixel)
-    engine->CreateLightSpot({ 0.0f, 16.5f, -5.0f }, 0.75f, 0.0f, 0.5f, {1.0f, 1.0f, 1.0f});
+    engine->CreateLightSpot({ 0.0f, 16.5f, -5.0f }, 0.75f, 0.0f, 0.5f, { 1.0f, 1.0f, 1.0f });
 
     /*
     Room    #1 Completed
@@ -49,8 +48,8 @@ void SetupLevel1(D3D11Engine* engine)
 
     /*
     Hallway #1 Completed
-        Drawables   -> 4
-        Lights      -> 0
+        Drawables   -> 4    (14)
+        Lights      -> 0    (1)
     */
 
     //SECOND ROOM
@@ -63,13 +62,12 @@ void SetupLevel1(D3D11Engine* engine)
     //Walls (counter-clockwise as you exit the hallway)
     engine->CreateDrawable("Meshes/wall_brick.obj", { 15.0f, 9.0f, 36.0f }, { 5.0f, 8.0f, 1.0f });
     engine->CreateDrawable("Meshes/wall_brick.obj", { 20.0f, 9.0f, 56.0f }, { 20.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
-    engine->CreateDrawable("Meshes/wall_brick.obj", { 0.0f, 9.0f, 76.0f },  { 20.0f, 8.0f, 1.0f });     //From  {-20, +1, +75} to {+20, +17 +77}
+    engine->CreateDrawable("Meshes/wall_brick.obj", { 0.0f, 9.0f, 76.0f }, { 20.0f, 8.0f, 1.0f });     //From  {-20, +1, +75} to {+20, +17 +77}
     engine->CreateDrawable("Meshes/wall_brick.obj", { -50.0f, 9.0f, 76.0f }, { 10.0f, 8.0f, 1.0f });
 
-    //Door at the far end
+    //Door and walls (left, then right)
     engine->CreateDrawable("Meshes/door_metal.obj", { -60.0f, 9.0f, 55.0f }, { 5.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
     engine->CreateDrawable("Meshes/sphere_metal.obj", { -58.75f, 9.25f, 52.25f }, { 0.25f, 0.25f, 0.25f }, { 0.0f, -XM_PIDIV2, 0.0f });
-    //Walls surrounding the door (left, then right)
     engine->CreateDrawable("Meshes/wall_brick.obj", { -60.0f, 9.0f, 42.5f }, { 7.5f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
     engine->CreateDrawable("Meshes/wall_brick.obj", { -60.0f,  9.0f, 67.5f }, { 7.5f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
 
@@ -78,16 +76,16 @@ void SetupLevel1(D3D11Engine* engine)
 
     //Light(s)
     engine->CreateConcaveDrawable("Meshes/lamp.obj", { 0.0f, 16.75f, 55.0f });
-    engine->CreateLightPoint({ 0.0f, 17.75f, 55.0f }, 3.0f, { 1.0f, 1.0f, 0.0f });
+    engine->CreateLightPoint({ 0.0f, 17.75f, 55.0f }, 3.0f, { 1.0f, 1.0f, 0.5f });
     engine->CreateLightSpot({ 0.0f, 16.5f, 55.0f }, 0.75f, 0.0f, 0.5f, { 1.0f, 1.0f, 1.0f });
     engine->CreateConcaveDrawable("Meshes/lamp.obj", { -35.0f, 16.75f, 55.0f });
-    engine->CreateLightPoint({ -35.0f, 17.75f, 55.0f }, 3.0f, { 1.0f, 1.0f, 0.0f });
+    engine->CreateLightPoint({ -35.0f, 17.75f, 55.0f }, 3.0f, { 1.0f, 1.0f, 0.5f });
     engine->CreateLightSpot({ -35.0f, 16.5f, 55.0f }, 0.75f, 0.0f, 0.5f, { 1.0f, 1.0f, 1.0f });
 
     /*
     Room    #2 Completed
-        Drawables   -> 15
-        Lights      -> 2
+        Drawables   -> 15   (29)
+        Lights      -> 2    (3)
     */
 
     //HALLWAY AFTER SECOND ROOM (TAKING A "RIGHT" INSTEAD OF CONTINUING FORWARD THROUGH THE ROOM)
@@ -101,17 +99,17 @@ void SetupLevel1(D3D11Engine* engine)
 
     /*
     Hallway #2 Completed
-        Drawables   -> 4
-        Lights      -> 0
+        Drawables   -> 4    (33)
+        Lights      -> 0    (3)
     */
 
     //THIRD ROOM
     //Floor and ceiling
     engine->CreateDrawable("Meshes/ground_stone.obj", { -40.0f, 0.0f, 115.0f }, { 2.0f, 1.0f, 2.0f });   //From  {-60, -1, +95} to {-20, +1, +135}
-    engine->CreateDrawable("Meshes/ground_stone.obj", {   0.0f, 0.0f, 115.0f }, { 2.0f, 1.0f, 2.0f });   //From  {-20, -1, +95} to {+20, +1, +135}
-    engine->CreateDrawable("Meshes/ground_stone.obj", {  40.0f, 0.0f, 115.0f }, { 2.0f, 1.0f, 2.0f });   //From  {+20, -1, +95} to {+60, +1, +135}
+    engine->CreateDrawable("Meshes/ground_stone.obj", { 0.0f, 0.0f, 115.0f }, { 2.0f, 1.0f, 2.0f });   //From  {-20, -1, +95} to {+20, +1, +135}
+    engine->CreateDrawable("Meshes/ground_stone.obj", { 40.0f, 0.0f, 115.0f }, { 2.0f, 1.0f, 2.0f });   //From  {+20, -1, +95} to {+60, +1, +135}
     engine->CreateDrawable("Meshes/ground_stone.obj", { 45.0f, 0.0f, 80.0f }, { 1.5f, 1.0f, 1.5f });   //From  {+30, -1, +65} to {+60, +1, +95}
-    
+
     engine->CreateDrawable("Meshes/ground_stone.obj", { -40.0f, 18.0f, 115.0f }, { 2.0f, 1.0f, 2.0f });   //From  {-60, -1, +95} to {-20, +1, +135}
     engine->CreateDrawable("Meshes/ground_stone.obj", { 0.0f, 18.0f, 115.0f }, { 2.0f, 1.0f, 2.0f });   //From  {-20, -1, +95} to {+20, +1, +135}
     engine->CreateDrawable("Meshes/ground_stone.obj", { 40.0f, 18.0f, 115.0f }, { 2.0f, 1.0f, 2.0f });   //From  {+20, -1, +95} to {+60, +1, +135}
@@ -122,7 +120,7 @@ void SetupLevel1(D3D11Engine* engine)
     engine->CreateDrawable("Meshes/sphere_metal.obj", { 12.25f, 9.25f, 133.75f }, { 0.25f, 0.25f, 0.25f });
     engine->CreateDrawable("Meshes/wall_brick.obj", { -10.0f,  9.0f, 135.0f }, { 20.0f, 8.0f, 1.0f });
     engine->CreateDrawable("Meshes/wall_brick.obj", { -45.0f, 9.0f, 135.0f }, { 15.0f, 8.0f, 1.0f });
-    engine->CreateDrawable("Meshes/wall_brick.obj", { -60.0f, 9.0f, 115.0f }, { 20.0f, 8.0f, 1.0f }, {0.0f, XM_PIDIV2, 0.0f});
+    engine->CreateDrawable("Meshes/wall_brick.obj", { -60.0f, 9.0f, 115.0f }, { 20.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
     engine->CreateDrawable("Meshes/wall_brick.obj", { -50.0f, 9.0f, 96.0f }, { 10.0f, 8.0f, 1.0f }); //Now we're back at the hallway
 
     //Keep going counter-clockwise starting from the hallway entrance
@@ -135,38 +133,38 @@ void SetupLevel1(D3D11Engine* engine)
 
     //Light(s)
     engine->CreateConcaveDrawable("Meshes/lamp.obj", { 5.0f, 16.75f, 115.0f });
-    engine->CreateLightPoint({ 5.0f, 17.75f, 115.0f }, 3.0f, { 1.0f, 1.0f, 0.0f });
+    engine->CreateLightPoint({ 5.0f, 17.75f, 115.0f }, 3.0f, { 1.0f, 1.0f, 0.5f });
     engine->CreateLightSpot({ 5.0f, 16.5f, 115.0f }, 0.75f, 0.0f, 0.5f, { 1.0f, 1.0f, 1.0f });
     engine->CreateConcaveDrawable("Meshes/lamp.obj", { -30.0f, 16.75f, 115.0f });
-    engine->CreateLightPoint({ -30.0f, 17.75f, 115.0f }, 3.0f, { 1.0f, 1.0f, 0.0f });
+    engine->CreateLightPoint({ -30.0f, 17.75f, 115.0f }, 3.0f, { 1.0f, 1.0f, 0.5f });
     engine->CreateLightSpot({ -30.0f, 16.5f, 115.0f }, 0.75f, 0.0f, 0.5f, { 1.0f, 1.0f, 1.0f });
     engine->CreateConcaveDrawable("Meshes/lamp.obj", { 45.0f, 16.75f, 80.0f });
-    engine->CreateLightPoint({ 45.0f, 17.75f, 80.0f }, 3.0f, { 1.0f, 1.0f, 0.0f });
+    engine->CreateLightPoint({ 45.0f, 17.75f, 80.0f }, 3.0f, { 1.0f, 1.0f, 0.5f });
     engine->CreateLightSpot({ 45.0f, 16.5f, 80.0f }, 0.75f, 0.0f, 0.5f, { 1.0f, 1.0f, 1.0f });
 
     /*
     Room    #3 Completed
-        Drawables   -> 23
-        Lights      -> 3
+        Drawables   -> 23   (56)
+        Lights      -> 3    (6)
     */
 
     //HALLWAY TO "FOURTH" ROOM
     //Floor and ceiling
     engine->CreateDrawable("Meshes/ground_stone.obj", { 15.0f, 0.0f, 145.0f }, { 1.0f, 1.0f, 1.0f });   //From  {+5, -1, +135} to {+25, +1, +155}
-    engine->CreateDrawable("Meshes/ground_stone.obj", {  5.0f, 0.0f, 165.0f }, { 2.0f, 1.0f, 1.0f });   //From  {-15, -1, +155} to {+25, +1, +175}
-    engine->CreateDrawable("Meshes/ground_stone.obj", { 15.0f, 18.0f, 145.0f }, { 1.0f, 1.0f, 1.0f });  
-    engine->CreateDrawable("Meshes/ground_stone.obj", { 5.0f, 18.0f, 165.0f }, { 2.0f, 1.0f, 1.0f });  
-    
+    engine->CreateDrawable("Meshes/ground_stone.obj", { 5.0f, 0.0f, 165.0f }, { 2.0f, 1.0f, 1.0f });   //From  {-15, -1, +155} to {+25, +1, +175}
+    engine->CreateDrawable("Meshes/ground_stone.obj", { 15.0f, 18.0f, 145.0f }, { 1.0f, 1.0f, 1.0f });
+    engine->CreateDrawable("Meshes/ground_stone.obj", { 5.0f, 18.0f, 165.0f }, { 2.0f, 1.0f, 1.0f });
+
     //Walls (Starting from the right side)
     engine->CreateDrawable("Meshes/wall_brick.obj", { 25.0f, 9.0f, 155.0f }, { 20.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
-    engine->CreateDrawable("Meshes/wall_brick.obj", {  5.0f, 9.0f, 175.0f }, { 20.0f, 8.0f, 1.0f });
+    engine->CreateDrawable("Meshes/wall_brick.obj", { 5.0f, 9.0f, 175.0f }, { 20.0f, 8.0f, 1.0f });
     engine->CreateDrawable("Meshes/wall_brick.obj", { -5.0f, 9.0f, 155.0f }, { 10.0f, 8.0f, 1.0f });
-    engine->CreateDrawable("Meshes/wall_brick.obj", {  5.0f, 9.0f, 145.0f }, { 10.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+    engine->CreateDrawable("Meshes/wall_brick.obj", { 5.0f, 9.0f, 145.0f }, { 10.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
 
     /*
     Hallway #4 Completed
-        Drawables   -> 8
-        Lights      -> 0
+        Drawables   -> 8    (64)
+        Lights      -> 0    (6)
     */
 
     //"FOURTH" ROOM (Leads to the end)
@@ -182,24 +180,26 @@ void SetupLevel1(D3D11Engine* engine)
     engine->CreateDrawable("Meshes/sphere_metal.obj", { -63.75f, 9.25f, 172.25f }, { 0.25f, 0.25f, 0.25f }, { 0.0f, -XM_PIDIV2, 0.0f });
     engine->CreateDrawable("Meshes/wall_brick.obj", { -65.0f, 9.0f, 185.0f }, { 5.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
     engine->CreateDrawable("Meshes/wall_brick.obj", { -40.0f, 9.0f, 190.0f }, { 25.0f, 8.0f, 1.0f });
-    engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f, 9.0f, 182.5f }, {  7.5f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+    engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f, 9.0f, 182.5f }, { 7.5f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
     engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f, 9.0f, 147.5f }, { 7.5f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
     engine->CreateDrawable("Meshes/wall_brick.obj", { -40.0f, 9.0f, 140.0f }, { 25.0f, 8.0f, 1.0f });
     engine->CreateDrawable("Meshes/wall_brick.obj", { -65.0f, 9.0f, 145.0f }, { 5.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
 
     //Light(s)
-
+    engine->CreateConcaveDrawable("Meshes/lamp.obj", { -40.0f, 16.75f, 165.0f });
+    engine->CreateLightPoint({ -40.0f, 17.75f, 165.0f }, 3.0f, { 1.0f, 1.0f, 0.5f });
+    engine->CreateLightSpot({ -40.0f, 16.5f, 165.0f }, 0.75f, 0.0f, 0.5f, { 1.0f, 1.0f, 1.0f });
 
     /*
     Room    #4 Completed
-        Drawables   -> 13
-        Lights      -> TBD
+        Drawables   -> 14   (78)
+        Lights      -> 1    (7)
     */
 
     //OTHER HALLWAY TO OTHER "FOURTH" ROOM
     //Floor and ceiling
-    engine->CreateDrawable("Meshes/ground_stone.obj", { -67.5f, 0.0f, 55.0f }, {0.75f, 1.0f, 1.0f});//From {-80, -1, +45} to {-60, +1, +65}
-    engine->CreateDrawable("Meshes/ground_stone.obj", { -90.0f, 0.0f, 75.0f }, {1.5f, 1.0f, 3.0f}); //From {-105, -1, +45} to {-75, +1, +105}
+    engine->CreateDrawable("Meshes/ground_stone.obj", { -67.5f, 0.0f, 55.0f }, { 0.75f, 1.0f, 1.0f });//From {-80, -1, +45} to {-60, +1, +65}
+    engine->CreateDrawable("Meshes/ground_stone.obj", { -90.0f, 0.0f, 75.0f }, { 1.5f, 1.0f, 3.0f }); //From {-105, -1, +45} to {-75, +1, +105}
     engine->CreateDrawable("Meshes/ground_stone.obj", { -67.5f, 18.0f, 55.0f }, { 0.75f, 1.0f, 1.0f });
     engine->CreateDrawable("Meshes/ground_stone.obj", { -90.0f, 18.0f, 75.0f }, { 1.5f, 1.0f, 3.0f });
 
@@ -213,22 +213,31 @@ void SetupLevel1(D3D11Engine* engine)
     engine->CreateDrawable("Meshes/wall_brick.obj", { -105.0f, 9.0f, 75.0f }, { 30.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
     engine->CreateDrawable("Meshes/wall_brick.obj", { -100.0f, 9.0f, 105.0f }, { 5.0f, 8.0f, 1.0f });
 
+    //Light(s)
+    engine->CreateConcaveDrawable("Meshes/lamp.obj", { -90.0f, 16.75f, 82.5f });
+    engine->CreateLightPoint({ -90.0f, 17.75f, 82.5f }, 3.0f, { 1.0f, 1.0f, 0.5f });
+    engine->CreateLightSpot({ -90.0f, 16.5f, 82.5f }, 0.75f, 0.0f, 0.5f, { 1.0f, 1.0f, 1.0f });
+
     /*
     Hallway #5 Completed
-        Drawables   -> 12
-        Lights      -> TBD
+        Drawables   -> 13   (91)
+        Lights      -> 1  (8)
     */
 
     //Ending (Connect the two alternating paths, one is a hallway ending at -90, 0, 105, the other a room with an edge at -65, 0, 205)
     //engine->CreateDrawable("Meshes/ground_stone.obj", { -90.0f, 0.0f, 155.0f }, { 2.5f, 1.0f, 5.0f });  //From {-115, -1, +105} to {-65, +1, +205}
 
-    //TALLY UP THE TOTAL AMOUNTS OF DRAWABLES, WHICH WILL GIVE US A BREAKPOINT OF WHERE THE MAP ENDS AND OBJECTS BEGIN
+    /*
+    Total
+        Drawables   -> 91
+        Lights      -> 8
+    */
 
     /*CLUTTER*/
     //FIRST ROOM
     //Clutter on the left side of the door
     engine->CreateDrawable("Meshes/crate_wood.obj", { -9.5f, 3.0f, 10.0f }, { 2.0f, 2.0f, 2.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -9.5f, 6.0f, 10.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f,  0.45f, 0.0f }, 1, { 2, 3 }); //interactID 1 = Destroy something, interacts with {1, 2}, aka the door
+    engine->CreateDrawable("Meshes/crate_blue.obj", { -9.5f, 6.0f, 10.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f,  0.45f, 0.0f }, 1, { 2, 3 }); //interactID 1 = Destroy something, interacts with {1, 2}, aka the door
     engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f, 2.0f,  6.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f });
     engine->CreateDrawable("Meshes/crate_wood.obj", { -5.0f, 2.0f, 10.0f });
     engine->CreateDrawable("Meshes/crate_wood.obj", { -4.0f, 2.0f,  6.0f });
@@ -251,6 +260,11 @@ void SetupLevel1(D3D11Engine* engine)
     engine->CreateDrawable("Meshes/crate_wood.obj", { 15.0f, 3.0f, 11.0f }, { 2.0f, 2.0f, 2.0f });
     engine->CreateDrawable("Meshes/crate_wood.obj", { 15.0f, 6.0f, 11.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f });
 
+    /*
+    Room    #1 Completed Clutter
+        Drawables   -> 21   (112)
+    */
+
     //SECOND ROOM
     //Clutter on the right side of the door
     engine->CreateDrawable("Meshes/crate_wood.obj", { -55.0f, 3.0f, 71.5f }, { 2.0f, 2.0f, 2.0f });
@@ -260,9 +274,33 @@ void SetupLevel1(D3D11Engine* engine)
     engine->CreateDrawable("Meshes/crate_wood.obj", { -49.0f, 3.0f, 71.5f }, { 2.0f, 2.0f, 2.0f });
     engine->CreateDrawable("Meshes/crate_wood.obj", { -49.0f, 6.0f, 71.5f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f });
 
+    //Attempt: Clutter collections made in blender to save on manually placing all of these with code (Works well enough, things aren't placed or rotated properly though because blender is kinda dogshit when it comes to its axes)
+    //Room 2
+    engine->CreateDrawable("Meshes/clutter_small_1.obj", { -30.0f, 2.0f, 42.5f }, {1.0f, 1.0f, 1.0f}, { 0.0f, XM_PIDIV2, 0.0f }); //Facing +Z
+    engine->CreateDrawable("Meshes/clutter_small_2.obj", { -5.0f, 2.0f, 67.5f }, { 1.0f, 1.0f, 1.0f }, {0.0f, -XM_PIDIV2, 0.0f}); //Facing -Z
+    engine->CreateDrawable("Meshes/clutter_small_3.obj", { 13.0f, 2.0f, 66.0f }, { 1.0f, 1.0f, 1.0f }, {0.0f, -XM_PIDIV2, 0.0f}); //Facing -X
 
+    //Clutter room #2 done:
+       //Drawables  -> 9    (121)
 
-    //"THIRD" ROOM
+    //Room 3
+    engine->CreateDrawable("Meshes/clutter_medium_1.obj", { -45.0f, 2.0f, 130.0f }, { 1.0f, 1.0f, 1.0f }, {0.0f, XM_PI, 0.0f}); //Facing -Z
+    engine->CreateDrawable("Meshes/clutter_medium_2.obj", {  0.0f, 2.0f, 100.0f }, { 1.0f, 1.0f, 1.0f }); //Facing +Z
+    engine->CreateDrawable("Meshes/clutter_medium_3.obj", { 46.0f, 2.0f, 77.0f }, { 1.0f, 1.0f, 1.0f }, {0.0f, XM_PI, 0.0f}); //Default: Facing -Z. Flip it to face the other way and put it in the corner under the lighting
+    engine->CreateDrawable("Meshes/clutter_small_1.obj", { 5.0f, 2.0f, 128.0f }, { 1.0f, 1.0f, 1.0f }, {0.0f, -XM_PIDIV2, 0.0f}); //Default facing -X? Want -Z so negative pidiv2 i think?
+
+    //Drawables     -> 4    (125)
+
+    //Two target boxes in room 3, both of these will have the destroy-interaction and get rid of the other box, as well as both the door in this room and the door in the previous room
+    //Door in second room: 23 and 24 (-1 because of indexing stuff)
+    //Door in this room: 42 and 43 (--,,--)
+    //These two boxes are 126 and 127 (Apparently they are actually 126 and 127 so there's been a miscalc somewhere, oopsie? (Oh yeah, the two new lights I added also have drawable))
+    engine->CreateDrawable("Meshes/crate_red.obj", { -1.75f, 6.0f, 130.5f }, { 1.0f, 1.0f, 1.0f }, { 0.0f,  0.0f, 0.0f }, 1, { 22, 23, 41, 42, 126 });
+    engine->CreateDrawable("Meshes/crate_blue.obj", { 46.2f, 5.0f, 78.6f }, { 1.0f, 1.0f, 1.0f }, { 0.0f,  0.0f, 0.0f }, 1, { 22, 23, 41, 42, 125 });
+
+    //Hallway 5-ish
+    engine->CreateDrawable("Meshes/clutter_small_2.obj", { -97.0f, 2.0f, 100.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PI, 0.0f }); //Facing +X
+    engine->CreateDrawable("Meshes/crate_wood.obj", { -80.0f, 3.0f, 100.0f }, {2.0f, 2.0f, 2.0f});
 
 }
 

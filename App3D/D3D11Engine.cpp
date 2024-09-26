@@ -41,11 +41,17 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	InitSampler();
 
 	//ImGui setup
+#ifdef _DEBUG
+
+#endif
 	SetupImGui(hWnd, device.Get(), context.Get());
 }
 
 D3D11Engine::~D3D11Engine()
 {
+#ifdef _DEBUG
+
+#endif
 	ClearImGui();
 }
 
@@ -90,11 +96,12 @@ void D3D11Engine::Update(float dt)
 	}
 
 	//PRESENT
-	swapChain->Present(1, 0); //vSync, 1 = enabled, 0 = disabled (or in other terms, fps limit to screen hz or uncap)
+	swapChain->Present(0, 0); //vSync, 1 = enabled, 0 = disabled (or in other terms, fps limit to screen hz or uncap)
 }
 
 void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps, int state, int rawX, int rawY)
 {
+#ifdef _DEBUG
 	StartImGuiFrame(); //Begin
 
 	fpsCounter++; //FPS counter, input from app-class
@@ -108,11 +115,12 @@ void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps,
 	ImGuiEngineWindow(
 		m_camera.get(), fpsString, state,
 		deferredIsEnabled, cullingIsEnabled, billboardingIsEnabled, lodIsEnabled, cubemapIsEnabled,
-		drawablesBeingRendered, selectableDrawables, 
+		drawablesBeingRendered, selectableDrawables,
 		rawX, rawY
 	);
 
 	EndImGuiFrame(); //End
+#endif
 }
 
 void D3D11Engine::MovePlayerX(float speed)
@@ -739,13 +747,16 @@ void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIE
 		int visibleDrawables = 0;
 		for (auto& drawable : m_quadTree.CheckTree(cam->GetFrustum()))
 		{
-			if (drawable->IsConcave()) //L j a e m p
+			if (!lodIsEnabled)
 			{
-				context->RSSetState(nonBackfaceCullRS.Get());
-			}
-			else
-			{
-				context->RSSetState(regularRS.Get());
+				if (drawable->IsConcave()) //L j a e m p
+				{
+					context->RSSetState(nonBackfaceCullRS.Get());
+				}
+				else
+				{
+					context->RSSetState(regularRS.Get());
+				}
 			}
 			drawable->Bind(context.Get());
 			visibleDrawables++;
@@ -759,13 +770,16 @@ void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIE
 		//Per drawable: bind vertex and index buffers, then draw them
 		for (auto& drawable : m_drawables)
 		{
-			if (drawable.IsConcave()) //L j a e m p
+			if (!lodIsEnabled)
 			{
-				context->RSSetState(nonBackfaceCullRS.Get());
-			}
-			else
-			{
-				context->RSSetState(regularRS.Get());
+				if (drawable.IsConcave()) //L j a e m p
+				{
+					context->RSSetState(nonBackfaceCullRS.Get());
+				}
+				else
+				{
+					context->RSSetState(regularRS.Get());
+				}
 			}
 			drawable.Bind(context.Get());
 		}
@@ -897,7 +911,7 @@ void D3D11Engine::InitRasterizerStates()
 	D3D11_RASTERIZER_DESC wfDesc;
 	ZeroMemory(&wfDesc, sizeof(wfDesc));
 	wfDesc.AntialiasedLineEnable = false;
-	wfDesc.CullMode = D3D11_CULL_MODE::D3D11_CULL_BACK;
+	wfDesc.CullMode = D3D11_CULL_MODE::D3D11_CULL_NONE; //Alt: cull back but I wanna try a lil something
 	wfDesc.DepthBias = 0;
 	wfDesc.DepthBiasClamp = 0;
 	wfDesc.DepthClipEnable = true;
@@ -1072,6 +1086,8 @@ void D3D11Engine::InitShadersAndInputLayout()
 	/****************************
 	//////READ SHADER FILES//////
 	****************************/
+	//New: Read from the debug output folder if we're in debug. If we're NOT in debug, make the GROSS assumption that we're attempting to run the published exe file
+#ifdef _DEBUG
 	//Vertex shader
 	hr = D3DReadFileToBlob(L"../x64/Debug/VertexShader.cso", &vsBlob);
 	if (FAILED(hr))
@@ -1090,20 +1106,6 @@ void D3D11Engine::InitShadersAndInputLayout()
 	{
 		MessageBox(NULL, L"Failed to read deferred pixel shader!", L"Error", MB_OK);
 	}
-	//Deferred compute shader
-	hr = D3DCompileFromFile(L"ComputeShader.hlsl", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "cs_5_0", D3DCOMPILE_DEBUG, 0, &csBlob, &errorBlob);
-	if (FAILED(hr))
-	{
-		MessageBox(NULL, L"Failed to read compute shader!", L"Error", MB_OK);
-		return;
-	}
-	//Cubemap compute shader (not quite accurate name, but it's currently only being used to render the cubemap cube)
-	hr = D3DCompileFromFile(L"CubeMapComputeShader.hlsl", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "cs_5_0", D3DCOMPILE_DEBUG, 0, &cscBlob, &errorBlob);
-	if (FAILED(hr))
-	{
-		MessageBox(NULL, L"Failed to read cube map compute shader!", L"Error", MB_OK);
-		return;
-	}
 	//Hull shader
 	hr = D3DReadFileToBlob(L"../x64/Debug/HullShader.cso", &hsBlob);
 	if (FAILED(hr))
@@ -1116,6 +1118,67 @@ void D3D11Engine::InitShadersAndInputLayout()
 	{
 		MessageBox(NULL, L"Failed to read domain shader!", L"Error", MB_OK);
 	}
+#endif
+
+#ifndef _DEBUG //We're trying to run the .exe
+	//Vertex shader
+	hr = D3DReadFileToBlob(L"CSO/VertexShader.cso", &vsBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read vertex shader!", L"Error", MB_OK);
+	}
+	//Forward pixel shader
+	hr = D3DReadFileToBlob(L"CSO/PixelShader.cso", &psBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read pixel shader!", L"Error", MB_OK);
+	}
+	//Deferred pixel shader
+	hr = D3DReadFileToBlob(L"CSO/DeferredPixelShader.cso", &dpsBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read deferred pixel shader!", L"Error", MB_OK);
+	}
+	//Hull shader
+	hr = D3DReadFileToBlob(L"CSO/HullShader.cso", &hsBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read hull shader!", L"Error", MB_OK);
+	}
+	//Domain shader
+	hr = D3DReadFileToBlob(L"CSO/DomainShader.cso", &dsBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read domain shader!", L"Error", MB_OK);
+	}
+	hr = D3DReadFileToBlob(L"CSO/ComputeShader.cso", &csBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read compute shader for particle system!", L"Error", MB_OK);
+		return;
+	}
+	hr = D3DReadFileToBlob(L"CSO/CubeMapComputeShader.cso", &cscBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read compute shader for particle system!", L"Error", MB_OK);
+		return;
+	}
+#endif
+	
+	//Deferred compute shader
+	/*hr = D3DCompileFromFile(L"ComputeShader.hlsl", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "cs_5_0", D3DCOMPILE_DEBUG, 0, &csBlob, &errorBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read compute shader!", L"Error", MB_OK);
+		return;
+	}*/
+	//Cubemap compute shader (not quite accurate name, but it's currently only being used to render the cubemap cube)
+	/*hr = D3DCompileFromFile(L"CubeMapComputeShader.hlsl", NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "cs_5_0", D3DCOMPILE_DEBUG, 0, &cscBlob, &errorBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read cube map compute shader!", L"Error", MB_OK);
+		return;
+	}*/
 
 	/****************************
 	//CREATE SHADERS FROM FILES//

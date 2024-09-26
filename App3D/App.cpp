@@ -132,6 +132,14 @@ void App::ContainCursor(bool clip)
 
 void App::DoSetup()
 {
+//Default state if we're not in debug, aka we're running the exe
+#ifndef _DEBUG
+    m_currentState = States::FPC_CONTROL;
+    m_cursorContained = true;
+    ContainCursor(true);
+    DisableCursor();
+#endif
+
     m_engine->GetCamera().SetPosition({ 0.0f, 12.0f, 0.0f });
 
     SetupLevel1(m_engine.get());
@@ -165,14 +173,15 @@ void App::DoFrame(float dt)
     );*/
 
     /*Imgui stuff (Right now just an fps counter)*/
+#ifdef _DEBUG
     if (m_fpsTimer->GetMilisecondsElapsed() > 1000.0f)
     {
         m_fpsShouldUpdate = true;
         m_fpsTimer->Restart();
     }
-
     m_engine->ImGuiSceneData(m_engine.get(), m_fpsShouldUpdate, (int)m_currentState, m_mouse->GetLastRawPosX(), m_mouse->GetLastRawPosY());
     m_fpsShouldUpdate = false;
+#endif
 
     /*Render the new scene*/
     m_engine->Update(dt);
