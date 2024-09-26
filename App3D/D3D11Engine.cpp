@@ -1118,6 +1118,20 @@ void D3D11Engine::InitShadersAndInputLayout()
 	{
 		MessageBox(NULL, L"Failed to read domain shader!", L"Error", MB_OK);
 	}
+	//Compute shader
+	hr = D3DReadFileToBlob(L"../x64/Debug/ComputeShader.cso", &csBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read compute shader for particle system!", L"Error", MB_OK);
+		return;
+	}
+	//Cubemap compute shader
+	hr = D3DReadFileToBlob(L"../x64/Debug/CubeMapComputeShader.cso", &cscBlob);
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to read compute shader for particle system!", L"Error", MB_OK);
+		return;
+	}
 #endif
 
 #ifndef _DEBUG //We're trying to run the .exe
