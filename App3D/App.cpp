@@ -215,6 +215,15 @@ void App::InterpretKeyboardInput(float dt)
     }
 #endif
 
+    if (m_keyboard->IsKeyReleased(0x1B)) //Escape
+    {
+        if (MessageBox(NULL, L"Would you like to quit the game?", L"Error", MB_YESNO) == IDYES)
+        {
+            DestroyWindow(m_hwnd);
+            return;
+        }
+    }
+
     /*Player*/
     //Probably want to add another layer of abstraction and let these playermovement and interaction be defined in here, because the app-class isn't as user-friendly as i want it to be lol
     if (m_currentState == States::FPC_CONTROL)
@@ -237,10 +246,15 @@ void App::InterpretKeyboardInput(float dt)
             m_engine->MovePlayerX(-m_playerSpeed * dt);
         }
 
-        if (m_keyboard->GetReleaseInfo().keyCode == 0x45 && m_keyboard->GetReleaseInfo().wasReleasedThisTick)
+        if (m_keyboard->IsKeyReleased(0x45)) //If it was specifically released on this tick
         {
             m_engine->PlayerInteract();
         }
+
+        /*if (m_keyboard->GetReleaseInfo().keyCode == 0x45 && m_keyboard->GetReleaseInfo().wasReleasedThisTick)
+        {
+            m_engine->PlayerInteract();
+        }*/
 
     }
 

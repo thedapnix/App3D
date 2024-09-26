@@ -7,7 +7,7 @@ bool Keyboard::IsKeyPressed(unsigned char keyCode)
 
 bool Keyboard::IsKeyReleased(unsigned char keyCode)
 {
-	return false;
+	return (m_release.keyCode == keyCode && m_release.wasReleasedThisTick);
 }
 
 void Keyboard::ResetReleaseInfo()
