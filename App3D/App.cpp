@@ -217,7 +217,7 @@ void App::InterpretKeyboardInput(float dt)
 
     if (m_keyboard->IsKeyReleased(0x1B)) //Escape
     {
-        if (MessageBox(NULL, L"Would you like to quit the game?", L"Error", MB_YESNO) == IDYES)
+        if (MessageBox(NULL, L"Are you sure you want to quit the game?", L"Exit", MB_YESNO) == IDYES)
         {
             DestroyWindow(m_hwnd);
             return;
