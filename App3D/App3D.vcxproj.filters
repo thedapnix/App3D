@@ -162,6 +162,9 @@
     <ClCompile Include="Interact.cpp">
       <Filter>Graphics\Drawable</Filter>
     </ClCompile>
+    <ClCompile Include="Libraries\ImGui\imgui_demo.cpp">
+      <Filter>ImGui\Library Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h">
@@ -213,15 +216,6 @@
       <Filter>ImGui\Library Files</Filter>
     </ClInclude>
     <ClInclude Include="Libraries\ImGui\imgui_internal.h">
-      <Filter>ImGui\Library Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Libraries\ImGui\imstb_rectpack.h">
-      <Filter>ImGui\Library Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Libraries\ImGui\imstb_textedit.h">
-      <Filter>ImGui\Library Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Libraries\ImGui\imstb_truetype.h">
       <Filter>ImGui\Library Files</Filter>
     </ClInclude>
     <ClInclude Include="ParticleSystem.h">
@@ -286,6 +280,15 @@
     </ClInclude>
     <ClInclude Include="Interact.h">
       <Filter>Graphics\Drawable</Filter>
+    </ClInclude>
+    <ClInclude Include="Libraries\ImGui\imstb_rectpack.h">
+      <Filter>ImGui\Library Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Libraries\ImGui\imstb_textedit.h">
+      <Filter>ImGui\Library Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Libraries\ImGui\imstb_truetype.h">
+      <Filter>ImGui\Library Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -12,8 +12,8 @@ void SetupImGui(HWND hwnd, ID3D11Device* device, ID3D11DeviceContext* context)
 
 	//Setup ImGui io
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;	//Enable Docking
-	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;	//Enable Multiple Viewports
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;	//Enable Docking (ImGui windows can snap to eachother)
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;	//Enable Multiple Viewports (ImGui Window can exist outside the original client window)
 
 	//Setup style
 	ImGui::StyleColorsDark();
@@ -58,7 +58,7 @@ void ImGuiEngineWindow(Camera* camera, std::string fps, int state,
 {
 	//Setup
 	static bool window_active = true;
-	ImGui::Begin("D3D11Engine", &window_active, ImGuiWindowFlags_MenuBar);
+	ImGui::Begin("Modifier View", &window_active, ImGuiWindowFlags_MenuBar);
 
 	//Menu
 	ImGuiWindowMenu(window_active);
@@ -108,11 +108,36 @@ void ImGuiEngineWindow(Camera* camera, std::string fps, int state,
 	ImGui::End();
 }
 
+void ImGuiSceneWindow(Camera* camera, D3D11Engine* engine)
+{
+	//ImGui windows just disappear instead of actually docking to the window, fantastic
+	//ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
+
+	//Setup
+	static bool window_active = true;
+	ImGui::Begin("Scene View", &window_active, ImGuiWindowFlags_MenuBar);
+
+	//Menu
+	//ImGuiWindowMenu(window_active);
+
+	//if (window_active)
+	//{
+		//Do scene stuff (Pass in a pointer to the engine here and call Render()?)
+		//It would be really cool if I could just call render and use the ImGui viewport
+
+		//This just in: No. I can't personally access/manipulate the ImGui viewport, so I need to instead present an image using ImGui::Image()
+		//If I recall correctly, the backbuffer is technically just a texture right? So before I call swapchain Present() I store the backbuffer as a texture, so I can pass it to the ImGui window?
+	//}
+
+	ImGui::End();
+}
+
 void EndImGuiFrame() //After the finalized frame has been decided upon, render and update
 {
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
+	//Viewports stuff
 	ImGui::UpdatePlatformWindows();
 	ImGui::RenderPlatformWindowsDefault();
 }

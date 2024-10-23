@@ -143,6 +143,9 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> context;
 	Microsoft::WRL::ComPtr<IDXGISwapChain> swapChain;
 
+	//New: Render scene to a texture as well, so we can pass it to ImGui and do ImGui::Image() to present instead of doing windows stuff? Perchance?
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> textureToGui;
+
 	//Render Target(s)
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> rtv;
 

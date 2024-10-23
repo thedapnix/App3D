@@ -107,5 +107,5 @@ private:
 	bool m_cursorEnabled = true;
 	//bool m_windowIsDirty = false; //new
 
-	float m_playerSpeed = 0.025f;
+	float m_playerSpeed = 0.03f; //Half of previous, shorter hallways but slower speed (0.0125f)
 };

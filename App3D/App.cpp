@@ -140,9 +140,11 @@ void App::DoSetup()
     DisableCursor();
 #endif
 
-    m_engine->GetCamera().SetPosition({ 0.0f, 12.0f, 0.0f });
+    m_engine->GetCamera().SetPosition({ -5.0f, 12.0f, 10.0f });
+    m_engine->GetCamera().RotateY(DirectX::XM_PIDIV2);
 
-    SetupLevel1(m_engine.get());
+    //SetupLevel1(m_engine.get());
+    SetupLevel2(m_engine.get()); //Changing the level design
 
     //Gun (remove for now ehe)
     //m_engine->CreatePovDrawable("Meshes/gun.obj", { POV_OFFSET_X, POV_OFFSET_Y, POV_OFFSET_Z }, { 2.0f, 2.0f, 2.0f });
@@ -172,19 +174,19 @@ void App::DoFrame(float dt)
         POV_OFFSET_Z
     );*/
 
-    /*Imgui stuff (Right now just an fps counter)*/
-#ifdef _DEBUG
-    if (m_fpsTimer->GetMilisecondsElapsed() > 1000.0f)
-    {
-        m_fpsShouldUpdate = true;
-        m_fpsTimer->Restart();
-    }
-    m_engine->ImGuiSceneData(m_engine.get(), m_fpsShouldUpdate, (int)m_currentState, m_mouse->GetLastRawPosX(), m_mouse->GetLastRawPosY());
-    m_fpsShouldUpdate = false;
-#endif
-
     /*Render the new scene*/
     m_engine->Update(dt);
+
+    /*Imgui stuff (I think it's important that the engine has done its rendering stuff first?)*/
+//#ifdef _DEBUG
+//    if (m_fpsTimer->GetMilisecondsElapsed() > 1000.0f)
+//    {
+//        m_fpsShouldUpdate = true;
+//        m_fpsTimer->Restart();
+//    }
+//    m_engine->ImGuiSceneData(m_engine.get(), m_fpsShouldUpdate, (int)m_currentState, m_mouse->GetLastRawPosX(), m_mouse->GetLastRawPosY());
+//    m_fpsShouldUpdate = false;
+//#endif
 
     //This can be set to true by the HandleUserInput() function, and will then be used in the InterpretKeyboardInput() function if it's appropriate
     m_keyboard->ResetReleaseInfo();

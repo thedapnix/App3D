@@ -83,9 +83,7 @@ void D3D11Engine::Update(float dt)
 
 	//RENDER
 	RenderDepth(dt);
-	//Render(dt, rtv.Get(), dsv.Get(), &viewport, m_camera.get(), CLEAR_COLOR);
-	Render(uav.Get(), dsv.Get(), &viewport, m_camera.get(), CLEAR_COLOR, m_windowWidth / NUMTHREADS, m_windowHeight / NUMTHREADS); //Dispatch (128, 96, 1)
-	//Render(uav.Get(), dsv.Get(), &viewport, m_cubeMap.GetCameraAt(0), CLEAR_COLOR, m_windowWidth, m_windowHeight);
+	Render(uav.Get(), dsv.Get(), &viewport, m_camera.get(), CLEAR_COLOR, m_windowWidth / NUMTHREADS, m_windowHeight / NUMTHREADS);
 	if (billboardingIsEnabled) RenderParticles(m_camera.get());
 	if (cubemapIsEnabled)
 	{
@@ -95,8 +93,14 @@ void D3D11Engine::Update(float dt)
 		}
 	}
 
+#ifdef _DEBUG
+	ImGuiSceneData(this, false, 0, 0,0);
+#endif
+
 	//PRESENT
 	swapChain->Present(0, 0); //vSync, 1 = enabled, 0 = disabled (or in other terms, fps limit to screen hz or uncap)
+
+	
 }
 
 void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps, int state, int rawX, int rawY)
@@ -118,6 +122,9 @@ void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps,
 		drawablesBeingRendered, selectableDrawables,
 		rawX, rawY
 	);
+
+	//New (Now try to render the typical scene to this scene view)
+	//ImGuiSceneWindow(m_camera.get(), d3d11engine);
 
 	EndImGuiFrame(); //End
 #endif
