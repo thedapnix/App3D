@@ -1,5 +1,9 @@
 newmtl wood_glow_blue
-Ka wood_glow_blue.png
+Ns 250.000000
 Kd wood_glow_blue.png
+Ka wood_glow_blue.png
 Ks wood_glow_blue.png
-Ns 1.0000
+Ke wood_glow_blue.png
+Ni 1.450000
+d 1.000000
+illum 2

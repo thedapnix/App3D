@@ -143,11 +143,11 @@ void App::DoSetup()
     m_engine->GetCamera().SetPosition({ -5.0f, 12.0f, 10.0f });
     m_engine->GetCamera().RotateY(DirectX::XM_PIDIV2);
 
+    //Gun (remove for now ehe)
+    m_engine->CreatePovDrawable("Meshes/gun.obj", { POV_OFFSET_X, POV_OFFSET_Y, POV_OFFSET_Z }, { 2.0f, 2.0f, 2.0f });
+
     //SetupLevel1(m_engine.get());
     SetupLevel2(m_engine.get()); //Changing the level design
-
-    //Gun (remove for now ehe)
-    //m_engine->CreatePovDrawable("Meshes/gun.obj", { POV_OFFSET_X, POV_OFFSET_Y, POV_OFFSET_Z }, { 2.0f, 2.0f, 2.0f });
 
     //Cubemap(s) I'm just limit testing cool shit
     //m_engine->CreateReflectiveDrawable("Meshes/default_sphere.obj", { -17.5f, 10.0f, 55.0f }, {2.0f, 2.0f, 2.0f}); //Big floating sphere in the big room, between the purple and cyan light
@@ -168,11 +168,11 @@ void App::DoFrame(float dt)
     m_engine->GetCamera().UpdateViewMatrix();
 
     //Update gun every frame, let's start by going back to the basics of rotating around a point like we did in hello triangle (PovDrawable position is an offset from the camera)
-    /*m_engine->GetPovDrawables().at(0).SetPosition(
+    m_engine->GetPovDrawables().at(0).SetPosition(
         POV_OFFSET_X,
         POV_OFFSET_Y,
         POV_OFFSET_Z
-    );*/
+    );
 
     /*Render the new scene*/
     m_engine->Update(dt);
@@ -196,24 +196,55 @@ void App::InterpretKeyboardInput(float dt)
 {
     /*State switching using the keys 1, 2, and 3 (No control, FPS player control, free camera control)*/
 #ifdef _DEBUG
-    if (m_keyboard->IsKeyPressed(0x31))
+    //Teleport to different levels by holding down L and pressing the keys 1 through 6
+    if (m_keyboard->IsKeyPressed(0x4C))
     {
-        m_currentState = States::NO_CONTROL;
-        m_cursorContained = false;
+        if (m_keyboard->IsKeyPressed(0x31))
+        {
+            m_engine->GetCamera().SetPosition({ -5.0f, 12.0f, 10.0f });
+        }
+        else if (m_keyboard->IsKeyPressed(0x32))
+        {
+            m_engine->GetCamera().SetPosition({ -5.0f + 60.0f, 12.0f, 10.0f + 60.0f });
+        }
+        else if (m_keyboard->IsKeyPressed(0x33))
+        {
+            m_engine->GetCamera().SetPosition({ -5.0f + 120.0f, 12.0f, 10.0f + 120.0f });
+        }
+        else if (m_keyboard->IsKeyPressed(0x34))
+        {
+            m_engine->GetCamera().SetPosition({ -5.0f + 180.0f, 12.0f, 10.0f + 180.0f });
+        }
+        else if (m_keyboard->IsKeyPressed(0x35))
+        {
+            m_engine->GetCamera().SetPosition({ -5.0f + 240.0f, 12.0f, 10.0f + 240.0f });
+        }
+        else if (m_keyboard->IsKeyPressed(0x36))
+        {
+            m_engine->GetCamera().SetPosition({ -5.0f + 300.0f, 12.0f, 10.0f + 300.0f });
+        }
     }
-    else if (m_keyboard->IsKeyPressed(0x32))
+    else //If not holding down L the keys 1, 2, and 3 swap between different camera states
     {
-        m_currentState = States::FPC_CONTROL;
-        m_cursorContained = true;
-        ContainCursor(true);
-        DisableCursor();
-    }
-    else if (m_keyboard->IsKeyPressed(0x33))
-    {
-        m_currentState = States::GODCAM_CONTROL;
-        m_cursorContained = false;
-        ContainCursor(false);
-        EnableCursor();
+        if (m_keyboard->IsKeyPressed(0x31))
+        {
+            m_currentState = States::NO_CONTROL;
+            m_cursorContained = false;
+        }
+        else if (m_keyboard->IsKeyPressed(0x32))
+        {
+            m_currentState = States::FPC_CONTROL;
+            m_cursorContained = true;
+            ContainCursor(true);
+            DisableCursor();
+        }
+        else if (m_keyboard->IsKeyPressed(0x33))
+        {
+            m_currentState = States::GODCAM_CONTROL;
+            m_cursorContained = false;
+            ContainCursor(false);
+            EnableCursor();
+        }
     }
 #endif
 

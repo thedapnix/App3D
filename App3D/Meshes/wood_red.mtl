@@ -1,5 +1,9 @@
 newmtl wood_red
-Ka wood_red.png
+Ns 250.000000
 Kd wood_red.png
+Ka wood_red.png
 Ks wood_red.png
-Ns 1.0000
+Ke wood_red.png
+Ni 1.450000
+d 1.000000
+illum 2

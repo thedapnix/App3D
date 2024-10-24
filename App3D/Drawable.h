@@ -110,6 +110,12 @@ struct DrawableInfo
 	bool isActive = true;			//Lets the engine know whether or not we bother rendering or collision-checking this drawable
 };
 
+struct OrbitData
+{
+	bool doesOrbit = false;
+	DirectX::XMFLOAT3 point = { 0.0f, 0.0f, 0.0f };
+};
+
 class Drawable
 {
 public:
@@ -117,7 +123,7 @@ public:
 	~Drawable() = default;
 
 	void Bind(ID3D11DeviceContext* context, bool isReflective = false) const; //More like Bind, Draw, and Unbind, but hey
-	void UpdateConstantBuffer(ID3D11DeviceContext* context, bool orbits = false, Camera* camera = nullptr);
+	void UpdateConstantBuffer(ID3D11DeviceContext* context, Camera* camera = nullptr, const DirectX::XMFLOAT3& pos = {0.0f, 0.0f, 0.0f} );
 	void CreateBoundingBoxFromPoints(DirectX::XMVECTOR min, DirectX::XMVECTOR max);
 
 	//Movement stuff
@@ -128,6 +134,7 @@ public:
 
 	/*Getters*/
 	const DirectX::XMFLOAT3& GetPosition() const;
+	const DirectX::XMFLOAT3& GetRotation() const;
 	DirectX::XMMATRIX World() const;
 	const DirectX::BoundingBox& GetBoundingBox() const;
 	const VertexBuffer& GetVertexBuffer() const;
@@ -146,6 +153,8 @@ public:
 	bool IsReflective() const;
 	void SetConcave(bool set = true);
 	bool IsConcave() const;
+	bool DoesOrbit() const;
+	void SetOrbit(bool set = true);
 
 	//Magic
 	void Interact(int (*funcPtr)(DrawableInfo, std::vector<Drawable>&), std::vector<Drawable>& drawables)
@@ -170,7 +179,7 @@ private:
 	ConstantBuffer m_constantBuffer;
 	ConstantBuffer m_constantBufferShininess;
 	//ConstantBuffer m_constantBufferPov; //new
-	void CalculateAndTransposeWorld(bool orbits = false, Camera* camera = nullptr);
+	void CalculateAndTransposeWorld(const DirectX::XMFLOAT3& pos = { 0.0f, 0.0f, 0.0f }, Camera* camera = nullptr);
 
 	std::vector<SubMesh> m_submeshes;
 
@@ -193,4 +202,7 @@ private:
 	//Variables for drawables with specific rendering qualities
 	bool m_isReflective;//Need to access this when we do culling with cubemaps
 	bool m_isConcave;	//Need to access this when we choose which rasterizer state to use when rendering objects, so as to not to perform backface culling on concave objects
+	bool m_orbits;
+
+	bool m_isDirty = false;
 };

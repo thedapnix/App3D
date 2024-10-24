@@ -370,19 +370,21 @@ void SetupLevel2(D3D11Engine* engine)
     engine->CreateDrawable("Meshes/crate_red.obj", { 4.5f, 6.0f, 74.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, 1, { 19, 20 });
 
     //Bouncing Box in the second hallway    (104)
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 30.0f + 60.0f, 2.0f, 58.0f + 60.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, 1, { 36, 37 });
+    engine->CreateDrawable("Meshes/crate_wood.obj", { 19.0f + 60.0f, 5.0f, 73.5f + 60.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, 1, { 36, 37 });     //Bounce from 5 to 10 and back
 
     //Blue Box in the third hallway         (105)
-    engine->CreateDrawable("Meshes/crate_blue.obj", { 4.5f + 120.0f, 6.0f, 74.0f + 120.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, 1, { 53, 54 });
+    engine->CreateDrawable("Meshes/crate_blue.obj", { 25.0f + 120.0f, 6.0f, 60.0f + 120.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, 1, { 53, 54 });
 
-    //Swinging Box in the fourth hallway    (106)
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 4.5f + 180.0f, 6.0f, 74.0f + 180.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, 1, { 70, 71 });
+    //Sliding Box in the fourth hallway     (106)
+    engine->CreateDrawable("Meshes/crate_wood.obj", { 11.0f + 180.0f, 6.0f, 22.0f + 180.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, 1, { 70, 71 });   //Slide from 22 to 30 and back (202 to 210 I think)
 
     //Glowing Box in the fifth hallway      (107)
-    engine->CreateDrawable("Meshes/crate_glow_blue.obj", { 4.5f + 240.0f, 6.0f, 74.0f + 240.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, 1, { 87, 88 });
+    engine->CreateDrawable("Meshes/crate_glow_blue.obj", { -2.95f + 240.0f, 4.0f, 61.9f + 240.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, 1, { 87, 88 });
 
-    //Sliding Box in the sixth hallway      (108)
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 4.5f + 300.0f, 6.0f, 74.0f + 300.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, 1, { 99, 100 });
+    //Swinging Box in the sixth hallway     (108)
+    //engine->CreateDrawable("Meshes/crate_wood.obj", { 30.0f + 300.0f, 12.0f, 70.0f + 300.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, 1, { 99, 100 });   //This one is way more complicated. Swing from a rope or something?
+    //engine->CreatePovDrawable("Meshes/crate_wood.obj", { 0.0f, -6.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, 1, { 99, 100 });
+    engine->CreateOrbitDrawable("Meshes/crate_wood.obj", { 25.0f + 300.0f, 12.0f, 70.0f + 300.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, 1, { 99, 100 });
 
     //Then add clutter, can't do that in the loop since they're supposed to differ between levels (have fun (god I hate this part I'm a PROGRAMMER NOT A LEVEL DESIGNER GRRRAHHHH))
     //At the very least, we can place clutter in relation to the first hallway, and then simply do +60, +120, +180, and +240, to put them in hallways number 2, 3, 4, and 5
@@ -433,7 +435,90 @@ void SetupLevel2(D3D11Engine* engine)
     //HALLWAY #3//
     //////////////
     */////////////
+    //Back-wall clutter
+    engine->CreateDrawable("Meshes/clutter_medium_1.obj", { 0.0f + 120.0f, 2.0f, -1.0f + 120.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f });
 
+    //Hallway (part 1, left side) clutter
+    engine->CreateDrawable("Meshes/clutter_small_2.obj", { -8.0f + 120.0f, 2.0f, 40.0f + 120.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -XM_PI, 0.0f });
+
+    //Hallway (part 1, right side)
+    //engine->CreateDrawable("Meshes/clutter_medium_1.obj", { 4.5f + 120.0f, 2.0f, 40.0f + 120.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f }); //Faces negative Z by default, rotated to face negative X
+
+    //Hallway (part 2, far side) clutter
+    //engine->CreateDrawable("Meshes/clutter_small_3.obj", { -8.5f + 120.0f, 2.0f, 79.0f + 120.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+    engine->CreateDrawable("Meshes/clutter_medium_2.obj", { 0.0f + 120.0f, 2.0f, 80.0f + 120.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PI, 0.0f }); //Faces positive Z by default, rotated to face negative Z
+
+    //Hallway (part 2, near side) clutter
+    engine->CreateDrawable("Meshes/clutter_small_2.obj", { 25.0f + 120.0f, 2.0f, 64.0f + 120.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f }); //Faces negative X by default, rotated to face positive Z
+
+    /*////////////
+    //////////////
+    //HALLWAY #4//
+    //////////////
+    */////////////
+    //Back-wall clutter
+    engine->CreateDrawable("Meshes/clutter_small_3.obj", { -9.0f + 180.0f, 2.0f, 4.0f + 180.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+
+    //Hallway (part 1, left side) clutter
+    engine->CreateDrawable("Meshes/clutter_medium_3.obj", { -8.0f + 180.0f, 2.0f, 72.0f + 180.0f }, { 1.0f, 1.0f, 1.0f }, {0.0f, XM_PIDIV2, 0.0f});
+
+    //Hallway (part 1, right side)
+    //engine->CreateDrawable("Meshes/clutter_medium_1.obj", { 4.5f + 180.0f, 2.0f, 40.0f + 180.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f }); //Faces negative Z by default, rotated to face negative X
+    engine->CreateDrawable("Meshes/crate_wood.obj", { 11.0f + 180.0f, 3.0f, 22.0f + 180.0f }, { 2.0f, 2.0f, 2.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+    engine->CreateDrawable("Meshes/crate_wood.obj", { 11.0f + 180.0f, 3.0f, 26.0f + 180.0f }, { 2.0f, 2.0f, 2.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+    engine->CreateDrawable("Meshes/crate_wood.obj", { 11.0f + 180.0f, 3.0f, 30.0f + 180.0f }, { 2.0f, 2.0f, 2.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+
+    //Hallway (part 2, far side) clutter
+    engine->CreateDrawable("Meshes/clutter_small_1.obj", { 22.5f + 180.0f, 2.0f, 78.0f + 180.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -XM_PIDIV2, 0.0f });
+    //engine->CreateDrawable("Meshes/clutter_medium_2.obj", { 25.0f + 180.0f, 2.0f, 80.0f + 180.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PI, 0.0f }); //Faces positive Z by default, rotated to face negative Z
+
+    //Hallway (part 2, near side) clutter
+    //engine->CreateDrawable("Meshes/clutter_small_2.obj", { 25.0f + 180.0f, 2.0f, 64.0f + 180.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f }); //Faces negative X by default, rotated to face positive Z
+
+    /*////////////
+    //////////////
+    //HALLWAY #5//
+    //////////////
+    */////////////
+    //Back-wall clutter
+    engine->CreateDrawable("Meshes/clutter_small_3.obj", { 5.0f + 240.0f, 2.0f, 4.0f + 240.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+    engine->CreateDrawable("Meshes/clutter_small_1.obj", { -10.0f + 240.0f, 2.0f, 3.0f + 240.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+
+    //Hallway (part 1, left side) clutter
+    engine->CreateDrawable("Meshes/clutter_medium_2.obj", { -11.0f + 240.0f, 2.0f, 60.0f + 240.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+
+    //Hallway (part 1, right side)
+    engine->CreateDrawable("Meshes/clutter_small_2.obj", { 7.0f + 240.0f, 2.0f, 30.0f + 240.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }); //Faces negative Z by default, rotated to face negative X
+
+    //Hallway (part 2, far side) clutter
+    //engine->CreateDrawable("Meshes/clutter_medium_2.obj", { 25.0f + 180.0f, 2.0f, 80.0f + 180.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PI, 0.0f }); //Faces positive Z by default, rotated to face negative Z
+
+    //Hallway (part 2, near side) clutter
+    engine->CreateDrawable("Meshes/clutter_small_1.obj", { 22.5f + 240.0f, 2.0f, 62.0f + 240.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+    //engine->CreateDrawable("Meshes/clutter_small_2.obj", { 25.0f + 180.0f, 2.0f, 64.0f + 180.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f }); //Faces negative X by default, rotated to face positive Z
+
+    /*////////////
+    //////////////
+    //HALLWAY #6//
+    //////////////
+    */////////////
+    //Back-wall clutter
+    //engine->CreateDrawable("Meshes/clutter_small_3.obj", { 5.0f + 240.0f, 2.0f, 4.0f + 240.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+    //engine->CreateDrawable("Meshes/clutter_small_1.obj", { -10.0f + 240.0f, 2.0f, 3.0f + 240.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+
+    //Hallway (part 1, left side) clutter
+    engine->CreateDrawable("Meshes/clutter_small_1.obj", { -11.0f + 300.0f, 2.0f, 81.0f + 300.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+    engine->CreateDrawable("Meshes/clutter_small_3.obj", { -11.0f + 300.0f, 2.0f, 45.0f + 300.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+
+    //Hallway (part 1, right side)
+    engine->CreateDrawable("Meshes/clutter_medium_2.obj", { 4.5f + 300.0f, 2.0f, 10.0f + 300.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f }); //Faces negative Z by default, rotated to face negative X
+
+    //Hallway (part 2, far side) clutter
+    engine->CreateDrawable("Meshes/clutter_medium_1.obj", { 22.5f + 300.0f, 2.0f, 81.0f + 300.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PI, 0.0f });
+    //engine->CreateDrawable("Meshes/clutter_medium_2.obj", { 25.0f + 180.0f, 2.0f, 80.0f + 180.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PI, 0.0f }); //Faces positive Z by default, rotated to face negative Z
+
+    //Hallway (part 2, near side) clutter
+    //engine->CreateDrawable("Meshes/clutter_small_2.obj", { 25.0f + 180.0f, 2.0f, 64.0f + 180.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f }); //Faces negative X by default, rotated to face positive Z
 }
 
 /*

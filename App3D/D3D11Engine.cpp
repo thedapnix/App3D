@@ -57,16 +57,61 @@ D3D11Engine::~D3D11Engine()
 
 void D3D11Engine::Update(float dt)
 {
-	//When we pass constant buffers to shaders, it's important that the matrices in them are transposed. They should NOT be transposed before that though
-	//Make the UpdateConstantBuffer() functions transpose and pass?
+	//UPDATE DRAWABLES
+	//104 moves 5 up and then 5 down, rinse and repeat
+	if (targetGoingUp)
+	{
+		m_drawables.at(104).Move(0.0f, 0.005f * dt, 0.0f);
+		if (m_drawables.at(104).GetPosition().y >= 10.0f)
+			targetGoingUp = false;
+	}
+	else
+	{
+		m_drawables.at(104).Move(0.0f, -0.005f * dt, 0.0f);
+		if (m_drawables.at(104).GetPosition().y <= 5.0f)
+			targetGoingUp = true;
+	}
+
+	//106 moves 8 forward and 8 back, rinse and repeat
+	if (targetGoingForward)
+	{
+		m_drawables.at(106).Move(0.0f, 0.0f, 0.005f * dt);
+		if (m_drawables.at(106).GetPosition().z >= 210.0f)
+			targetGoingForward = false;
+	}
+	else
+	{
+		m_drawables.at(106).Move(0.0f, 0.0f, -0.005f * dt);
+		if (m_drawables.at(106).GetPosition().z <= 202.0f)
+			targetGoingForward = true;
+	}
+
+	//108 does a pendulum swing type beat, but let's start by finding out if we can even make it circle
+	if (targetSwingingOriginal)
+	{
+		m_drawables.at(108).Rotate(0.00075f * dt, 0.0f, 0.0f);
+		if (m_drawables.at(108).GetRotation().x >= XM_PIDIV4)
+			targetSwingingOriginal = false;
+	}
+	else
+	{
+		m_drawables.at(108).Rotate(-0.00075f * dt, 0.0f, 0.0f);
+		if (m_drawables.at(108).GetRotation().x <= -XM_PIDIV4)
+			targetSwingingOriginal = true;
+	}
+	m_drawables.at(108).SetPosition(0.0f, -6.0f, 0.0f);
+	//m_drawables.at(108).SetPosition(0.0f, 0.0f, 5.0f);
+	//m_povDrawables.at(1).SetPosition(0.0f, 0.0f, 5.0f);
 
 	//UPDATE CONSTANT BUFFERS
 	m_camera->UpdateConstantBuffer(context.Get());
 
-	//m_drawables.at(11).Rotate(0.0f, 0.0005f * dt, 0.001f * dt);
 	for (auto& drawable : m_drawables)
 	{
-		drawable.UpdateConstantBuffer(context.Get());
+		if (drawable.DoesOrbit()) //Scuffed ass, this is why ECS is so much better, everything starts getting so convoluted, imagine if there were systems in charge of updating these!!!!!
+			drawable.UpdateConstantBuffer(context.Get(), nullptr, { 325.0f, 18.0f, 370.0f });
+		else
+			drawable.UpdateConstantBuffer(context.Get());
 	}
 	for (auto& drawable : m_reflectiveDrawables)
 	{
@@ -75,7 +120,7 @@ void D3D11Engine::Update(float dt)
 	}
 	for (auto& drawable : m_povDrawables)
 	{
-		drawable.UpdateConstantBuffer(context.Get(), true, m_camera.get()); 
+		drawable.UpdateConstantBuffer(context.Get(), m_camera.get());
 	}
 
 	m_particleVar += dt;
@@ -199,15 +244,6 @@ bool D3D11Engine::CreateReflectiveDrawable(std::string objFileName, DirectX::XMF
 {
 	int index = InitDrawableFromFile(objFileName, m_reflectiveDrawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith); //temp: just put false as interactible here bleh
 
-	//if (m_reflectiveDrawables.size() == 1)
-	//{
-	//	m_reflectiveDrawables.at(0).SetReflective();
-	//}
-	//else //2 lol
-	//{
-	//	m_reflectiveDrawables.at(1).SetReflective();
-	//}
-
 	//Should be a little bit more stylish than the abomination above
 	m_reflectiveDrawables.at(index).SetReflective();
 
@@ -219,7 +255,9 @@ bool D3D11Engine::CreateReflectiveDrawable(std::string objFileName, DirectX::XMF
 
 bool D3D11Engine::CreatePovDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
 {
-	InitDrawableFromFile(objFileName, m_povDrawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith);
+	int index = InitDrawableFromFile(objFileName, m_povDrawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith);
+
+	m_povDrawables.at(index).SetOrbit();
 
 	return true;
 }
@@ -233,6 +271,15 @@ bool D3D11Engine::CreateConcaveDrawable(std::string objFileName, DirectX::XMFLOA
 	return true;
 }
 
+bool D3D11Engine::CreateOrbitDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
+{
+	int index = InitDrawableFromFile(objFileName, m_drawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith);
+
+	m_drawables.at(index).SetOrbit(); //Yes, this will orbit around a point
+
+	return false;
+}
+
 bool D3D11Engine::MoveDrawable(int i, DirectX::XMFLOAT3 dist)
 {
 	m_drawables.at(i).Move(dist.x, dist.y, dist.z);
@@ -242,16 +289,13 @@ bool D3D11Engine::MoveDrawable(int i, DirectX::XMFLOAT3 dist)
 
 bool D3D11Engine::SetupQT()
 {
+	//Since the quad-tree is only set up once, it takes in all the bounding boxes before we've done any UpdateConstantBuffer() stuff, aka before orbitting drawables have been placed in relation to the things they orbit
 	for (const auto& drawable : m_drawables)
 		m_quadTree.AddElement(&drawable, drawable.GetBoundingBox());
 
 	//Danger zone
 	for (const auto& drawable : m_reflectiveDrawables)
 		m_quadTree.AddElement(&drawable, drawable.GetBoundingBox());
-
-	//So uh... when i add the drawable into the quadtree, m_isReflective is true
-	//But when I try to check that in the render function, we don't go through??????????
-	//Fucking EXCUSE ME??????????
 
 	return true;
 }

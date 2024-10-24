@@ -49,6 +49,8 @@ public:
 		DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
 	bool CreateConcaveDrawable(		std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, 
 		DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
+	bool CreateOrbitDrawable(std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f },
+		DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
 	bool MoveDrawable(int i, DirectX::XMFLOAT3 dist);
 	bool SetupQT();
 	void RemoveDrawableInteraction(int id);
@@ -121,6 +123,11 @@ private:
 	std::unique_ptr<Camera> m_camera;
 	GBuffer m_gBuffers[4];
 	float m_particleVar = 0.0f;
+
+	//Dirty temp variables
+	bool targetGoingUp = true;
+	bool targetGoingForward = true;
+	bool targetSwingingOriginal = true;
 
 	/*ImGui variables*/
 	int fpsCounter = 0;

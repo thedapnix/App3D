@@ -54,3 +54,6 @@ DirectX::XMFLOAT3& XmFloat3Max(const DirectX::XMFLOAT3& in1, const DirectX::XMFL
 float XmFloat3MaxValue(const DirectX::XMFLOAT3& in);
 
 float XmFloat3Dot(const DirectX::XMFLOAT3& in1, const DirectX::XMFLOAT3& in2);
+
+//Returns true if the two inputs are the same
+bool XmFloat3Compare(const DirectX::XMFLOAT3& lhs, const DirectX::XMFLOAT3& rhs);
