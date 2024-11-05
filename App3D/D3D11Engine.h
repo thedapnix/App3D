@@ -41,16 +41,17 @@ public:
 	void PlayerInteract();
 
 	//Drawable and culling stuff
-	bool CreateDrawable(			std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, 
+	int CreateDrawable(			std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, 
 		DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
-	bool CreateReflectiveDrawable(	std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, 
+	int CreateReflectiveDrawable(	std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, 
 		DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
-	bool CreatePovDrawable(			std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, 
+	int CreatePovDrawable(			std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, 
 		DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
-	bool CreateConcaveDrawable(		std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, 
+	int CreateConcaveDrawable(		std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, 
 		DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
-	bool CreateOrbitDrawable(std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f },
+	int CreateOrbitDrawable(std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f },
 		DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
+	void ApplyNormalMapToDrawable(int index, std::string ddsFileName);
 	bool MoveDrawable(int i, DirectX::XMFLOAT3 dist);
 	bool SetupQT();
 	void RemoveDrawableInteraction(int id);

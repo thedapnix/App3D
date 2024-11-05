@@ -13,6 +13,8 @@
 //Helper functions (idk if i'll need this rn but this class will get worked on)
 //void UpdateWorldMatrix(DirectX::XMMATRIX& world, float dt);
 
+//To-do: Delete all of this :) Calculations should not be performed on XMFLOATs, as they're not SIMD optimized
+
 static DirectX::XMFLOAT4X4 Identity4x4()
 {
 	static DirectX::XMFLOAT4X4 I(

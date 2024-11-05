@@ -389,6 +389,12 @@ void SetupLevel2(D3D11Engine* engine)
     //Then add clutter, can't do that in the loop since they're supposed to differ between levels (have fun (god I hate this part I'm a PROGRAMMER NOT A LEVEL DESIGNER GRRRAHHHH))
     //At the very least, we can place clutter in relation to the first hallway, and then simply do +60, +120, +180, and +240, to put them in hallways number 2, 3, 4, and 5
 
+    //Normal mapping test
+    int normalMapTestCrateIndex = engine->CreateDrawable("Meshes/crate_wood.obj", { 3.0f, 11.0f, 25.0f });
+    engine->ApplyNormalMapToDrawable(normalMapTestCrateIndex, "NormalMaps/wood.png"); //The backup, can't get dds to work
+    //engine->ApplyNormalMapToDrawable(normalMapTestCrateIndex, "NormalMaps/wood.dds");
+    int regularTestCrateIndex = engine->CreateDrawable("Meshes/crate_wood.obj", { 3.0f, 11.0f, 27.0f });
+
     /*////////////
     //////////////
     //HALLWAY #1//

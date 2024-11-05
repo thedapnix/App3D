@@ -84,6 +84,56 @@ void ShaderResource::Init(ID3D11Device* device, const char* textureFileName)
 	//}
 }
 
+void ShaderResource::InitNormalMap(ID3D11Device* device, const char* textureFileName)
+{
+	//Temp as all fucking hell
+
+	/*Create descriptor and subresource data using info from the file you read*/
+	D3D11_TEXTURE2D_DESC srtDesc;
+	ZeroMemory(&srtDesc, sizeof(srtDesc));
+
+	srtDesc.Width = 256;
+	srtDesc.Height = 256;
+	srtDesc.MipLevels = 1;
+	srtDesc.ArraySize = 1;
+	srtDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	srtDesc.SampleDesc.Count = 1;
+	//srtDesc.SampleDesc.Quality = 0;
+	srtDesc.Usage = D3D11_USAGE_IMMUTABLE; //GPU read-only
+	srtDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	srtDesc.CPUAccessFlags = 0;
+	srtDesc.MiscFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA srtData;
+	ZeroMemory(&srtData, sizeof(srtData));
+
+	srtData.pSysMem = textureFileName;
+	srtData.SysMemPitch = 256 * 3;
+	//srtData.SysMemSlicePitch = 0;
+
+	HRESULT hr = device->CreateTexture2D(&srtDesc, &srtData, srt.GetAddressOf());
+
+	if (FAILED(hr)) {
+		MessageBox(NULL, L"Failed to create shader resource texture for drawable!", L"Error", MB_OK);
+		return;
+	}
+
+	/*D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+	ZeroMemory(&srvDesc, sizeof(srvDesc));
+
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = srtDesc.MipLevels;
+	srvDesc.Format = srtDesc.Format;*/
+
+	hr = device->CreateShaderResourceView(srt.Get(), NULL, srv.GetAddressOf());
+
+	if (FAILED(hr)) {
+		MessageBox(NULL, L"Failed to create shader resource view for drawable!", L"Error", MB_OK);
+		return;
+	}
+}
+
 ID3D11ShaderResourceView* ShaderResource::GetSRV() const
 {
 	return srv.Get();

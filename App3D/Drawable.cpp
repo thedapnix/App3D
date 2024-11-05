@@ -1,8 +1,5 @@
 #include "Drawable.h"
 
-//#define STB_IMAGE_IMPLEMENTATION
-//#include "stb_image.h"
-
 Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOAT3 scaling, DirectX::XMFLOAT3 rotation, DirectX::XMFLOAT3 translation, int interact, std::vector<int> interactsWith)
 {
 	//Every drawable has a vertex buffer, an index buffer, and a constant buffer
@@ -18,7 +15,8 @@ Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOA
 		device,
 		data.iData.size,
 		data.iData.count,
-		(uint32_t*)(data.iData.vector.data()));
+		(uint32_t*)(data.iData.vector.data())
+	);
 
 	m_scale = scaling;
 	m_rotate = rotation;
@@ -27,7 +25,7 @@ Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOA
 	//Later on whenever we update constant buffers we will pass in additional information to this function
 	//CalculateAndTransposeWorld();
 
-	m_constantBuffer.Init(device, &m_transform, sizeof(m_transform));
+	m_constantBuffer.Init(device, &m_cbd, sizeof(m_cbd));
 
 	/*Submesh stuff*/
 	for (auto& submesh : data.subMeshVector)
@@ -45,12 +43,13 @@ Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOA
 	m_isDirty = true; //This way, we can ensure that the CalculateAndTransposeWorld() function is called once, and in a proper manner
 }
 
-void Drawable::Bind(ID3D11DeviceContext* context, bool isReflective) const
+void Drawable::Bind(ID3D11DeviceContext* context) const
 {
 	if (m_drawableInfo.isActive)
 	{
 		//Buffers
 		context->VSSetConstantBuffers(0, 1, m_constantBuffer.GetBufferAddress());
+		context->PSSetConstantBuffers(0, 1, m_constantBuffer.GetBufferAddress());
 
 		ID3D11Buffer* buffer[] = { m_vertexBuffer.GetBuffer() };
 		UINT stride = m_vertexBuffer.GetVertexSize();
@@ -61,9 +60,9 @@ void Drawable::Bind(ID3D11DeviceContext* context, bool isReflective) const
 
 		for (int i = 0; i < m_submeshes.size(); i++)
 		{
-			m_submeshes.at(i).Bind(context, isReflective);
+			m_submeshes.at(i).Bind(context, m_isReflective, m_hasNormalMap);
 			m_submeshes.at(i).Draw(context);
-			m_submeshes.at(i).Unbind(context, isReflective);
+			m_submeshes.at(i).Unbind(context, m_isReflective, m_hasNormalMap);
 		}
 		context->VSSetConstantBuffers(0, 0, NULL);
 	}
@@ -76,9 +75,11 @@ void Drawable::UpdateConstantBuffer(ID3D11DeviceContext* context, Camera* camera
 		//Calculate transform (might have been altered during frame) and then transpose before sending to shaders
 		CalculateAndTransposeWorld(pos, camera);
 
+		m_cbd.hasNormalMap = m_hasNormalMap;
+
 		D3D11_MAPPED_SUBRESOURCE mapped = {};												//Set up the new srtData for the resource, zero the memory
 		context->Map(m_constantBuffer.GetBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);	//Disable GPU access to the srtData we want to change, and get a pointer to its memory
-		memcpy(mapped.pData, &m_transform, sizeof(m_transform));							//Write the new srtData to memory
+		memcpy(mapped.pData, &m_cbd, sizeof(m_cbd));										//Write the new srtData to memory
 		context->Unmap(m_constantBuffer.GetBuffer(), 0);									//Re-enable GPU access to the srtData
 
 		m_isDirty = false;
@@ -215,6 +216,21 @@ void Drawable::SetOrbit(bool set)
 	m_orbits = set;
 }
 
+void Drawable::SetNormalMap(ID3D11Device* device, std::string ddsFileName)
+{
+	//Store the .dds file as texture to sample in the shader
+	m_normalMapTexture.Init(device, ddsFileName.c_str());
+	
+	//Naively put this normal map texture onto every submesh, for now
+	for (auto& submesh : m_submeshes)
+	{
+		submesh.AddNormalMap(m_normalMapTexture.GetSRV());
+	}
+
+	m_hasNormalMap = true;
+	m_isDirty = true; //Constant buffer will need to be updated
+}
+
 void Drawable::Destroy()
 {
 	m_drawableInfo.isActive = false;
@@ -273,7 +289,7 @@ void Drawable::CalculateAndTransposeWorld(const DirectX::XMFLOAT3& pos, Camera* 
 	
 	//We only ever call this function before we're about to enter Render()-function, so we transpose the world-matrix before passing it to shaders
 	world = DirectX::XMMatrixTranspose(world);
-	DirectX::XMStoreFloat4x4(&m_transform.world, world);
+	DirectX::XMStoreFloat4x4(&m_cbd.world, world);
 
 	//New: Update the bounding box as well so interacting with moving targets isn't terrible
 	if (m_orbits)

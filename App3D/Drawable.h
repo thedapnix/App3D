@@ -13,6 +13,7 @@
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 #include "ConstantBuffer.h"
+#include "ShaderResource.h"
 
 #include "SubMesh.h"
 
@@ -122,7 +123,7 @@ public:
 	Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOAT3 scaling, DirectX::XMFLOAT3 rotation, DirectX::XMFLOAT3 translation, int interact, std::vector<int> interactsWith);
 	~Drawable() = default;
 
-	void Bind(ID3D11DeviceContext* context, bool isReflective = false) const; //More like Bind, Draw, and Unbind, but hey
+	void Bind(ID3D11DeviceContext* context) const; //More like Bind, Draw, and Unbind, but hey
 	void UpdateConstantBuffer(ID3D11DeviceContext* context, Camera* camera = nullptr, const DirectX::XMFLOAT3& pos = {0.0f, 0.0f, 0.0f} );
 	void CreateBoundingBoxFromPoints(DirectX::XMVECTOR min, DirectX::XMVECTOR max);
 
@@ -155,6 +156,7 @@ public:
 	bool IsConcave() const;
 	bool DoesOrbit() const;
 	void SetOrbit(bool set = true);
+	void SetNormalMap(ID3D11Device* device, std::string ddsFileName);
 
 	//Magic
 	void Interact(int (*funcPtr)(DrawableInfo, std::vector<Drawable>&), std::vector<Drawable>& drawables)
@@ -163,22 +165,17 @@ public:
 	}
 
 private:
-	__declspec(align(16)) struct WorldTransform
+	__declspec(align(16)) struct ConstantBufferData
 	{
 		DirectX::XMFLOAT4X4 world;
-	};
-	__declspec(align(16)) struct ShininessCB
-	{
-		float shininess;
+
+		bool hasNormalMap = false;
 	};
 	DirectX::XMFLOAT3 m_scale;
 	DirectX::XMFLOAT3 m_rotate;
 	DirectX::XMFLOAT3 m_translate;
-	WorldTransform m_transform;
-	ShininessCB m_shineCB;
+	ConstantBufferData m_cbd;
 	ConstantBuffer m_constantBuffer;
-	ConstantBuffer m_constantBufferShininess;
-	//ConstantBuffer m_constantBufferPov; //new
 	void CalculateAndTransposeWorld(const DirectX::XMFLOAT3& pos = { 0.0f, 0.0f, 0.0f }, Camera* camera = nullptr);
 
 	std::vector<SubMesh> m_submeshes;
@@ -200,9 +197,13 @@ private:
 	DrawableInfo m_drawableInfo;
 
 	//Variables for drawables with specific rendering qualities
-	bool m_isReflective;//Need to access this when we do culling with cubemaps
-	bool m_isConcave;	//Need to access this when we choose which rasterizer state to use when rendering objects, so as to not to perform backface culling on concave objects
-	bool m_orbits;
+	bool m_isReflective = false;//Need to access this when we do culling with cubemaps
+	bool m_isConcave = false;	//Need to access this when we choose which rasterizer state to use when rendering objects, so as to not to perform backface culling on concave objects
+	bool m_orbits = false;
+
+	//Normal mapping
+	bool m_hasNormalMap = false;
+	ShaderResource m_normalMapTexture;
 
 	bool m_isDirty = false;
 };

@@ -13,9 +13,11 @@ public:
 		ID3D11ShaderResourceView* ambient, ID3D11ShaderResourceView* diffuse, ID3D11ShaderResourceView* specular, float shine);
 	~SubMesh() = default;
 
-	void Bind(ID3D11DeviceContext* context, bool isReflective) const;
+	void AddNormalMap(ID3D11ShaderResourceView* nm);
+
+	void Bind(ID3D11DeviceContext* context, bool isReflective = false, bool hasNormalMap = false) const;
 	void Draw(ID3D11DeviceContext* context) const;
-	void Unbind(ID3D11DeviceContext* context, bool isReflective = false) const;
+	void Unbind(ID3D11DeviceContext* context, bool isReflective = false, bool hasNormalMap = false) const;
 
 private:
 	__declspec(align(16)) struct ShininessCB
@@ -30,4 +32,5 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ambientSRV;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> diffuseSRV;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> specularSRV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> normalmapSRV;
 };

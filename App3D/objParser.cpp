@@ -150,8 +150,8 @@ int InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToFi
 		{
 			std::string groupName;
 			lineSS >> groupName;
-			//if (!submeshStartIndices.empty()) //We've reached a new submesh material
-			if (!parsed.indices.empty())
+			
+			if (!parsed.indices.empty()) //New submesh
 			{
 				BufferData::SubMeshData smd;
 				smd.startIndex = parsed.currentSubmeshIndex;

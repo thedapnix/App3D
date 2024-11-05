@@ -7,7 +7,7 @@ ShadowMap::ShadowMap(ID3D11Device* device, std::vector<Drawable>* drawables, Spo
 	m_spotlights = spotlights;
 	if (m_spotlights->GetLightCount() == 0)
 	{
-		MessageBox(NULL, L"No lights, shadowmap not created!", L"Error", MB_OK);
+		MessageBox(NULL, L"No lights, shadowmap not created!", L"Notice", MB_OK);
 	}
 	m_drawables = drawables;
 
@@ -30,11 +30,6 @@ ID3D11VertexShader* ShadowMap::GetVertexShader()
 	return vertexShader.Get();
 }
 
-ID3D11VertexShader* ShadowMap::GetVertexShaderPov()
-{
-	return vertexShaderPov.Get();
-}
-
 const D3D11_VIEWPORT* ShadowMap::GetViewport() const
 {
 	return &viewport;
@@ -50,7 +45,6 @@ void ShadowMap::InitShaderAndInputLayout(ID3D11Device* device)
 	HRESULT hr;
 	Microsoft::WRL::ComPtr<ID3DBlob>
 		vsBlob,
-		vspBlob, //new
 		errorBlob;
 
 #ifdef _DEBUG
@@ -75,33 +69,6 @@ void ShadowMap::InitShaderAndInputLayout(ID3D11Device* device)
 		MessageBox(NULL, L"Failed to create vertex shader for shadowmap!", L"Error", MB_OK);
 		return;
 	}
-
-	//Pretty sure both of these are scrapped?
-	/*hr = D3DReadFileToBlob(L"../x64/Debug/ShadowMapVertexShaderPov.cso", &vspBlob);
-	if (FAILED(hr))
-	{
-		MessageBox(NULL, L"Failed to read vertex shader for shadowmap pov!", L"Error", MB_OK);
-	}
-	hr = device->CreateVertexShader(vspBlob->GetBufferPointer(), vspBlob->GetBufferSize(), NULL, &vertexShaderPov);
-	if (FAILED(hr))
-	{
-		MessageBox(NULL, L"Failed to create vertex shader for shadowmap pov!", L"Error", MB_OK);
-		return;
-	}*/
-
-	//Create Input Layout using data from our vsBlob, copied from D3D11Engine
-	//D3D11_INPUT_ELEMENT_DESC inputElementDesc[1] =
-	//{
-	//  { "POS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	//  //{ "UV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	//  //{ "NOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	//};
-	//hr = device->CreateInputLayout(inputElementDesc, ARRAYSIZE(inputElementDesc), vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &inputLayout);
-	//if (FAILED(hr))
-	//{
-	//	MessageBox(NULL, L"Failed to create input layout for shadowmap!", L"Error", MB_OK);
-	//	return;
-	//}
 }
 
 void ShadowMap::InitSampler(ID3D11Device* device)

@@ -233,14 +233,12 @@ void D3D11Engine::PlayerInteract()
 	//m_camera->ChangeFrustum();
 }
 
-bool D3D11Engine::CreateDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
+int D3D11Engine::CreateDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
 {
-	InitDrawableFromFile(objFileName, m_drawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith);
-
-	return true;
+	return InitDrawableFromFile(objFileName, m_drawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith);
 }
 
-bool D3D11Engine::CreateReflectiveDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
+int D3D11Engine::CreateReflectiveDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
 {
 	int index = InitDrawableFromFile(objFileName, m_reflectiveDrawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith); //temp: just put false as interactible here bleh
 
@@ -250,34 +248,39 @@ bool D3D11Engine::CreateReflectiveDrawable(std::string objFileName, DirectX::XMF
 	//Cube environment mapping setup (moved from engine constructor)
 	m_cubeMaps.push_back(CubeMap(device.Get(), true, translate)); //previously m_reflectiveDrawables.at(0).GetPosition() instead of just passing in translate, but that's silly
 
-	return true;
+	return index;
 }
 
-bool D3D11Engine::CreatePovDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
+int D3D11Engine::CreatePovDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
 {
 	int index = InitDrawableFromFile(objFileName, m_povDrawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith);
 
 	m_povDrawables.at(index).SetOrbit();
 
-	return true;
+	return index;
 }
 
-bool D3D11Engine::CreateConcaveDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
+int D3D11Engine::CreateConcaveDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
 {
 	int index = InitDrawableFromFile(objFileName, m_drawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith);
 
 	m_drawables.at(index).SetConcave(); //A concave drawable shouldn't be backface culled like regular ones, since we're supposed to be able to see "inside" of them
 
-	return true;
+	return index;
 }
 
-bool D3D11Engine::CreateOrbitDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
+int D3D11Engine::CreateOrbitDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
 {
 	int index = InitDrawableFromFile(objFileName, m_drawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith);
 
 	m_drawables.at(index).SetOrbit(); //Yes, this will orbit around a point
 
-	return false;
+	return index;
+}
+
+void D3D11Engine::ApplyNormalMapToDrawable(int index, std::string ddsFileName)
+{
+	m_drawables.at(index).SetNormalMap(device.Get(), ddsFileName);
 }
 
 bool D3D11Engine::MoveDrawable(int i, DirectX::XMFLOAT3 dist)
@@ -603,7 +606,7 @@ void D3D11Engine::RenderReflectiveObject(Camera* cam, CubeMap* cubeMap, int inde
 			drawable.Bind(context.Get(), true);
 		}*/
 		//oowweeee
-		m_reflectiveDrawables.at(index).Bind(context.Get(), true);
+		m_reflectiveDrawables.at(index).Bind(context.Get());
 
 		/*Unbind shaders*/
 		//Vertex shader

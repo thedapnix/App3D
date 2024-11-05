@@ -3,7 +3,18 @@ Texture2D ambientTexture : register(t0);
 Texture2D diffuseTexture : register(t1);
 Texture2D specularTexture : register(t2);
 
+//Todo: Add new Texture2D and sample from it, but only if a normal map is available for the mesh (So we have to pass that in through the constant buffer
+Texture2D nmapTexture : register(t3);
+
 SamplerState samplerState : register(s0);
+
+//Return of the per-object constant buffer, need to know if the object has a normalmap or nah
+cbuffer OBJECT_CONSTANT_BUFFER : register(b0)
+{
+    matrix world;
+    
+    bool hasNormalMap;
+};
 
 cbuffer SHININESS_CONSTANT_BUFFER : register(b1)
 {
@@ -45,10 +56,16 @@ PixelShaderOutput main(PixelShaderInput input)
     float3 diffuse = diffuseTexture.Sample(samplerState, input.uv).xyz;
     float3 specular = specularTexture.Sample(samplerState, input.uv).xyz;
     
-    //and then pack the normal into the 4th component of the other texture containers?
-    output.ambient = float4(ambient, input.nor.x);
-    output.diffuse = float4(diffuse, input.nor.y);
-    output.specular = float4(specular, input.nor.z);
+    //And then pack the normal into the 4th component of the other texture containers (New: Fetch normals from the normalmapped texture instead of the regular normal, if it exists)
+    float3 normal = input.nor;
+    if(hasNormalMap)
+    {
+        normal = nmapTexture.Sample(samplerState, input.uv).xyz;
+    }
+    
+    output.ambient = float4(ambient, normal.x);
+    output.diffuse = float4(diffuse, normal.y);
+    output.specular = float4(specular, normal.z);
     
     return output;
 }

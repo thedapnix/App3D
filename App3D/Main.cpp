@@ -23,21 +23,25 @@ Tiled Deferred Shading
 Occlusion Culling
 	Don't bother rendering things that are occluded from view, such as being entirely behind a wall
 ENUM passed through buffer to shaders denoting what kind of drawable something is. 0 = dynamic, so we render all sides, 1 = floor, 2 = ceiling, 3 = right-facing wall, and 4 = left-facing wall
-	So on 1 through 4 we only render the parts that have their surface normals pointing up, down, left, and right respectively
+	So on 1 through 4 we only render the parts that have their surface normals pointing up, down, left, and right respectively (Needs to be determined before normal-mapping process)
 Emission/glow
 	Right now, I double the light calculations necessary to make the mesh of the lamps look better by adding a point light up there, but really what I want is just to make the lamp texture glow
+Instancing
+	Meshes that are repeated several times should be loaded in only once, then placed into the world "for every instance", reducing the memory cost of storing a bunch of textures
+	 Also reduces the bind-calls to the rendering API, since previously those would otherwise have to be called for every mesh
 */
 
 //Feature ideas (In order of importance):
 /*
-1. Rope swinging pendulum motion + drawable moving along the end of the rope (Most important because I need it for my thesis lol)
+1. Normal Mapping (Sexier textures)
+	Gives the illusion of higher poly count, which is peak
+2. Rope swinging pendulum motion + drawable moving along the end of the rope (Most important because I need it for my thesis lol)
 	Should have the basic functionality from my gun following camera rotation thingy
-2. Dynamic Lights (Way more interesting scenes)
+3. Dynamic Lights (Way more interesting scenes)
 	Have a light hanging off the end of the rope instead, I render depth every frame after all, so dynamic lights shouldn't be too difficult?
-3. Shooting Guns in first person (Adds meaning to the fact that I've implemented a first person gun into the game in the first place)
+4. Shooting Guns in first person (Adds meaning to the fact that I've implemented a first person gun into the game in the first place)
 	Should be fairly simple, cast ray from camera in the direction of the look-vector
-	Add some visual effect like a muzzle flash? Idk vfx might be way outside of my scope
-4. 
+	Add some visual effect like a muzzle flash? Idk vfx might be way outside of my scope 
 5. Skeletal Animations (Way more interesting characters)
 	I keep pushing them away but I really should try to learn it, no matter how scuffed it'll be
 6. ECS (Feels a million times better to work with, and boy I sure hope it doesn't tank my performance)

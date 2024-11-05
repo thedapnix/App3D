@@ -2,11 +2,8 @@
 cbuffer OBJECT_CONSTANT_BUFFER : register(b0)
 {
     matrix world;
-    //matrix scale;
-    //matrix rotate;
-    //matrix translate;
     
-    //float willOrbit;
+    bool hasNormalMap;
 };
 
 struct VertexShaderInput
