@@ -103,6 +103,8 @@ void D3D11Engine::Update(float dt)
 	//m_drawables.at(108).SetPosition(0.0f, 0.0f, 5.0f);
 	//m_povDrawables.at(1).SetPosition(0.0f, 0.0f, 5.0f);
 
+	m_drawables.back().Rotate(0.00075f * dt, 0.0f, 0.00075f * dt);
+
 	//UPDATE CONSTANT BUFFERS
 	m_camera->UpdateConstantBuffer(context.Get());
 

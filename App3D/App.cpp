@@ -143,11 +143,24 @@ void App::DoSetup()
     m_engine->GetCamera().SetPosition({ -5.0f, 12.0f, 10.0f });
     m_engine->GetCamera().RotateY(DirectX::XM_PIDIV2);
 
-    //Gun (remove for now ehe)
+    //Gun (Remove when appropriate, obvi)
+    /*
     m_engine->CreatePovDrawable("Meshes/gun.obj", { POV_OFFSET_X, POV_OFFSET_Y, POV_OFFSET_Z }, { 2.0f, 2.0f, 2.0f });
+
+    m_engine->GetPovDrawables().at(0).SetPosition(
+        POV_OFFSET_X,
+        POV_OFFSET_Y,
+        POV_OFFSET_Z
+    );
+    */
 
     //SetupLevel1(m_engine.get());
     SetupLevel2(m_engine.get()); //Changing the level design
+
+    //Normal mapping test
+    int normalMapTestCrateIndex = m_engine->CreateDrawable("Meshes/crate_wood.obj", { 3.0f, 11.0f, 24.0f });
+    m_engine->ApplyNormalMapToDrawable(normalMapTestCrateIndex, "NormalMaps/wood.png"); //The backup, can't get dds to work
+    //int regularTestCrateIndex = m_engine->CreateDrawable("Meshes/crate_wood.obj", { 3.0f, 11.0f, 26.0f });
 
     //Cubemap(s) I'm just limit testing cool shit
     //m_engine->CreateReflectiveDrawable("Meshes/default_sphere.obj", { -17.5f, 10.0f, 55.0f }, {2.0f, 2.0f, 2.0f}); //Big floating sphere in the big room, between the purple and cyan light
@@ -166,13 +179,6 @@ void App::DoFrame(float dt)
     /*Camera stuff*/
     InterpretKeyboardInput(dt);
     m_engine->GetCamera().UpdateViewMatrix();
-
-    //Update gun every frame, let's start by going back to the basics of rotating around a point like we did in hello triangle (PovDrawable position is an offset from the camera)
-    m_engine->GetPovDrawables().at(0).SetPosition(
-        POV_OFFSET_X,
-        POV_OFFSET_Y,
-        POV_OFFSET_Z
-    );
 
     /*Render the new scene*/
     m_engine->Update(dt);

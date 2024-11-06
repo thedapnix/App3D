@@ -306,6 +306,9 @@ void SetupLevel1(D3D11Engine* engine)
 
 void SetupLevel2(D3D11Engine* engine)
 {
+    //Temp code for testing
+    int w1 = 0, w2 = 0, w3 = 0, w11 = 0, w12 = 0, w13 = 0, w14 = 0, w15 = 0;
+
     for (int i = 0; i < 6; i++) //6 hallways, 3 color, 3 motion (as a result of the preliminary experiment we skip the form attribute)
     {
         //Floor and roof
@@ -318,22 +321,32 @@ void SetupLevel2(D3D11Engine* engine)
         engine->CreateDrawable("Meshes/wall_brick.obj", { 0.0f + (60.0f * i),  9.0f, -5.0f + (60.0f * i) }, { 15.0f, 8.0f, 1.0f });
         if (i == 0) //First hallway there won't be a door behind you, you're on your own
         {
-            engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f, 9.0f, 17.5f }, { 22.5f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
-            engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f, 9.0f, 62.5f }, { 22.5f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+            w1 = engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f, 9.0f, 17.5f }, { 22.5f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+            w2 = engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f, 9.0f, 62.5f }, { 22.5f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
         }
         else
         {
             engine->CreateDrawable("Meshes/door_metal.obj", { -15.0f + (60.0f * i), 9.0f, 10.0f + (60.0f * i) }, { 5.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
             engine->CreateDrawable("Meshes/sphere_metal.obj", { -16.25f + (60.0f * i), 9.25f, 12.75f + (60.0f * i) }, { 0.25f, 0.25f, 0.25f }, { 0.0f, XM_PIDIV2, 0.0f });
-            engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f + (60.0f * i), 9.0f, 0.0f + (60.0f * i) }, { 5.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
-            engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f + (60.0f * i), 9.0f, 67.5f + (60.0f * i)}, {17.5f, 8.0f, 1.0f}, {0.0f, XM_PIDIV2, 0.0f});
-            engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f + (60.0f * i), 9.0f, 32.5f + (60.0f * i) }, { 17.5f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+            w1 = engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f + (60.0f * i), 9.0f, 0.0f + (60.0f * i) }, { 5.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+            w2 = engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f + (60.0f * i), 9.0f, 67.5f + (60.0f * i)}, {17.5f, 8.0f, 1.0f}, {0.0f, XM_PIDIV2, 0.0f});
+            w3 = engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f + (60.0f * i), 9.0f, 32.5f + (60.0f * i) }, { 17.5f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
         }
-        engine->CreateDrawable("Meshes/wall_brick.obj", { 0.0f + (60.0f * i) , 9.0f, 85.0f + (60.0f * i) }, { 15.0f, 8.0f, 1.0f });
-        engine->CreateDrawable("Meshes/wall_brick.obj", { 30.0f + (60.0f * i), 9.0f, 85.0f + (60.0f * i) }, { 15.0f, 8.0f, 1.0f });
-        engine->CreateDrawable("Meshes/wall_brick.obj", { 30.0f + (60.0f * i), 9.0f, 55.0f + (60.0f * i) }, { 15.0f, 8.0f, 1.0f });
-        engine->CreateDrawable("Meshes/wall_brick.obj", { 15.0f + (60.0f * i), 9.0f, 40.0f + (60.0f * i) }, { 15.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
-        engine->CreateDrawable("Meshes/wall_brick.obj", { 15.0f + (60.0f * i), 9.0f, 10.0f + (60.0f * i) }, { 15.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+        w11 = engine->CreateDrawable("Meshes/wall_brick.obj", { 0.0f + (60.0f * i) , 9.0f, 85.0f + (60.0f * i) }, { 15.0f, 8.0f, 1.0f });
+        w12 = engine->CreateDrawable("Meshes/wall_brick.obj", { 30.0f + (60.0f * i), 9.0f, 85.0f + (60.0f * i) }, { 15.0f, 8.0f, 1.0f });
+        w13 = engine->CreateDrawable("Meshes/wall_brick.obj", { 30.0f + (60.0f * i), 9.0f, 55.0f + (60.0f * i) }, { 15.0f, 8.0f, 1.0f });
+        w14 = engine->CreateDrawable("Meshes/wall_brick.obj", { 15.0f + (60.0f * i), 9.0f, 40.0f + (60.0f * i) }, { 15.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+        w15 = engine->CreateDrawable("Meshes/wall_brick.obj", { 15.0f + (60.0f * i), 9.0f, 10.0f + (60.0f * i) }, { 15.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+
+        //Add normal maps to all the brick walls hoo boy
+        engine->ApplyNormalMapToDrawable(w1, "NormalMaps/brick.png");
+        engine->ApplyNormalMapToDrawable(w2, "NormalMaps/brick.png");
+        if (w3 != 0) engine->ApplyNormalMapToDrawable(w3, "NormalMaps/brick.png");
+        engine->ApplyNormalMapToDrawable(w11, "NormalMaps/brick.png");
+        engine->ApplyNormalMapToDrawable(w12, "NormalMaps/brick.png");
+        engine->ApplyNormalMapToDrawable(w13, "NormalMaps/brick.png");
+        engine->ApplyNormalMapToDrawable(w14, "NormalMaps/brick.png");
+        engine->ApplyNormalMapToDrawable(w15, "NormalMaps/brick.png");
 
         //Lights
         engine->CreateConcaveDrawable("Meshes/lamp.obj", { 0.0f + (60.0f * i), 16.75f, 25.0f + (60.0f * i) });
@@ -342,6 +355,8 @@ void SetupLevel2(D3D11Engine* engine)
         engine->CreateConcaveDrawable("Meshes/lamp.obj", { 17.5f + (60.0f * i), 16.75f, 70.0f + (60.0f * i) });
         engine->CreateLightPoint({ 17.5f + (60.0f * i), 17.75f, 70.0f + (60.0f * i) }, 3.0f, { 1.0f, 1.0f, 0.5f });
         engine->CreateLightSpot({ 17.5f + (60.0f * i), 16.5f, 70.0f + (60.0f * i) }, 0.75f, 0.0f, 0.5f, { 1.0f, 1.0f, 1.0f });
+
+
     }
 
     //First hallway, 13 drawables make up the basis
@@ -388,12 +403,6 @@ void SetupLevel2(D3D11Engine* engine)
 
     //Then add clutter, can't do that in the loop since they're supposed to differ between levels (have fun (god I hate this part I'm a PROGRAMMER NOT A LEVEL DESIGNER GRRRAHHHH))
     //At the very least, we can place clutter in relation to the first hallway, and then simply do +60, +120, +180, and +240, to put them in hallways number 2, 3, 4, and 5
-
-    //Normal mapping test
-    int normalMapTestCrateIndex = engine->CreateDrawable("Meshes/crate_wood.obj", { 3.0f, 11.0f, 25.0f });
-    engine->ApplyNormalMapToDrawable(normalMapTestCrateIndex, "NormalMaps/wood.png"); //The backup, can't get dds to work
-    //engine->ApplyNormalMapToDrawable(normalMapTestCrateIndex, "NormalMaps/wood.dds");
-    int regularTestCrateIndex = engine->CreateDrawable("Meshes/crate_wood.obj", { 3.0f, 11.0f, 27.0f });
 
     /*////////////
     //////////////

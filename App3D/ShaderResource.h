@@ -16,7 +16,6 @@ public:
 	~ShaderResource() = default;
 
 	void Init(ID3D11Device* device, const char* textureFileName);
-	void InitNormalMap(ID3D11Device* device, const char* textureFileName);
 
 	ID3D11ShaderResourceView* GetSRV() const;
 

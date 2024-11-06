@@ -12,8 +12,13 @@ SamplerState samplerState : register(s0);
 cbuffer OBJECT_CONSTANT_BUFFER : register(b0)
 {
     matrix world;
+    matrix invWorld;
     
     bool hasNormalMap;
+    float3 aTangent;
+    float3 aBitangent;
+    float3 bTangent;
+    float3 bBitangent;
 };
 
 cbuffer SHININESS_CONSTANT_BUFFER : register(b1)
@@ -61,6 +66,24 @@ PixelShaderOutput main(PixelShaderInput input)
     if(hasNormalMap)
     {
         normal = nmapTexture.Sample(samplerState, input.uv).xyz;
+        normal = 2.0f * normal - 1.0f; //Uncompress components from ()0, 1) to (-1, 1)
+        
+        //Looks better, but lighting still ain't right, especially depending on different sides
+        //So what's happening right now is object/local space normal mapping, but we want to do tangent, much better
+        //Problem: Wacky woohoo mathematics and I'm not a very genius (Edit: Sike, I'm a god of programming)
+        float3 invWorldNormal = input.nor;
+        invWorldNormal = mul(invWorldNormal, (float3x3)invWorld);
+        
+        float3 tangent = mul(aTangent, (float3x3) world);
+        //float3 tangent = float3(1.0f, 0.0f, 0.0f); //Fucking.... excuse...... me......????????
+        
+        float3 N = invWorldNormal;
+        float3 T = normalize(tangent - dot(tangent, N) * N); //Is this the thing, the Gram-Schmidt process, re-orthogonalizing the basis?
+        float3 B = cross(N, T); //Bitangent here instead of CPU-side manual calculations
+    
+        float3x3 tbn = float3x3(T.xyz, B.xyz, N.xyz);
+        
+        normal = normalize(mul(normal, tbn)); //Bam
     }
     
     output.ambient = float4(ambient, normal.x);
