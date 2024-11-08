@@ -15,8 +15,8 @@ Camera::Camera()
     //Near- and far-z set to arbitrary standard values of 1 and 1000 (near could be 0.1 instead, we'll see what happens)
     SetLens(0.33f * XM_PI, 800.0f / 600.0f, 1.0f, 175.0f); //Mess around with farZ values, I think 175.0f is good but in different setting another might be more appropriate
 
-    //Smaller fov (4 degrees lol) and clips at a distance of 10 Z
-    SetSelectionLens(0.022f * XM_PI, 800.0f / 600.0f, 1.0f, 10.0f);
+    //Smaller fov (4 degrees lol) and clips at a distance of 15 Z (Previously 10)
+    SetSelectionLens(0.022f * XM_PI, 800.0f / 600.0f, 1.0f, 15.0f);
 
     //Bounding Box
     XMVECTOR vMin = XMVectorSet(-1.0f, -1.0f, -1.0f, 0.0f);

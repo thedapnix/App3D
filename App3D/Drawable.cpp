@@ -111,7 +111,7 @@ void Drawable::UpdateConstantBuffer(ID3D11DeviceContext* context, Camera* camera
 				0.0f
 			);
 
-			XMVECTOR bitangent1 = XMVectorSet(
+			/*XMVECTOR bitangent1 = XMVectorSet(
 				f * (-XMVectorGetY(deltaUv2) * XMVectorGetX(edge1) + XMVectorGetY(deltaUv1) * XMVectorGetX(edge2)),
 				f * (-XMVectorGetY(deltaUv2) * XMVectorGetY(edge1) + XMVectorGetY(deltaUv1) * XMVectorGetY(edge2)),
 				f * (-XMVectorGetY(deltaUv2) * XMVectorGetZ(edge1) + XMVectorGetY(deltaUv1) * XMVectorGetZ(edge2)),
@@ -140,13 +140,13 @@ void Drawable::UpdateConstantBuffer(ID3D11DeviceContext* context, Camera* camera
 				f * (-XMVectorGetY(deltaUv2) * XMVectorGetY(edge1) + XMVectorGetY(deltaUv1) * XMVectorGetY(edge2)),
 				f * (-XMVectorGetY(deltaUv2) * XMVectorGetZ(edge1) + XMVectorGetY(deltaUv1) * XMVectorGetZ(edge2)),
 				0.0f
-			);
+			);*/
 
 			//Then go ahead and pass these to the shader or something I guess????
 			XMStoreFloat3(&m_cbd.aTangent, tangent1);
-			XMStoreFloat3(&m_cbd.aBitangent, bitangent1);
+			/*XMStoreFloat3(&m_cbd.aBitangent, bitangent1);
 			XMStoreFloat3(&m_cbd.bTangent, tangent2);
-			XMStoreFloat3(&m_cbd.bBitangent, bitangent2);
+			XMStoreFloat3(&m_cbd.bBitangent, bitangent2);*/
 
 			//And bob is officially your fucking uncle
 		}

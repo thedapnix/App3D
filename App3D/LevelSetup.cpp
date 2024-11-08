@@ -312,10 +312,10 @@ void SetupLevel2(D3D11Engine* engine)
     for (int i = 0; i < 6; i++) //6 hallways, 3 color, 3 motion (as a result of the preliminary experiment we skip the form attribute)
     {
         //Floor and roof
-        engine->CreateDrawable("Meshes/ground_stone.obj",   {  0.0f + (60.0f * i),  0.0f, 25.0f + (60.0f * i) }, { 1.5f, 1.0f, 3.0f });
-        engine->CreateDrawable("Meshes/ground_stone.obj",   {  0.0f + (60.0f * i), 18.0f, 25.0f + (60.0f * i) }, { 1.5f, 1.0f, 3.0f });
-        engine->CreateDrawable("Meshes/ground_stone.obj",   { 15.0f + (60.0f * i),  0.0f, 70.0f + (60.0f * i) }, { 1.5f, 1.0f, 3.0f }, { 0.0f, XM_PIDIV2, 0.0f });
-        engine->CreateDrawable("Meshes/ground_stone.obj",   { 15.0f + (60.0f * i), 18.0f, 70.0f + (60.0f * i) }, { 1.5f, 1.0f, 3.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+        int g1 = engine->CreateDrawable("Meshes/ground_stone.obj",   {  0.0f + (60.0f * i),  0.0f, 25.0f + (60.0f * i) }, { 1.5f, 1.0f, 3.0f });
+        int g2 = engine->CreateDrawable("Meshes/ground_stone.obj",   {  0.0f + (60.0f * i), 18.0f, 25.0f + (60.0f * i) }, { 1.5f, 1.0f, 3.0f });
+        int g3 = engine->CreateDrawable("Meshes/ground_stone.obj",   { 15.0f + (60.0f * i),  0.0f, 70.0f + (60.0f * i) }, { 1.5f, 1.0f, 3.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+        int g4 = engine->CreateDrawable("Meshes/ground_stone.obj",   { 15.0f + (60.0f * i), 18.0f, 70.0f + (60.0f * i) }, { 1.5f, 1.0f, 3.0f }, { 0.0f, XM_PIDIV2, 0.0f });
 
         //Walls (Starting with back wall, then going along the side with the door until we've looped back around)
         engine->CreateDrawable("Meshes/wall_brick.obj", { 0.0f + (60.0f * i),  9.0f, -5.0f + (60.0f * i) }, { 15.0f, 8.0f, 1.0f });
@@ -339,14 +339,29 @@ void SetupLevel2(D3D11Engine* engine)
         w15 = engine->CreateDrawable("Meshes/wall_brick.obj", { 15.0f + (60.0f * i), 9.0f, 10.0f + (60.0f * i) }, { 15.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
 
         //Add normal maps to all the brick walls hoo boy
-        engine->ApplyNormalMapToDrawable(w1, "NormalMaps/brick.png");
+        /*engine->ApplyNormalMapToDrawable(w1, "NormalMaps/brick.png");
         engine->ApplyNormalMapToDrawable(w2, "NormalMaps/brick.png");
         if (w3 != 0) engine->ApplyNormalMapToDrawable(w3, "NormalMaps/brick.png");
         engine->ApplyNormalMapToDrawable(w11, "NormalMaps/brick.png");
         engine->ApplyNormalMapToDrawable(w12, "NormalMaps/brick.png");
         engine->ApplyNormalMapToDrawable(w13, "NormalMaps/brick.png");
         engine->ApplyNormalMapToDrawable(w14, "NormalMaps/brick.png");
-        engine->ApplyNormalMapToDrawable(w15, "NormalMaps/brick.png");
+        engine->ApplyNormalMapToDrawable(w15, "NormalMaps/brick.png");*/
+
+        engine->ApplyNormalMapToDrawable(w1, "NormalMaps/brick.jpg");
+        engine->ApplyNormalMapToDrawable(w2, "NormalMaps/brick.jpg");
+        if (w3 != 0) engine->ApplyNormalMapToDrawable(w3, "NormalMaps/brick.jpg");
+        engine->ApplyNormalMapToDrawable(w11, "NormalMaps/brick.jpg");
+        engine->ApplyNormalMapToDrawable(w12, "NormalMaps/brick.jpg");
+        engine->ApplyNormalMapToDrawable(w13, "NormalMaps/brick.jpg");
+        engine->ApplyNormalMapToDrawable(w14, "NormalMaps/brick.jpg");
+        engine->ApplyNormalMapToDrawable(w15, "NormalMaps/brick.jpg");
+
+        //Normal maps to the floors and roofs
+        //engine->ApplyNormalMapToDrawable(g1, "NormalMaps/stone.jpg");
+        //engine->ApplyNormalMapToDrawable(g2, "NormalMaps/stone.jpg");
+        //engine->ApplyNormalMapToDrawable(g3, "NormalMaps/stone.jpg");
+        //engine->ApplyNormalMapToDrawable(g4, "NormalMaps/stone.jpg");
 
         //Lights
         engine->CreateConcaveDrawable("Meshes/lamp.obj", { 0.0f + (60.0f * i), 16.75f, 25.0f + (60.0f * i) });
@@ -355,8 +370,6 @@ void SetupLevel2(D3D11Engine* engine)
         engine->CreateConcaveDrawable("Meshes/lamp.obj", { 17.5f + (60.0f * i), 16.75f, 70.0f + (60.0f * i) });
         engine->CreateLightPoint({ 17.5f + (60.0f * i), 17.75f, 70.0f + (60.0f * i) }, 3.0f, { 1.0f, 1.0f, 0.5f });
         engine->CreateLightSpot({ 17.5f + (60.0f * i), 16.5f, 70.0f + (60.0f * i) }, 0.75f, 0.0f, 0.5f, { 1.0f, 1.0f, 1.0f });
-
-
     }
 
     //First hallway, 13 drawables make up the basis
@@ -536,356 +549,40 @@ void SetupLevel2(D3D11Engine* engine)
     //engine->CreateDrawable("Meshes/clutter_small_2.obj", { 25.0f + 180.0f, 2.0f, 64.0f + 180.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f }); //Faces negative X by default, rotated to face positive Z
 }
 
-/*
-void SetupLevel2(D3D11Engine* engine)
+void SetupTestLevel(D3D11Engine* engine)
 {
-    //DRAWABLES IN LEVEL2: 6 + 12
-    //Ground and floor
-    engine->CreateDrawable("Meshes/ground_stone.obj", { 0.0f + 60.0f, -10.0f,   7.0f }, { 1.8f, 1.0f, 1.8f });
-    engine->CreateDrawable("Meshes/ground_stone.obj", { 0.0f + 60.0f,   8.0f,   7.0f }, { 1.8f, 1.0f, 1.8f });
+    int floorIndex = engine->CreateDrawable("Meshes/Test/stone.obj", {-5.0f, 0.0f, 5.0f}, {5.0f, 1.0f, 5.0f});
+    int floorIndex2 = engine->CreateDrawable("Meshes/Test/stone.obj", { 5.0f, 0.0f, 5.0f }, { 5.0f, 1.0f, 5.0f });
+    int floorIndex3 = engine->CreateDrawable("Meshes/Test/stone.obj", { -5.0f, 0.0f, -5.0f }, { 5.0f, 1.0f, 5.0f });
+    int floorIndex4 = engine->CreateDrawable("Meshes/Test/stone.obj", { 5.0f, 0.0f, -5.0f }, { 5.0f, 1.0f, 5.0f });
 
-    //Walls (left, then right)
-    engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f + 60.0f, -1.0f,  19.0f }, { 10.0f, 8.0f, 1.0f });
-    engine->CreateDrawable("Meshes/wall_brick.obj", { 15.0f + 60.0f, -1.0f,  19.0f }, { 10.0f, 8.0f, 1.0f });
+    int roofIndex = engine->CreateDrawable("Meshes/Test/stone.obj", { -5.0f, 18.0f, 5.0f }, { 5.0f, 1.0f, 5.0f });
+    int roofIndex2 = engine->CreateDrawable("Meshes/Test/stone.obj", { 5.0f, 18.0f, 5.0f }, { 5.0f, 1.0f, 5.0f });
+    int roofIndex3 = engine->CreateDrawable("Meshes/Test/stone.obj", { -5.0f, 18.0f, -5.0f }, { 5.0f, 1.0f, 5.0f });
+    int roofIndex4 = engine->CreateDrawable("Meshes/Test/stone.obj", { 5.0f, 18.0f, -5.0f }, { 5.0f, 1.0f, 5.0f });
 
-    //Door (elongated metal crate with a small metal sphere as a makeshift doorknob)
-    engine->CreateDrawable("Meshes/door_metal.obj", { 0.0f + 60.0f, -1.0f, 19.0f }, { 5.0f, 8.0f, 1.0f });
-    engine->CreateDrawable("Meshes/sphere_metal.obj", { -2.75f + 60.0f, -1.25f, 17.75f }, { 0.25f, 0.25f, 0.25f });
+    int crateIndex = engine->CreateDrawable("Meshes/Test/crate.obj", {0.0f, 2.0f, 5.0f});
 
-    //LEFT SIDE
-    //In order: Big box, box on top of it, box in front of it
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f + 60.0f, -7.0f, 15.0f }, { 2.0f, 2.0f, 2.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f + 60.0f, -4.0f, 15.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f,  0.45f, 0.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f + 60.0f, -8.0f, 11.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f });
+    int wallIndex = engine->CreateDrawable("Meshes/Test/wall.obj", { 0.0f, 9.0f, 11.0f }, { 10.0f, 8.0f, 1.0f });
+    int wallIndex2 = engine->CreateDrawable("Meshes/Test/wall.obj", { -11.0f, 9.0f, 0.0f }, { 10.0f, 8.0f, 1.0f }, {0.0f, XM_PIDIV2, 0.0f});
+    int wallIndex3 = engine->CreateDrawable("Meshes/Test/wall.obj", { 11.0f, 9.0f, 0.0f }, { 10.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
 
-    //In order: First box in front of first three, box on top of it, box in front of it (SECOND ONE MOVED TO RIGHT SIDE, THIRD ONE EVEN FURTHER FORWARD)
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -10.0f + 60.0f, -8.0f,  8.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 14.0f + 60.0f, -8.0f,  10.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -12.0f + 60.0f, -8.0f, 4.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f });
+    //Testing normal maps and dagnabbit it looks nice
+    engine->ApplyNormalMapToDrawable(floorIndex, "NormalMaps/stone_fancy.jpg");
+    engine->ApplyNormalMapToDrawable(floorIndex2, "NormalMaps/stone_fancy.jpg");
+    engine->ApplyNormalMapToDrawable(floorIndex3, "NormalMaps/stone_fancy.jpg");
+    engine->ApplyNormalMapToDrawable(floorIndex4, "NormalMaps/stone_fancy.jpg");
+    engine->ApplyNormalMapToDrawable(roofIndex, "NormalMaps/stone_fancy.jpg");
+    engine->ApplyNormalMapToDrawable(roofIndex2, "NormalMaps/stone_fancy.jpg");
+    engine->ApplyNormalMapToDrawable(roofIndex3, "NormalMaps/stone_fancy.jpg");
+    engine->ApplyNormalMapToDrawable(roofIndex4, "NormalMaps/stone_fancy.jpg");
+    engine->ApplyNormalMapToDrawable(crateIndex, "NormalMaps/wood_fancy_invert.png");
+    engine->ApplyNormalMapToDrawable(wallIndex, "NormalMaps/brick_fancy.jpg");
+    engine->ApplyNormalMapToDrawable(wallIndex2, "NormalMaps/brick_fancy.jpg");
+    engine->ApplyNormalMapToDrawable(wallIndex3, "NormalMaps/brick_fancy.jpg");
 
-    //RIGHT SIDE
-    //In order: Big box, medium box in front of it, box on top of it, box further in front
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 7.0f + 60.0f, -7.0f, 16.0f }, { 2.0f, 2.0f, 2.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 9.0f + 60.0f, -7.5f, 12.0f }, { 1.5f, 1.5f, 1.5f });
-    engine->CreateDrawable("Meshes/crate_red.obj", { 9.0f + 60.0f, -5.0f, 12.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 9.0f + 60.0f, -8.0f, 8.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f });
-
-    //In order: Big box, box on top of it (MOVED TO THE LEFT SIDE ON LEVEL 2, FOR THE SAKE OF SPICING THINGS UP)
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -15.0f + 60.0f, -7.0f, 16.0f }, { 2.0f, 2.0f, 2.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -15.0f + 60.0f, -4.0f, 16.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f });
-
-    //LIGHTS
-    engine->CreateLightSpot({ 0.0f + 60.0f, 5.0f, 5.0f }, 0.75f, 0.0f, 0.35f); //fov previously 0.25, rotX previously -0.25, rotY previously 0.125
+    //Add a light because otherwise normal mapping obviously won't do anything
+    engine->CreateConcaveDrawable("Meshes/lamp.obj", { 0.0f, 16.75f, 0.0f });
+    engine->CreateLightPoint({ 0.0f, 17.75f, 0.0f }, 3.0f, { 1.0f, 1.0f, 0.5f });
+    engine->CreateLightSpot({ 0.0f, 16.5f, 0.0f }, 0.75f, 0.0f, 0.5f, { 1.0f, 1.0f, 1.0f });
 }
-
-void SetupLevel3(D3D11Engine* engine)
-{
-    //DRAWABLES IN LEVEL3: 6 + 12
-    engine->CreateDrawable("Meshes/ground_stone.obj", { 0.0f + 120.0f, -10.0f,   7.0f }, { 1.8f, 1.0f, 1.8f });
-    engine->CreateDrawable("Meshes/ground_stone.obj", { 0.0f + 120.0f,   8.0f,   7.0f }, { 1.8f, 1.0f, 1.8f });
-
-    //Walls (left, then right)
-    engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f + 120.0f, -1.0f,  19.0f }, { 10.0f, 8.0f, 1.0f });
-    engine->CreateDrawable("Meshes/wall_brick.obj", { 15.0f + 120.0f, -1.0f,  19.0f }, { 10.0f, 8.0f, 1.0f });
-
-    //Door (elongated metal crate with a small metal sphere as a makeshift doorknob)
-    engine->CreateDrawable("Meshes/door_metal.obj", { 0.0f + 120.0f, -1.0f, 19.0f }, { 5.0f, 8.0f, 1.0f });
-    engine->CreateDrawable("Meshes/sphere_metal.obj", { -2.75f + 120.0f, -1.25f, 17.75f }, { 0.25f, 0.25f, 0.25f });
-
-    //LEFT SIDE
-    //In order: Big box, box on top of it, box in front of it
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f + 120.0f, -7.0f, 15.0f }, { 2.0f, 2.0f, 2.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f + 120.0f, -4.0f, 15.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f,  0.45f, 0.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f + 120.0f, -8.0f, 11.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f });
-
-    //In order: First box in front of first three, box on top of it, box in front of it
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -10.0f + 120.0f, -8.0f,  8.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -10.0f + 120.0f, -6.0f,  8.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -10.0f + 120.0f, -8.0f, 4.0f }, { 3.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f }); //Longboy
-
-    //RIGHT SIDE
-    //In order: Big box, medium box in front of it, box on top of it, box further in front
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 7.0f + 120.0f, -8.0f, 16.0f }, { 1.0f, 1.0f, 1.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 9.0f + 120.0f, -7.5f, 12.0f }, { 1.5f, 1.5f, 1.5f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 9.0f + 120.0f, -5.0f, 12.0f }, { 1.0f, 1.0f, 1.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 9.0f + 120.0f, -8.0f, 8.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f });
-
-    //In order: Big box, box on top of it
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 15.0f + 120.0f, -7.0f, 16.0f }, { 2.0f, 2.0f, 2.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 15.0f + 120.0f, -4.0f, 16.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f });
-
-    //LIGHTS
-    engine->CreateLightSpot({ 0.0f + 120.0f, 5.0f, 5.0f }, 0.75f, 0.0f, 0.35f); //fov previously 0.25, rotX previously -0.25, rotY previously 0.125
-}
-
-void SetupLevel4(D3D11Engine* engine)
-{
-    //DRAWABLES IN LEVEL4: 6 + 21
-    //Ground and floor
-    engine->CreateDrawable("Meshes/ground_stone.obj", { 0.0f + 180.0f, -10.0f,   7.0f }, { 1.8f, 1.0f, 1.8f });
-    engine->CreateDrawable("Meshes/ground_stone.obj", { 0.0f + 180.0f,   8.0f,   7.0f }, { 1.8f, 1.0f, 1.8f });
-
-    //Walls (left, then right)
-    engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f + 180.0f, -1.0f,  19.0f }, { 10.0f, 8.0f, 1.0f });
-    engine->CreateDrawable("Meshes/wall_brick.obj", { 15.0f + 180.0f, -1.0f,  19.0f }, { 10.0f, 8.0f, 1.0f });
-
-    //Door (elongated metal crate with a small metal sphere as a makeshift doorknob)
-    engine->CreateDrawable("Meshes/door_metal.obj", { 0.0f + 180.0f, -1.0f, 19.0f }, { 5.0f, 8.0f, 1.0f });
-    engine->CreateDrawable("Meshes/sphere_metal.obj", { -2.75f + 180.0f, -1.25f, 17.75f }, { 0.25f, 0.25f, 0.25f });
-
-    //LEFT SIDE
-    //In order: Big box, box on top of it, box in front of it
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f + 180.0f, -7.0f, 15.0f }, { 2.0f, 2.0f, 2.0f });
-    engine->CreateDrawable("Meshes/crate_blue.obj", { -8.0f + 180.0f, -4.0f, 15.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f,  0.45f, 0.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f + 180.0f, -8.0f, 11.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f });
-
-    //Specific for level 4: more distractors
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -5.0f + 180.0f, -8.0f,  15.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -4.0f + 180.0f, -8.0f,  11.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -6.0f + 180.0f, -8.0f,  8.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -14.0f + 180.0f, -7.0f, 15.0f }, { 2.0f, 2.0f, 2.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -14.0f + 180.0f, -8.0f, 11.0f });
-
-
-    //In order: First box in front of first three, box on top of it, box in front of it
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -10.0f + 180.0f, -8.0f,  8.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -10.0f + 180.0f, -6.0f,  8.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -12.0f + 180.0f, -8.0f, 5.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f });
-
-    //RIGHT SIDE
-    //In order: Big box, medium box in front of it, box on top of it, box further in front
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 7.0f + 180.0f, -7.0f, 16.0f }, { 2.0f, 2.0f, 2.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 9.0f + 180.0f, -8.0f, 12.0f }, { 1.0f, 1.0f, 1.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 15.0f + 180.0f, -6.0f, 12.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 9.0f + 180.0f, -8.0f, 8.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f });
-
-    //Specific for level 4: more distractors
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 6.0f + 180.0f, -8.0f, 10.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 12.0f + 180.0f, -8.0f, 11.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 15.0f + 180.0f, -8.0f, 12.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 12.0f + 180.0f, -8.0f, 8.0f });
-
-    //In order: Big box, box on top of it
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 15.0f + 180.0f, -7.0f, 16.0f }, { 2.0f, 2.0f, 2.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 15.0f + 180.0f, -4.0f, 16.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f });
-
-    //LIGHTS
-    engine->CreateLightSpot({ 0.0f + 180.0f, 5.0f, 5.0f }, 0.75f, 0.0f, 0.35f); //fov previously 0.25, rotX previously -0.25, rotY previously 0.125
-}
-
-void SetupLevel5(D3D11Engine* engine)
-{
-    //DRAWABLES IN LEVEL5: 6 + 12
-    //Ground and floor
-    engine->CreateDrawable("Meshes/ground_stone.obj", { 0.0f + 240.0f, -10.0f,   7.0f }, { 1.8f, 1.0f, 1.8f });
-    engine->CreateDrawable("Meshes/ground_stone.obj", { 0.0f + 240.0f,   8.0f,   7.0f }, { 1.8f, 1.0f, 1.8f });
-
-    //Walls (left, then right)
-    engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f + 240.0f, -1.0f,  19.0f }, { 10.0f, 8.0f, 1.0f });
-    engine->CreateDrawable("Meshes/wall_brick.obj", { 15.0f + 240.0f, -1.0f,  19.0f }, { 10.0f, 8.0f, 1.0f });
-
-    //Door (elongated metal crate with a small metal sphere as a makeshift doorknob)
-    engine->CreateDrawable("Meshes/door_metal.obj", { 0.0f + 240.0f, -1.0f, 19.0f }, { 5.0f, 8.0f, 1.0f });
-    engine->CreateDrawable("Meshes/sphere_metal.obj", { -2.75f + 240.0f, -1.25f, 17.75f }, { 0.25f, 0.25f, 0.25f });
-
-    //LEFT SIDE
-    //In order: Big box, box on top of it, box in front of it
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f + 240.0f, -8.0f, 15.0f }, { 1.0f, 1.0f, 1.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f + 240.0f, -5.5f, 15.0f }, { 1.5f, 1.5f, 1.5f }, { 0.0f,  0.45f, 0.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f + 240.0f, -8.0f, 11.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f });
-
-    //In order: First box in front of first three, box on top of it, box in front of it
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -10.0f + 240.0f, -8.0f,  8.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -13.0f + 240.0f, -8.0f,  8.0f }); //
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -12.0f + 240.0f, -8.0f, 5.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f });
-
-    //RIGHT SIDE
-    //In order: Big box, medium box in front of it, box on top of it, box further in front
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 7.0f + 240.0f, -8.0f, 16.0f }, { 1.0f, 1.0f, 1.0f }); //smaller
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 9.0f + 240.0f, -7.5f, 12.0f }, { 1.5f, 1.5f, 1.5f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 9.0f + 240.0f, -5.0f, 12.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 9.0f + 240.0f, -8.0f, 8.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f });
-
-    //In order: Big box, box on top of it
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 15.0f + 240.0f, -8.0f, 14.0f }, { 1.0f, 1.0f, 1.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 15.0f + 240.0f, -6.0f, 14.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f });
-
-    //LIGHTS
-    engine->CreateLightSpot({ 0.0f + 240.0f, 5.0f, 5.0f }, 0.75f, 0.0f, 0.35f); //fov previously 0.25, rotX previously -0.25, rotY previously 0.125
-}
-
-void SetupLevel6(D3D11Engine* engine)
-{
-    //DRAWABLES IN LEVEL5: 6 + 12
-    //Ground and floor
-    engine->CreateDrawable("Meshes/ground_stone.obj", { 0.0f + 300.0f, -10.0f,   7.0f }, { 1.8f, 1.0f, 1.8f });
-    engine->CreateDrawable("Meshes/ground_stone.obj", { 0.0f + 300.0f,   8.0f,   7.0f }, { 1.8f, 1.0f, 1.8f });
-
-    //Walls (left, then right)
-    engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f + 300.0f, -1.0f,  19.0f }, { 10.0f, 8.0f, 1.0f });
-    engine->CreateDrawable("Meshes/wall_brick.obj", { 15.0f + 300.0f, -1.0f,  19.0f }, { 10.0f, 8.0f, 1.0f });
-
-    //Door (elongated metal crate with a small metal sphere as a makeshift doorknob)
-    engine->CreateDrawable("Meshes/door_metal.obj", { 0.0f + 300.0f, -1.0f, 19.0f }, { 5.0f, 8.0f, 1.0f });
-    engine->CreateDrawable("Meshes/sphere_metal.obj", { -2.75f + 300.0f, -1.25f, 17.75f }, { 0.25f, 0.25f, 0.25f });
-
-    //LEFT SIDE
-    //In order: Big box, box on top of it, box in front of it
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f + 300.0f, -8.0f, 15.0f }, { 1.0f, 1.0f, 1.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -11.0f + 300.0f, -8.0f, 15.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f,  0.45f, 0.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f + 300.0f, -8.0f, 11.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f });
-
-    //In order: First box in front of first three, box on top of it, box in front of it
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -10.0f + 300.0f, -8.0f,  8.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -14.0f + 300.0f, -7.5f,  8.0f }, {1.5f, 1.5, 1.5f});
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -12.0f + 300.0f, -8.0f, 5.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f });
-
-    //RIGHT SIDE
-    //In order: Big box, medium box in front of it, box on top of it, box further in front
-    engine->CreateDrawable("Meshes/sphere_wood.obj", { 7.0f + 300.0f, -7.0f, 16.0f }, { 2.0f, 2.0f, 2.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 9.0f + 300.0f, -7.5f, 12.0f }, { 1.5f, 1.5f, 1.5f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 9.0f + 300.0f, -5.0f, 12.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 9.0f + 300.0f, -8.0f, 8.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f });
-
-    //In order: Big box, box on top of it
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 15.0f + 300.0f, -7.0f, 16.0f }, { 2.0f, 2.0f, 2.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 15.0f + 300.0f, -4.0f, 16.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f });
-
-    //LIGHTS
-    engine->CreateLightSpot({ 0.0f + 300.0f, 5.0f, 5.0f }, 0.75f, 0.0f, 0.35f); //fov previously 0.25, rotX previously -0.25, rotY previously 0.125
-}
-
-void SetupLevel7(D3D11Engine* engine)
-{
-    //Ground and floor
-    engine->CreateDrawable("Meshes/ground_stone.obj", { 0.0f + 360.0f, -10.0f,   7.0f }, { 1.8f, 1.0f, 1.8f });
-    engine->CreateDrawable("Meshes/ground_stone.obj", { 0.0f + 360.0f,   8.0f,   7.0f }, { 1.8f, 1.0f, 1.8f });
-
-    //Walls (left, then right)
-    engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f + 360.0f, -1.0f,  19.0f }, { 10.0f, 8.0f, 1.0f });
-    engine->CreateDrawable("Meshes/wall_brick.obj", { 15.0f + 360.0f, -1.0f,  19.0f }, { 10.0f, 8.0f, 1.0f });
-
-    //Door (elongated metal crate with a small metal sphere as a makeshift doorknob)
-    engine->CreateDrawable("Meshes/door_metal.obj", { 0.0f + 360.0f, -1.0f, 19.0f }, { 5.0f, 8.0f, 1.0f });
-    engine->CreateDrawable("Meshes/sphere_metal.obj", { -2.75f + 360.0f, -1.25f, 17.75f }, { 0.25f, 0.25f, 0.25f });
-
-    //LEFT SIDE
-    //In order: Big box, box on top of it, box in front of it
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f + 360.0f, -7.0f, 15.0f }, { 2.0f, 2.0f, 2.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f + 360.0f, -4.0f, 15.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f,  0.45f, 0.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f + 360.0f, -8.0f, 11.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f });
-
-    //In order: First box in front of first three, box on top of it, box in front of it
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -10.0f + 360.0f, -8.0f,  8.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -10.0f + 360.0f, -6.0f,  8.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -12.0f + 360.0f, -8.0f, 5.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f });
-
-    //RIGHT SIDE
-    //In order: Big box, medium box in front of it, box on top of it, box further in front
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 7.0f + 360.0f, -7.5f, 16.0f }, { 1.5f, 1.5f, 1.5f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 9.0f + 360.0f, -7.0f, 12.0f }, { 2.0f, 2.0f, 2.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 9.0f + 360.0f, -4.0f, 12.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 9.0f + 360.0f, -8.0f, 8.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f });
-
-    //In order: Big box, box on top of it
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 16.0f + 360.0f, -8.0f, 16.0f }, { 1.0f, 1.0f, 1.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 16.0f + 360.0f, -6.0f, 16.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f });
-
-    //New:
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -13.0f + 360.0f, -8.0f, 8.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -14.0f + 360.0f, -8.0f, 11.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 14.0f + 360.0f, -8.0f, 11.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 15.0f + 360.0f, -8.0f, 8.0f });
-
-    //LIGHTS
-    engine->CreateLightSpot({ 0.0f + 360.0f, 5.0f, 5.0f }, 0.75f, 0.0f, 0.35f); //fov previously 0.25, rotX previously -0.25, rotY previously 0.125
-}
-
-void SetupLevel8(D3D11Engine* engine)
-{
-    //Ground and floor
-    engine->CreateDrawable("Meshes/ground_stone.obj", { 0.0f + 420.0f, -10.0f,   7.0f }, { 1.8f, 1.0f, 1.8f });
-    engine->CreateDrawable("Meshes/ground_stone.obj", { 0.0f + 420.0f,   8.0f,   7.0f }, { 1.8f, 1.0f, 1.8f });
-
-    //Walls (left, then right)
-    engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f + 420.0f, -1.0f,  19.0f }, { 10.0f, 8.0f, 1.0f });
-    engine->CreateDrawable("Meshes/wall_brick.obj", { 15.0f + 420.0f, -1.0f,  19.0f }, { 10.0f, 8.0f, 1.0f });
-
-    //Door (elongated metal crate with a small metal sphere as a makeshift doorknob)
-    engine->CreateDrawable("Meshes/door_metal.obj", { 0.0f + 420.0f, -1.0f, 19.0f }, { 5.0f, 8.0f, 1.0f });
-    engine->CreateDrawable("Meshes/sphere_metal.obj", { -2.75f + 420.0f, -1.25f, 17.75f }, { 0.25f, 0.25f, 0.25f });
-
-    //LEFT SIDE
-    //In order: Big box, box on top of it, box in front of it
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f + 420.0f, -7.0f, 15.0f }, { 2.0f, 2.0f, 2.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f + 420.0f, -4.0f, 15.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f,  0.45f, 0.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f + 420.0f, -8.0f, 11.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f });
-
-    //new bigass create left side
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -15.0f + 420.0f, -6.0f, 12.0f }, { 3.0f, 3.0f, 3.0f });
-
-    //In order: First box in front of first three, box on top of it, box in front of it
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 12.0f + 420.0f, -8.0f,  11.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 6.0f + 420.0f, -8.0f,  11.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -12.0f + 420.0f, -8.0f, 5.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f });
-
-    //RIGHT SIDE
-    //In order: Big box, medium box in front of it, box on top of it, box further in front
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 7.0f + 420.0f, -7.0f, 16.0f }, { 2.0f, 2.0f, 2.0f });
-    engine->CreateDrawable("Meshes/crate_glow_blue.obj", { 9.0f + 420.0f, -7.5f, 12.0f }, { 1.5f, 1.5f, 1.5f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 9.0f + 420.0f, -5.0f, 12.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 9.0f + 420.0f, -8.0f, 8.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f });
-
-    //In order: Big box, box on top of it
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 13.0f + 420.0f, -7.0f, 16.0f }, { 2.0f, 2.0f, 2.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 13.0f + 420.0f, -4.0f, 16.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f });
-
-    //LIGHTS
-    engine->CreateLightSpot({ 0.0f + 420.0f, 5.0f, 5.0f }, 0.75f, 0.0f, 0.35f); //fov previously 0.25, rotX previously -0.25, rotY previously 0.125
-}
-
-void SetupLevel9(D3D11Engine* engine)
-{
-    //Ground and floor
-    engine->CreateDrawable("Meshes/ground_stone.obj", { 0.0f + 480.0f, -10.0f,   7.0f }, { 1.8f, 1.0f, 1.8f });
-    engine->CreateDrawable("Meshes/ground_stone.obj", { 0.0f + 480.0f,   8.0f,   7.0f }, { 1.8f, 1.0f, 1.8f });
-
-    //Walls (left, then right)
-    engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f + 480.0f, -1.0f,  19.0f }, { 10.0f, 8.0f, 1.0f });
-    engine->CreateDrawable("Meshes/wall_brick.obj", { 15.0f + 480.0f, -1.0f,  19.0f }, { 10.0f, 8.0f, 1.0f });
-
-    //Door (elongated metal crate with a small metal sphere as a makeshift doorknob)
-    engine->CreateDrawable("Meshes/door_metal.obj", { 0.0f + 480.0f, -1.0f, 19.0f }, { 5.0f, 8.0f, 1.0f });
-    engine->CreateDrawable("Meshes/sphere_metal.obj", { -2.75f + 480.0f, -1.25f, 17.75f }, { 0.25f, 0.25f, 0.25f });
-
-    //LEFT SIDE
-    //In order: Big box, box on top of it, box in front of it
-    engine->CreateDrawable("Meshes/crate_wood_skewed.obj", { -8.0f + 480.0f, -7.0f, 15.0f }, { 2.0f, 2.0f, 2.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f + 480.0f, -4.0f, 15.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f,  0.45f, 0.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -8.0f + 480.0f, -8.0f, 11.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f });
-
-    //In order: First box in front of first three, box on top of it, box in front of it
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -10.0f + 480.0f, -8.0f,  8.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -10.0f + 480.0f, -6.0f,  8.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -12.0f + 480.0f, -8.0f, 5.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -0.45f, 0.0f });
-
-    //RIGHT SIDE
-    //In order: Big box, medium box in front of it, box on top of it, box further in front
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 7.0f + 480.0f, -7.0f, 16.0f }, { 2.0f, 2.0f, 2.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 9.0f + 480.0f, -8.0f, 12.0f }, { 1.0f, 1.0f, 1.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 13.0f + 480.0f, -8.0f, 12.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 9.0f + 480.0f, -8.0f, 8.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.45f, 0.0f });
-
-    //In order: Big box, box on top of it
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 15.0f + 480.0f, -7.0f, 16.0f }, { 2.0f, 2.0f, 2.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 15.0f + 480.0f, -3.5f, 16.0f }, { 1.5f, 1.5f, 1.5f }, { 0.0f, 0.45f, 0.0f });
-
-    //New:
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -13.0f + 480.0f, -8.0f, 8.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { -14.0f + 480.0f, -8.0f, 11.0f });
-    engine->CreateDrawable("Meshes/crate_wood.obj", { 15.0f + 480.0f, -7.5f, 8.0f }, {1.5f, 1.5f, 1.5f});
-
-    //LIGHTS
-    engine->CreateLightSpot({ 0.0f + 480.0f, 5.0f, 5.0f }, 0.75f, 0.0f, 0.35f); //fov previously 0.25, rotX previously -0.25, rotY previously 0.125
-}
-*/

@@ -4,12 +4,7 @@
 
 //Just because I don't want to clog up App anymore
 
-void SetupLevel1(D3D11Engine* engine);
-void SetupLevel2(D3D11Engine* engine);
-void SetupLevel3(D3D11Engine* engine);
-void SetupLevel4(D3D11Engine* engine);
-void SetupLevel5(D3D11Engine* engine);
-void SetupLevel6(D3D11Engine* engine);
-void SetupLevel7(D3D11Engine* engine);
-void SetupLevel8(D3D11Engine* engine);
-void SetupLevel9(D3D11Engine* engine);
+void SetupLevel1(D3D11Engine* engine); //First attempt, though I figured maybe repeating corridors would be better and Ilir agreed so
+void SetupLevel2(D3D11Engine* engine); //Level 2 baby, repeating corridors
+
+void SetupTestLevel(D3D11Engine* engine); //For testing different things :)

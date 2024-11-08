@@ -1,0 +1,9 @@
+newmtl brick
+Ns 250.000000
+Kd brickwall.jpg
+Ka brickwall.jpg
+Ks brickwall.jpg
+Ke brickwall.jpg
+Ni 1.450000
+d 1.000000
+illum 2

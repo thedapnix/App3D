@@ -1,5 +1,5 @@
 newmtl brick
-Ka brickwall.jpg
-Kd brickwall.jpg
-Ks brickwall.jpg
+Ka brick.png
+Kd brick.png
+Ks brick.png
 Ns 1.0000

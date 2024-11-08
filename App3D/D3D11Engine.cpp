@@ -57,52 +57,10 @@ D3D11Engine::~D3D11Engine()
 
 void D3D11Engine::Update(float dt)
 {
-	//UPDATE DRAWABLES
-	//104 moves 5 up and then 5 down, rinse and repeat
-	if (targetGoingUp)
-	{
-		m_drawables.at(104).Move(0.0f, 0.005f * dt, 0.0f);
-		if (m_drawables.at(104).GetPosition().y >= 10.0f)
-			targetGoingUp = false;
-	}
-	else
-	{
-		m_drawables.at(104).Move(0.0f, -0.005f * dt, 0.0f);
-		if (m_drawables.at(104).GetPosition().y <= 5.0f)
-			targetGoingUp = true;
-	}
+	//UPDATE DRAWABLES (Comment this out if we're running the test level, because the drawable indices are hard-coded when we don't have our ECS setup yet)
+	//UpdateMovingDrawables(dt);
 
-	//106 moves 8 forward and 8 back, rinse and repeat
-	if (targetGoingForward)
-	{
-		m_drawables.at(106).Move(0.0f, 0.0f, 0.005f * dt);
-		if (m_drawables.at(106).GetPosition().z >= 210.0f)
-			targetGoingForward = false;
-	}
-	else
-	{
-		m_drawables.at(106).Move(0.0f, 0.0f, -0.005f * dt);
-		if (m_drawables.at(106).GetPosition().z <= 202.0f)
-			targetGoingForward = true;
-	}
-
-	//108 does a pendulum swing type beat, but let's start by finding out if we can even make it circle
-	if (targetSwingingOriginal)
-	{
-		m_drawables.at(108).Rotate(0.00075f * dt, 0.0f, 0.0f);
-		if (m_drawables.at(108).GetRotation().x >= XM_PIDIV4)
-			targetSwingingOriginal = false;
-	}
-	else
-	{
-		m_drawables.at(108).Rotate(-0.00075f * dt, 0.0f, 0.0f);
-		if (m_drawables.at(108).GetRotation().x <= -XM_PIDIV4)
-			targetSwingingOriginal = true;
-	}
-	m_drawables.at(108).SetPosition(0.0f, -6.0f, 0.0f);
-	//m_drawables.at(108).SetPosition(0.0f, 0.0f, 5.0f);
-	//m_povDrawables.at(1).SetPosition(0.0f, 0.0f, 5.0f);
-
+	//Trolling, this exists just to test normal mapping implementation (Currently: Not working as intended)
 	m_drawables.back().Rotate(0.00075f * dt, 0.0f, 0.00075f * dt);
 
 	//UPDATE CONSTANT BUFFERS
@@ -233,6 +191,51 @@ void D3D11Engine::PlayerInteract()
 
 	//Also for funsies: Change views?
 	//m_camera->ChangeFrustum();
+}
+
+void D3D11Engine::UpdateMovingDrawables(float dt)
+{
+	if (targetGoingUp)
+	{
+		m_drawables.at(104).Move(0.0f, 0.005f * dt, 0.0f);
+		if (m_drawables.at(104).GetPosition().y >= 10.0f)
+			targetGoingUp = false;
+	}
+	else
+	{
+		m_drawables.at(104).Move(0.0f, -0.005f * dt, 0.0f);
+		if (m_drawables.at(104).GetPosition().y <= 5.0f)
+			targetGoingUp = true;
+	}
+
+	//106 moves 8 forward and 8 back, rinse and repeat
+	if (targetGoingForward)
+	{
+		m_drawables.at(106).Move(0.0f, 0.0f, 0.005f * dt);
+		if (m_drawables.at(106).GetPosition().z >= 210.0f)
+			targetGoingForward = false;
+	}
+	else
+	{
+		m_drawables.at(106).Move(0.0f, 0.0f, -0.005f * dt);
+		if (m_drawables.at(106).GetPosition().z <= 202.0f)
+			targetGoingForward = true;
+	}
+
+	//108 does a pendulum swing type beat, but let's start by finding out if we can even make it circle
+	if (targetSwingingOriginal)
+	{
+		m_drawables.at(108).Rotate(0.00075f * dt, 0.0f, 0.0f);
+		if (m_drawables.at(108).GetRotation().x >= XM_PIDIV4)
+			targetSwingingOriginal = false;
+	}
+	else
+	{
+		m_drawables.at(108).Rotate(-0.00075f * dt, 0.0f, 0.0f);
+		if (m_drawables.at(108).GetRotation().x <= -XM_PIDIV4)
+			targetSwingingOriginal = true;
+	}
+	m_drawables.at(108).SetPosition(0.0f, -6.0f, 0.0f);
 }
 
 int D3D11Engine::CreateDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)

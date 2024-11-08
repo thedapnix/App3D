@@ -1,0 +1,9 @@
+newmtl stone
+Ns 250.000000
+Kd stone_fancy.jpg
+Ka stone_fancy.jpg
+Ks stone_fancy.jpg
+Ke stone_fancy.jpg
+Ni 1.450000
+d 1.000000
+illum 2

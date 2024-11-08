@@ -39,6 +39,7 @@ public:
 	void MovePlayerZ(float speed);
 	Camera& GetCamera() const noexcept;
 	void PlayerInteract();
+	void UpdateMovingDrawables(float dt);
 
 	//Drawable and culling stuff
 	int CreateDrawable(			std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, 

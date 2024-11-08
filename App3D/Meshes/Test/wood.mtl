@@ -1,0 +1,9 @@
+newmtl wood
+Ns 250.000000
+Kd wood_fancy.png
+Ka wood_fancy.png
+Ks wood_fancy.png
+Ke wood_fancy.png
+Ni 1.450000
+d 1.000000
+illum 2

@@ -54,9 +54,9 @@ void main(uint3 DTid : SV_DispatchThreadID) //So the DTid is the index of the sp
     {
         //Quick little light culling for a performance boost
         float3 lightToCam = abs(spotlights[i].origin - cameraPosition);
-        if(lightToCam.x >= 150.0f || 
-            lightToCam.y >= 150.0f ||
-            lightToCam.z >= 150.0f)
+        if(lightToCam.x >= 100.0f || 
+            lightToCam.y >= 100.0f ||
+            lightToCam.z >= 100.0f)
         {
             continue;
         }
