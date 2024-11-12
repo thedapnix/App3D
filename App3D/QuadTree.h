@@ -33,7 +33,7 @@ private:
 	int m_depth = 0;
 
 	//Previously: 8, 4, 100 on the following three variables. Need to up these numbers to support more elements in the tree, covering a larger area
-	static constexpr int maxElements = 32;
+	static constexpr int maxElements = 64; //Previously 32 but im limit testing normal maps and a bunch of boxes
 	static constexpr int maxDepth = 8;
 	static constexpr int maxHeight = 400; //Had to extend this from 300 to 400 now since we've got a bit of a longboy level on our hands
 	static constexpr int minHeight = -100;

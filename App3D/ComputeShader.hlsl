@@ -32,7 +32,8 @@ struct SpotLight
 
 StructuredBuffer<SpotLight> spotlights : register(t4);
 Texture2DArray<float> shadowMaps : register(t5);
-sampler shadowMapSampler : register(s0);
+//sampler shadowMapSampler : register(s0);
+SamplerState shadowMapSampler : register(s0);
 
 [numthreads(8, 8, 1)]                       //Think of a grid of cells reminiscent of threads in OS programming, where every thread runs the code below
                                             //In this case, I make a 8x8 grid, making sure to cover the entire view (by dispatching 100x100)

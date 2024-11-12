@@ -167,8 +167,8 @@ void App::DoSetup()
     //int crateIdx = m_engine->CreateDrawable("Meshes/crate_wood.obj", { 0.0f, 12.0f, 30.0f });
     //m_engine->ApplyNormalMapToDrawable(crateIdx, "NormalMaps/wood.jpg");
 
-    int crateIdx = m_engine->CreateDrawable("Meshes/Test/crate.obj", { 0.0f, 12.0f, 5.0f });
-    m_engine->ApplyNormalMapToDrawable(crateIdx, "NormalMaps/wood_fancy_invert.png");
+    //int crateIdx = m_engine->CreateDrawable("Meshes/Test/crate.obj", { 0.0f, 12.0f, 5.0f });
+    //m_engine->ApplyNormalMapToDrawable(crateIdx, "NormalMaps/wood_fancy_invert.png");
 
     //Cubemap(s) I'm just limit testing cool shit
     //m_engine->CreateReflectiveDrawable("Meshes/default_sphere.obj", { -17.5f, 10.0f, 55.0f }, {2.0f, 2.0f, 2.0f}); //Big floating sphere in the big room, between the purple and cyan light

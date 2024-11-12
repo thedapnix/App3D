@@ -67,6 +67,7 @@ void Drawable::Bind(ID3D11DeviceContext* context) const
 			m_submeshes.at(i).Unbind(context, m_isReflective, m_hasNormalMap);
 		}
 		context->VSSetConstantBuffers(0, 0, NULL);
+		context->PSSetConstantBuffers(0, 0, NULL); //Forgot to unbind?
 	}
 }
 
@@ -78,78 +79,6 @@ void Drawable::UpdateConstantBuffer(ID3D11DeviceContext* context, Camera* camera
 		CalculateAndTransposeWorld(pos, camera);
 
 		m_cbd.hasNormalMap = m_hasNormalMap;
-
-		if (m_hasNormalMap)
-		{
-			//Calculate tangent and bi-tangent? aiiiishhhhh... is it fine to assume a plane spanning -1 to +1? That's what most of my cubes are so pwetty pwease?
-			XMVECTOR pos1 = XMVectorSet(-1.0f, 1.0f, 0.0f, 0.0f);
-			XMVECTOR pos2 = XMVectorSet(-1.0f, -1.0f, 0.0f, 0.0f);
-			XMVECTOR pos3 = XMVectorSet(1.0f, -1.0f, 0.0f, 0.0f);
-			XMVECTOR pos4 = XMVectorSet(1.0f, 1.0f, 0.0f, 0.0f);
-
-			XMVECTOR uv1 = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-			XMVECTOR uv2 = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-			XMVECTOR uv3 = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-			XMVECTOR uv4 = XMVectorSet(1.0f, 1.0f, 0.0f, 0.0f);
-
-			XMVECTOR nor = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-
-			//Get edges and uv deltas for the first triangle
-			XMVECTOR edge1 = XMVectorSubtract(pos2, pos1);
-			XMVECTOR edge2 = XMVectorSubtract(pos3, pos1);
-			XMVECTOR deltaUv1 = XMVectorSubtract(uv2, uv1);
-			XMVECTOR deltaUv2 = XMVectorSubtract(uv3, uv1);
-
-			//Pre-calculate the fractional
-			float f = 1.0f / (XMVectorGetX(deltaUv1) * XMVectorGetY(deltaUv2) - XMVectorGetX(deltaUv2) * XMVectorGetY(deltaUv1));
-
-			//Hellscape incoming
-			XMVECTOR tangent1 = XMVectorSet(
-				f * (XMVectorGetY(deltaUv2) * XMVectorGetX(edge1) - XMVectorGetY(deltaUv1) * XMVectorGetX(edge2)),
-				f * (XMVectorGetY(deltaUv2) * XMVectorGetY(edge1) - XMVectorGetY(deltaUv1) * XMVectorGetY(edge2)),
-				f * (XMVectorGetY(deltaUv2) * XMVectorGetZ(edge1) - XMVectorGetY(deltaUv1) * XMVectorGetZ(edge2)),
-				0.0f
-			);
-
-			/*XMVECTOR bitangent1 = XMVectorSet(
-				f * (-XMVectorGetY(deltaUv2) * XMVectorGetX(edge1) + XMVectorGetY(deltaUv1) * XMVectorGetX(edge2)),
-				f * (-XMVectorGetY(deltaUv2) * XMVectorGetY(edge1) + XMVectorGetY(deltaUv1) * XMVectorGetY(edge2)),
-				f * (-XMVectorGetY(deltaUv2) * XMVectorGetZ(edge1) + XMVectorGetY(deltaUv1) * XMVectorGetZ(edge2)),
-				0.0f
-			);
-
-			//Get edges and uv deltas for the second triangle
-			edge1 = XMVectorSubtract(pos3, pos1);
-			edge2 = XMVectorSubtract(pos4, pos1);
-			deltaUv1 = XMVectorSubtract(uv3, uv1);
-			deltaUv2 = XMVectorSubtract(uv4, uv1);
-
-			//Re-calculate the fractional
-			f = 1.0f / (XMVectorGetX(deltaUv1) * XMVectorGetY(deltaUv2) - XMVectorGetX(deltaUv2) * XMVectorGetY(deltaUv1));
-
-			//Hellscape round two
-			XMVECTOR tangent2 = XMVectorSet(
-				f * (XMVectorGetY(deltaUv2) * XMVectorGetX(edge1) - XMVectorGetY(deltaUv1) * XMVectorGetX(edge2)),
-				f * (XMVectorGetY(deltaUv2) * XMVectorGetY(edge1) - XMVectorGetY(deltaUv1) * XMVectorGetY(edge2)),
-				f * (XMVectorGetY(deltaUv2) * XMVectorGetZ(edge1) - XMVectorGetY(deltaUv1) * XMVectorGetZ(edge2)),
-				0.0f
-			);
-
-			XMVECTOR bitangent2 = XMVectorSet(
-				f * (-XMVectorGetY(deltaUv2) * XMVectorGetX(edge1) + XMVectorGetY(deltaUv1) * XMVectorGetX(edge2)),
-				f * (-XMVectorGetY(deltaUv2) * XMVectorGetY(edge1) + XMVectorGetY(deltaUv1) * XMVectorGetY(edge2)),
-				f * (-XMVectorGetY(deltaUv2) * XMVectorGetZ(edge1) + XMVectorGetY(deltaUv1) * XMVectorGetZ(edge2)),
-				0.0f
-			);*/
-
-			//Then go ahead and pass these to the shader or something I guess????
-			XMStoreFloat3(&m_cbd.aTangent, tangent1);
-			/*XMStoreFloat3(&m_cbd.aBitangent, bitangent1);
-			XMStoreFloat3(&m_cbd.bTangent, tangent2);
-			XMStoreFloat3(&m_cbd.bBitangent, bitangent2);*/
-
-			//And bob is officially your fucking uncle
-		}
 
 		D3D11_MAPPED_SUBRESOURCE mapped = {};												//Set up the new srtData for the resource, zero the memory
 		context->Map(m_constantBuffer.GetBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);	//Disable GPU access to the srtData we want to change, and get a pointer to its memory

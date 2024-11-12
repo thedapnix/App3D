@@ -171,10 +171,6 @@ private:
 		DirectX::XMFLOAT4X4 invWorld; //Also transposed?
 
 		bool hasNormalMap = false;
-		DirectX::XMFLOAT3 aTangent;
-		DirectX::XMFLOAT3 aBitangent;
-		DirectX::XMFLOAT3 bTangent;
-		DirectX::XMFLOAT3 bBitangent;
 	};
 	DirectX::XMFLOAT3 m_scale;
 	DirectX::XMFLOAT3 m_rotate;

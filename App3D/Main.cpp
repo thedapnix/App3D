@@ -51,6 +51,8 @@ Instancing
 //If I manage to get all of these things done, I should be able to use this engine to create 3D FPS games and 2D games
 	//Mainly saying 3D FPS games because even if the skeletal animation is scuffed as fuck, it'll work in an FPS, TPS no fucking way
 
+//Normal mapping done, but I kinda need some sort of global illumination now, since the added detail from normal mapping is lost on any texture that isn't being affected by light
+
 int WINAPI wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
 	_In_ PWSTR pCmdLine,

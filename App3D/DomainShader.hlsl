@@ -30,6 +30,7 @@ struct DomainShaderOutput
 	float4 col : TEXCOORD1;
 
 	float4 worldPosition : TEXCOORD2;
+    float3 tangent : TEXCOORD3; //Perchance?
 };
 
 
@@ -93,6 +94,30 @@ DomainShaderOutput main(
     float4 pos = mul(output.worldPosition, view);
     pos = mul(pos, proj);
     output.clipPosition = pos;
+	
+	//Is this a good place to do tangent calculations? I have access to triangles after all?
+    float3 pos1 = patch[0].worldPosition;
+    float3 pos2 = patch[1].worldPosition;
+    float3 pos3 = patch[2].worldPosition;
+	
+    float3 uv1 = float3(patch[0].uv, 0.0f);
+    float3 uv2 = float3(patch[1].uv, 0.0f);
+    float3 uv3 = float3(patch[2].uv, 0.0f);
+	
+    float3 edge1 = pos2 - pos1;
+    float3 edge2 = pos3 - pos1;
+    float3 deltaUv1 = uv2 - uv1;
+    float3 deltaUv2 = uv3 - uv1;
+	
+    float frac = 1.0f / (deltaUv1.x * deltaUv2.y - deltaUv2.x * deltaUv1.y);
+	
+    float3 tangent = float3(
+		frac * (deltaUv2.y * edge1.x - deltaUv1.y * edge2.x),
+		frac * (deltaUv2.y * edge1.y - deltaUv1.y * edge2.y),
+		frac * (deltaUv2.y * edge1.z - deltaUv1.y * edge2.z)
+	);
+	
+    output.tangent = tangent;
 
 	return output;
 }

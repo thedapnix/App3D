@@ -48,7 +48,7 @@ void SubMesh::Draw(ID3D11DeviceContext* context) const
 void SubMesh::Unbind(ID3D11DeviceContext* context, bool isReflective, bool hasNormalMap) const
 {
 	if (isReflective) return;
-	
+
 	if (hasNormalMap)
 	{
 		ID3D11ShaderResourceView* views[] = { NULL, NULL, NULL, NULL };

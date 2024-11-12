@@ -60,8 +60,8 @@ void D3D11Engine::Update(float dt)
 	//UPDATE DRAWABLES (Comment this out if we're running the test level, because the drawable indices are hard-coded when we don't have our ECS setup yet)
 	//UpdateMovingDrawables(dt);
 
-	//Trolling, this exists just to test normal mapping implementation (Currently: Not working as intended)
-	m_drawables.back().Rotate(0.00075f * dt, 0.0f, 0.00075f * dt);
+	//Trolling, this exists just to test normal mapping implementation
+	//m_drawables.back().Rotate(0.00075f * dt, 0.0f, 0.00075f * dt);
 
 	//UPDATE CONSTANT BUFFERS
 	m_camera->UpdateConstantBuffer(context.Get());
@@ -896,13 +896,14 @@ void D3D11Engine::DefPassTwo(Camera* cam, ID3D11UnorderedAccessView* uav, UINT c
 
 	//UNBIND
 	context->CSSetShader(NULL, NULL, 0);
-	context->CSSetConstantBuffers(0, 0, NULL);
+	ID3D11Buffer* nullBuffer = NULL;
+	context->CSSetConstantBuffers(0, 0, &nullBuffer);
 	ID3D11UnorderedAccessView* nullUav = NULL;
 	context->CSSetUnorderedAccessViews(0, 1, &nullUav, NULL);
 	ID3D11ShaderResourceView* nullSRVs[] = { NULL, NULL, NULL, NULL, NULL, NULL };
 	context->CSSetShaderResources(0, 6, nullSRVs);
 	ID3D11SamplerState* nullSamplers[] = { NULL };
-	context->CSSetSamplers(0, 1, nullSamplers); //old bug spotted, I've been doing PSSetSamplers this whole time (hasn't caused any noticeable issues but not proper unbind)
+	context->CSSetSamplers(0, 1, nullSamplers);
 
 	//Everything is unbound when we exit DefPassTwo()
 }

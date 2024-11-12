@@ -307,10 +307,15 @@ void SetupLevel1(D3D11Engine* engine)
 void SetupLevel2(D3D11Engine* engine)
 {
     //Temp code for testing
-    int w1 = 0, w2 = 0, w3 = 0, w11 = 0, w12 = 0, w13 = 0, w14 = 0, w15 = 0;
+    int w1, w2, w3, w11, w12, w13, w14, w15; //Walls
+    int d1, d2; //Doors
 
     for (int i = 0; i < 6; i++) //6 hallways, 3 color, 3 motion (as a result of the preliminary experiment we skip the form attribute)
     {
+        //Reset w and d every corridor
+        w1 = w2 = w3 = w11 = w12 = w13 = w14 = w15 = 0;
+        d1 = d2 = 0;
+
         //Floor and roof
         int g1 = engine->CreateDrawable("Meshes/ground_stone.obj",   {  0.0f + (60.0f * i),  0.0f, 25.0f + (60.0f * i) }, { 1.5f, 1.0f, 3.0f });
         int g2 = engine->CreateDrawable("Meshes/ground_stone.obj",   {  0.0f + (60.0f * i), 18.0f, 25.0f + (60.0f * i) }, { 1.5f, 1.0f, 3.0f });
@@ -318,7 +323,7 @@ void SetupLevel2(D3D11Engine* engine)
         int g4 = engine->CreateDrawable("Meshes/ground_stone.obj",   { 15.0f + (60.0f * i), 18.0f, 70.0f + (60.0f * i) }, { 1.5f, 1.0f, 3.0f }, { 0.0f, XM_PIDIV2, 0.0f });
 
         //Walls (Starting with back wall, then going along the side with the door until we've looped back around)
-        engine->CreateDrawable("Meshes/wall_brick.obj", { 0.0f + (60.0f * i),  9.0f, -5.0f + (60.0f * i) }, { 15.0f, 8.0f, 1.0f });
+        int o1 = engine->CreateDrawable("Meshes/wall_brick.obj", { 0.0f + (60.0f * i),  9.0f, -5.0f + (60.0f * i) }, { 15.0f, 8.0f, 1.0f });
         if (i == 0) //First hallway there won't be a door behind you, you're on your own
         {
             w1 = engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f, 9.0f, 17.5f }, { 22.5f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
@@ -326,8 +331,8 @@ void SetupLevel2(D3D11Engine* engine)
         }
         else
         {
-            engine->CreateDrawable("Meshes/door_metal.obj", { -15.0f + (60.0f * i), 9.0f, 10.0f + (60.0f * i) }, { 5.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
-            engine->CreateDrawable("Meshes/sphere_metal.obj", { -16.25f + (60.0f * i), 9.25f, 12.75f + (60.0f * i) }, { 0.25f, 0.25f, 0.25f }, { 0.0f, XM_PIDIV2, 0.0f });
+            d1 = engine->CreateDrawable("Meshes/door_metal.obj", { -15.0f + (60.0f * i), 9.0f, 10.0f + (60.0f * i) }, { 5.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+            d2 = engine->CreateDrawable("Meshes/sphere_metal.obj", { -16.25f + (60.0f * i), 9.25f, 12.75f + (60.0f * i) }, { 0.25f, 0.25f, 0.25f }, { 0.0f, XM_PIDIV2, 0.0f });
             w1 = engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f + (60.0f * i), 9.0f, 0.0f + (60.0f * i) }, { 5.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
             w2 = engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f + (60.0f * i), 9.0f, 67.5f + (60.0f * i)}, {17.5f, 8.0f, 1.0f}, {0.0f, XM_PIDIV2, 0.0f});
             w3 = engine->CreateDrawable("Meshes/wall_brick.obj", { -15.0f + (60.0f * i), 9.0f, 32.5f + (60.0f * i) }, { 17.5f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
@@ -339,15 +344,7 @@ void SetupLevel2(D3D11Engine* engine)
         w15 = engine->CreateDrawable("Meshes/wall_brick.obj", { 15.0f + (60.0f * i), 9.0f, 10.0f + (60.0f * i) }, { 15.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
 
         //Add normal maps to all the brick walls hoo boy
-        /*engine->ApplyNormalMapToDrawable(w1, "NormalMaps/brick.png");
-        engine->ApplyNormalMapToDrawable(w2, "NormalMaps/brick.png");
-        if (w3 != 0) engine->ApplyNormalMapToDrawable(w3, "NormalMaps/brick.png");
-        engine->ApplyNormalMapToDrawable(w11, "NormalMaps/brick.png");
-        engine->ApplyNormalMapToDrawable(w12, "NormalMaps/brick.png");
-        engine->ApplyNormalMapToDrawable(w13, "NormalMaps/brick.png");
-        engine->ApplyNormalMapToDrawable(w14, "NormalMaps/brick.png");
-        engine->ApplyNormalMapToDrawable(w15, "NormalMaps/brick.png");*/
-
+        engine->ApplyNormalMapToDrawable(o1, "NormalMaps/brick.jpg");
         engine->ApplyNormalMapToDrawable(w1, "NormalMaps/brick.jpg");
         engine->ApplyNormalMapToDrawable(w2, "NormalMaps/brick.jpg");
         if (w3 != 0) engine->ApplyNormalMapToDrawable(w3, "NormalMaps/brick.jpg");
@@ -357,7 +354,11 @@ void SetupLevel2(D3D11Engine* engine)
         engine->ApplyNormalMapToDrawable(w14, "NormalMaps/brick.jpg");
         engine->ApplyNormalMapToDrawable(w15, "NormalMaps/brick.jpg");
 
-        //Normal maps to the floors and roofs
+        //And the doors
+        if (d1 != 0) engine->ApplyNormalMapToDrawable(d1, "NormalMaps/metal_long.jpg");
+        if (d2 != 0) engine->ApplyNormalMapToDrawable(d2, "NormalMaps/metal.jpg");
+
+        //Normal maps to the floors and roofs (No this looks fucking AWFUL lmao, since the stone texture i made is just a grey image with a noise filter applied to it, and that messes with the normals)
         //engine->ApplyNormalMapToDrawable(g1, "NormalMaps/stone.jpg");
         //engine->ApplyNormalMapToDrawable(g2, "NormalMaps/stone.jpg");
         //engine->ApplyNormalMapToDrawable(g3, "NormalMaps/stone.jpg");
@@ -547,39 +548,129 @@ void SetupLevel2(D3D11Engine* engine)
 
     //Hallway (part 2, near side) clutter
     //engine->CreateDrawable("Meshes/clutter_small_2.obj", { 25.0f + 180.0f, 2.0f, 64.0f + 180.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f }); //Faces negative X by default, rotated to face positive Z
+
+    //34 crate-type things
+    for (int i = 103; i < 136; i++)
+    {
+        engine->ApplyNormalMapToDrawable(i, "NormalMaps/wood_invert.jpg");
+    }
 }
 
 void SetupTestLevel(D3D11Engine* engine)
 {
-    int floorIndex = engine->CreateDrawable("Meshes/Test/stone.obj", {-5.0f, 0.0f, 5.0f}, {5.0f, 1.0f, 5.0f});
-    int floorIndex2 = engine->CreateDrawable("Meshes/Test/stone.obj", { 5.0f, 0.0f, 5.0f }, { 5.0f, 1.0f, 5.0f });
-    int floorIndex3 = engine->CreateDrawable("Meshes/Test/stone.obj", { -5.0f, 0.0f, -5.0f }, { 5.0f, 1.0f, 5.0f });
-    int floorIndex4 = engine->CreateDrawable("Meshes/Test/stone.obj", { 5.0f, 0.0f, -5.0f }, { 5.0f, 1.0f, 5.0f });
+    for (int i = 0; i < 4; i++)
+    {
+        //Drawable creation
+        int floorIndex = engine->CreateDrawable("Meshes/Test/stone.obj", { -5.0f + 20.0f * (float)i, 0.0f, 5.0f }, { 5.0f, 1.0f, 5.0f });
+        int floorIndex2 = engine->CreateDrawable("Meshes/Test/stone.obj", { 5.0f + 20.0f * (float)i, 0.0f, 5.0f }, { 5.0f, 1.0f, 5.0f });
+        int floorIndex3 = engine->CreateDrawable("Meshes/Test/stone.obj", { -5.0f + 20.0f * (float)i, 0.0f, -5.0f }, { 5.0f, 1.0f, 5.0f });
+        int floorIndex4 = engine->CreateDrawable("Meshes/Test/stone.obj", { 5.0f + 20.0f * (float)i, 0.0f, -5.0f }, { 5.0f, 1.0f, 5.0f });
 
-    int roofIndex = engine->CreateDrawable("Meshes/Test/stone.obj", { -5.0f, 18.0f, 5.0f }, { 5.0f, 1.0f, 5.0f });
-    int roofIndex2 = engine->CreateDrawable("Meshes/Test/stone.obj", { 5.0f, 18.0f, 5.0f }, { 5.0f, 1.0f, 5.0f });
-    int roofIndex3 = engine->CreateDrawable("Meshes/Test/stone.obj", { -5.0f, 18.0f, -5.0f }, { 5.0f, 1.0f, 5.0f });
-    int roofIndex4 = engine->CreateDrawable("Meshes/Test/stone.obj", { 5.0f, 18.0f, -5.0f }, { 5.0f, 1.0f, 5.0f });
+        int roofIndex = engine->CreateDrawable("Meshes/Test/stone.obj", { -5.0f + 20.0f * (float)i, 18.0f, 5.0f }, { 5.0f, 1.0f, 5.0f });
+        int roofIndex2 = engine->CreateDrawable("Meshes/Test/stone.obj", { 5.0f + 20.0f * (float)i, 18.0f, 5.0f }, { 5.0f, 1.0f, 5.0f });
+        int roofIndex3 = engine->CreateDrawable("Meshes/Test/stone.obj", { -5.0f + 20.0f * (float)i, 18.0f, -5.0f }, { 5.0f, 1.0f, 5.0f });
+        int roofIndex4 = engine->CreateDrawable("Meshes/Test/stone.obj", { 5.0f + 20.0f * (float)i, 18.0f, -5.0f }, { 5.0f, 1.0f, 5.0f });
 
-    int crateIndex = engine->CreateDrawable("Meshes/Test/crate.obj", {0.0f, 2.0f, 5.0f});
+        int wallIndex = engine->CreateDrawable("Meshes/Test/wall.obj", { 0.0f + 20.0f * (float)i, 9.0f, 11.0f }, { 10.0f, 8.0f, 1.0f });
+        //int wallIndex2 = engine->CreateDrawable("Meshes/Test/wall.obj", { -11.0f, 9.0f, 0.0f }, { 10.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+        //int wallIndex3 = engine->CreateDrawable("Meshes/Test/wall.obj", { 11.0f, 9.0f, 0.0f }, { 10.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
 
-    int wallIndex = engine->CreateDrawable("Meshes/Test/wall.obj", { 0.0f, 9.0f, 11.0f }, { 10.0f, 8.0f, 1.0f });
-    int wallIndex2 = engine->CreateDrawable("Meshes/Test/wall.obj", { -11.0f, 9.0f, 0.0f }, { 10.0f, 8.0f, 1.0f }, {0.0f, XM_PIDIV2, 0.0f});
-    int wallIndex3 = engine->CreateDrawable("Meshes/Test/wall.obj", { 11.0f, 9.0f, 0.0f }, { 10.0f, 8.0f, 1.0f }, { 0.0f, XM_PIDIV2, 0.0f });
+        //Normalmap application
+        engine->ApplyNormalMapToDrawable(floorIndex, "NormalMaps/stone_fancy.jpg");
+        engine->ApplyNormalMapToDrawable(floorIndex2, "NormalMaps/stone_fancy.jpg");
+        engine->ApplyNormalMapToDrawable(floorIndex3, "NormalMaps/stone_fancy.jpg");
+        engine->ApplyNormalMapToDrawable(floorIndex4, "NormalMaps/stone_fancy.jpg");
 
-    //Testing normal maps and dagnabbit it looks nice
-    engine->ApplyNormalMapToDrawable(floorIndex, "NormalMaps/stone_fancy.jpg");
-    engine->ApplyNormalMapToDrawable(floorIndex2, "NormalMaps/stone_fancy.jpg");
-    engine->ApplyNormalMapToDrawable(floorIndex3, "NormalMaps/stone_fancy.jpg");
-    engine->ApplyNormalMapToDrawable(floorIndex4, "NormalMaps/stone_fancy.jpg");
-    engine->ApplyNormalMapToDrawable(roofIndex, "NormalMaps/stone_fancy.jpg");
-    engine->ApplyNormalMapToDrawable(roofIndex2, "NormalMaps/stone_fancy.jpg");
-    engine->ApplyNormalMapToDrawable(roofIndex3, "NormalMaps/stone_fancy.jpg");
-    engine->ApplyNormalMapToDrawable(roofIndex4, "NormalMaps/stone_fancy.jpg");
-    engine->ApplyNormalMapToDrawable(crateIndex, "NormalMaps/wood_fancy_invert.png");
-    engine->ApplyNormalMapToDrawable(wallIndex, "NormalMaps/brick_fancy.jpg");
-    engine->ApplyNormalMapToDrawable(wallIndex2, "NormalMaps/brick_fancy.jpg");
-    engine->ApplyNormalMapToDrawable(wallIndex3, "NormalMaps/brick_fancy.jpg");
+        engine->ApplyNormalMapToDrawable(roofIndex, "NormalMaps/stone_fancy.jpg");
+        engine->ApplyNormalMapToDrawable(roofIndex2, "NormalMaps/stone_fancy.jpg");
+        engine->ApplyNormalMapToDrawable(roofIndex3, "NormalMaps/stone_fancy.jpg");
+        engine->ApplyNormalMapToDrawable(roofIndex4, "NormalMaps/stone_fancy.jpg");
+
+        engine->ApplyNormalMapToDrawable(wallIndex, "NormalMaps/brick_fancy.jpg");
+        //engine->ApplyNormalMapToDrawable(wallIndex2, "NormalMaps/brick_fancy.jpg");
+        //engine->ApplyNormalMapToDrawable(wallIndex3, "NormalMaps/brick_fancy.jpg");
+    }
+    
+    for (int i = 0; i < 2; i++)
+    {
+        //Drawable creation
+        int crateIndex = engine->CreateDrawable("Meshes/Test/crate.obj", { 0.0f + 10.0f * (float)i, 2.0f, 5.0f});
+        int crateIndex2 = engine->CreateDrawable("Meshes/Test/crate.obj", { 0.0f + 10.0f * (float)i, 4.0f, 5.0f });
+        int crateIndex3 = engine->CreateDrawable("Meshes/Test/crate.obj", { 0.0f + 10.0f * (float)i, 6.0f, 5.0f });
+        int crateIndex4 = engine->CreateDrawable("Meshes/Test/crate.obj", { 0.0f + 10.0f * (float)i, 8.0f, 5.0f });
+        int crateIndex5 = engine->CreateDrawable("Meshes/Test/crate.obj", { 0.0f + 10.0f * (float)i, 10.0f, 5.0f });
+        int crateIndex6 = engine->CreateDrawable("Meshes/Test/crate.obj", { 0.0f + 10.0f * (float)i, 12.0f, 5.0f });
+        int crateIndex7 = engine->CreateDrawable("Meshes/Test/crate.obj", { 0.0f + 10.0f * (float)i, 14.0f, 5.0f });
+        int crateIndex8 = engine->CreateDrawable("Meshes/Test/crate.obj", { 0.0f + 10.0f * (float)i, 16.0f, 5.0f });
+
+        int crateIndex11 = engine->CreateDrawable("Meshes/Test/crate.obj", { 3.0f + 10.0f * (float)i, 2.0f, 5.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PI / 8.0f, 0.0f }); //PI is a full turn, half of pi is 180 degrees, fourth of pi is 90, 8th is 45 bla bla, so 45 degrees back and forth here
+        int crateIndex12 = engine->CreateDrawable("Meshes/Test/crate.obj", { 3.0f + 10.0f * (float)i, 4.0f, 5.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -XM_PI / 8.0f, 0.0f });
+        int crateIndex13 = engine->CreateDrawable("Meshes/Test/crate.obj", { 3.0f + 10.0f * (float)i, 6.0f, 5.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PI / 8.0f, 0.0f });
+        int crateIndex14 = engine->CreateDrawable("Meshes/Test/crate.obj", { 3.0f + 10.0f * (float)i, 8.0f, 5.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -XM_PI / 8.0f, 0.0f });
+        int crateIndex15 = engine->CreateDrawable("Meshes/Test/crate.obj", { 3.0f + 10.0f * (float)i, 10.0f, 5.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PI / 8.0f, 0.0f });
+        int crateIndex16 = engine->CreateDrawable("Meshes/Test/crate.obj", { 3.0f + 10.0f * (float)i, 12.0f, 5.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -XM_PI / 8.0f, 0.0f });
+        int crateIndex17 = engine->CreateDrawable("Meshes/Test/crate.obj", { 3.0f + 10.0f * (float)i, 14.0f, 5.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, XM_PI / 8.0f, 0.0f });
+        int crateIndex18 = engine->CreateDrawable("Meshes/Test/crate.obj", { 3.0f + 10.0f * (float)i, 16.0f, 5.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, -XM_PI / 8.0f, 0.0f });
+
+        //Normalmap application
+        engine->ApplyNormalMapToDrawable(crateIndex, "NormalMaps/wood_fancy_invert.png");
+        engine->ApplyNormalMapToDrawable(crateIndex2, "NormalMaps/wood_fancy_invert.png");
+        engine->ApplyNormalMapToDrawable(crateIndex3, "NormalMaps/wood_fancy_invert.png");
+        engine->ApplyNormalMapToDrawable(crateIndex4, "NormalMaps/wood_fancy_invert.png");
+        engine->ApplyNormalMapToDrawable(crateIndex5, "NormalMaps/wood_fancy_invert.png");
+        engine->ApplyNormalMapToDrawable(crateIndex6, "NormalMaps/wood_fancy_invert.png");
+        engine->ApplyNormalMapToDrawable(crateIndex7, "NormalMaps/wood_fancy_invert.png");
+        engine->ApplyNormalMapToDrawable(crateIndex8, "NormalMaps/wood_fancy_invert.png");
+
+        engine->ApplyNormalMapToDrawable(crateIndex11, "NormalMaps/wood_fancy_invert.png");
+        engine->ApplyNormalMapToDrawable(crateIndex12, "NormalMaps/wood_fancy_invert.png");
+        engine->ApplyNormalMapToDrawable(crateIndex13, "NormalMaps/wood_fancy_invert.png");
+        engine->ApplyNormalMapToDrawable(crateIndex14, "NormalMaps/wood_fancy_invert.png");
+        engine->ApplyNormalMapToDrawable(crateIndex15, "NormalMaps/wood_fancy_invert.png");
+        engine->ApplyNormalMapToDrawable(crateIndex16, "NormalMaps/wood_fancy_invert.png");
+        engine->ApplyNormalMapToDrawable(crateIndex17, "NormalMaps/wood_fancy_invert.png");
+        engine->ApplyNormalMapToDrawable(crateIndex18, "NormalMaps/wood_fancy_invert.png");
+    }
+
+    //Drawable creation
+    int crateIndex21 = engine->CreateDrawable("Meshes/Test/crate.obj", { 5.0f, 2.0f, 0.0f });
+    int crateIndex22 = engine->CreateDrawable("Meshes/Test/crate.obj", { 5.0f, 4.0f, 0.0f });
+    int crateIndex23 = engine->CreateDrawable("Meshes/Test/crate.obj", { 5.0f, 6.0f, 0.0f });
+    int crateIndex24 = engine->CreateDrawable("Meshes/Test/crate.obj", { 5.0f, 8.0f, 0.0f });
+    int crateIndex25 = engine->CreateDrawable("Meshes/Test/crate.obj", { 5.0f, 10.0f, 0.0f });
+    int crateIndex26 = engine->CreateDrawable("Meshes/Test/crate.obj", { 5.0f, 12.0f, 0.0f });
+    int crateIndex27 = engine->CreateDrawable("Meshes/Test/crate.obj", { 5.0f, 14.0f, 0.0f });
+    int crateIndex28 = engine->CreateDrawable("Meshes/Test/crate.obj", { 5.0f, 16.0f, 0.0f });
+
+    //Normalmap application
+    engine->ApplyNormalMapToDrawable(crateIndex21, "NormalMaps/wood_fancy_invert.png");
+    engine->ApplyNormalMapToDrawable(crateIndex22, "NormalMaps/wood_fancy_invert.png");
+    engine->ApplyNormalMapToDrawable(crateIndex23, "NormalMaps/wood_fancy_invert.png");
+    engine->ApplyNormalMapToDrawable(crateIndex24, "NormalMaps/wood_fancy_invert.png");
+    engine->ApplyNormalMapToDrawable(crateIndex25, "NormalMaps/wood_fancy_invert.png");
+    engine->ApplyNormalMapToDrawable(crateIndex26, "NormalMaps/wood_fancy_invert.png");
+    engine->ApplyNormalMapToDrawable(crateIndex27, "NormalMaps/wood_fancy_invert.png");
+    engine->ApplyNormalMapToDrawable(crateIndex28, "NormalMaps/wood_fancy_invert.png");
+
+    //Drawable creation
+    int crateIndex31 = engine->CreateDrawable("Meshes/Test/crate.obj", { -5.0f, 2.0f, 0.0f });
+    int crateIndex32 = engine->CreateDrawable("Meshes/Test/crate.obj", { -5.0f, 4.0f, 0.0f });
+    int crateIndex33 = engine->CreateDrawable("Meshes/Test/crate.obj", { -5.0f, 6.0f, 0.0f });
+    int crateIndex34 = engine->CreateDrawable("Meshes/Test/crate.obj", { -5.0f, 8.0f, 0.0f });
+    int crateIndex35 = engine->CreateDrawable("Meshes/Test/crate.obj", { -5.0f, 10.0f, 0.0f });
+    int crateIndex36 = engine->CreateDrawable("Meshes/Test/crate.obj", { -5.0f, 12.0f, 0.0f });
+    int crateIndex37 = engine->CreateDrawable("Meshes/Test/crate.obj", { -5.0f, 14.0f, 0.0f });
+    int crateIndex38 = engine->CreateDrawable("Meshes/Test/crate.obj", { -5.0f, 16.0f, 0.0f });
+
+    //Normalmap application
+    engine->ApplyNormalMapToDrawable(crateIndex31, "NormalMaps/wood_fancy_invert.png");
+    engine->ApplyNormalMapToDrawable(crateIndex32, "NormalMaps/wood_fancy_invert.png");
+    engine->ApplyNormalMapToDrawable(crateIndex33, "NormalMaps/wood_fancy_invert.png");
+    engine->ApplyNormalMapToDrawable(crateIndex34, "NormalMaps/wood_fancy_invert.png");
+    engine->ApplyNormalMapToDrawable(crateIndex35, "NormalMaps/wood_fancy_invert.png");
+    engine->ApplyNormalMapToDrawable(crateIndex36, "NormalMaps/wood_fancy_invert.png");
+    engine->ApplyNormalMapToDrawable(crateIndex37, "NormalMaps/wood_fancy_invert.png");
+    engine->ApplyNormalMapToDrawable(crateIndex38, "NormalMaps/wood_fancy_invert.png");
 
     //Add a light because otherwise normal mapping obviously won't do anything
     engine->CreateConcaveDrawable("Meshes/lamp.obj", { 0.0f, 16.75f, 0.0f });
