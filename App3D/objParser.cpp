@@ -10,7 +10,7 @@ using namespace DirectX;
 
 bool ParseMaterial(std::string mtlFileName, ParsedData& data, std::unordered_map<std::string, ShaderResource>& textures, ID3D11Device* device)
 {
-	std::ifstream ifs("Meshes/Test/" + mtlFileName); //CHANGE THIS BACK LATER, ONLY TEST/ WHEN WE'RE DOING THE TEST LEVEL
+	std::ifstream ifs("Meshes/" + mtlFileName); //CHANGE THIS BACK LATER, ONLY TEST/ WHEN WE'RE DOING THE TEST LEVEL
 	if (!ifs)
 	{
 		MessageBox(NULL, L"Couldn't open mtl file!", L"Error", MB_OK);

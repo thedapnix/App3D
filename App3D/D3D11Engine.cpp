@@ -58,7 +58,7 @@ D3D11Engine::~D3D11Engine()
 void D3D11Engine::Update(float dt)
 {
 	//UPDATE DRAWABLES (Comment this out if we're running the test level, because the drawable indices are hard-coded when we don't have our ECS setup yet)
-	//UpdateMovingDrawables(dt);
+	UpdateMovingDrawables(dt);
 
 	//Trolling, this exists just to test normal mapping implementation
 	//m_drawables.back().Rotate(0.00075f * dt, 0.0f, 0.00075f * dt);
@@ -751,12 +751,6 @@ void D3D11Engine::RenderDepth(float dt)
 			drawable.Bind(context.Get());
 		}
 
-		//Just slapping this in here (actually no I'm not lol, it works but it looks goofy since there isn't a character holding the gun it's just floating around xd)
-		/*for (auto& drawable : m_povDrawables)
-		{
-			drawable.Bind(context.Get());
-		}*/
-
 		context->VSSetConstantBuffers(1, 0, NULL); //unbind the camera cb
 	}
 
@@ -1339,14 +1333,14 @@ void D3D11Engine::InitUAV()
 		MessageBox(NULL, L"Failed to get backbuffer!", L"Error", MB_OK);
 	}
 
-	//I haven't been setting up descriptors for uav or anything????? (not that it mattered xd)
+	//I haven't been setting up descriptors for uav or anything????? (not that it mattered xd, edit: Ever since I did I seemed to have made the output window scream at me hehe, fixed now, not a texture2D array, silly me)
 	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
 	ZeroMemory(&uavDesc, sizeof(uavDesc));
 	uavDesc.Format = DXGI_FORMAT_UNKNOWN;
-	uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2DARRAY;
-	uavDesc.Texture2DArray.ArraySize = 1;
-	uavDesc.Texture2DArray.FirstArraySlice = 0;
-	uavDesc.Texture2DArray.MipSlice = 0;
+	uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D; //D3D11_UAV_DIMENSION_TEXTURE2DARRAY
+	//uavDesc.Texture2DArray.ArraySize = 1;
+	//uavDesc.Texture2DArray.FirstArraySlice = 0;
+	//uavDesc.Texture2DArray.MipSlice = 0;
 
 	hr = device->CreateUnorderedAccessView(backBuffer.Get(), &uavDesc, &uav); //&uavDesc was previously NULL (I think I &uav here instead of uav.GetAddressOf())
 	if (FAILED(hr))

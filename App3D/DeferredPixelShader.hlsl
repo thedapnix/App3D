@@ -15,10 +15,6 @@ cbuffer OBJECT_CONSTANT_BUFFER : register(b0)
     matrix invWorld;
     
     bool hasNormalMap;
-    float3 aTangent;
-    //float3 aBitangent;
-    //float3 bTangent;
-    //float3 bBitangent;
 };
 
 cbuffer SHININESS_CONSTANT_BUFFER : register(b1)

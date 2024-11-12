@@ -141,12 +141,12 @@ void App::DoSetup()
 #endif
 
     //For the intended level
-    //m_engine->GetCamera().SetPosition({ -5.0f, 12.0f, 10.0f });
-    //m_engine->GetCamera().RotateY(DirectX::XM_PIDIV2);
+    m_engine->GetCamera().SetPosition({ -5.0f, 12.0f, 10.0f });
+    m_engine->GetCamera().RotateY(DirectX::XM_PIDIV2);
 
     //For the test level
-    m_engine->GetCamera().SetPosition({ 0.0f, 12.0f, -20.0f });
-    m_engine->GetCamera().Pitch(0.1f);
+    //m_engine->GetCamera().SetPosition({ 0.0f, 12.0f, -20.0f });
+    //m_engine->GetCamera().Pitch(0.1f);
 
     //Gun (Remove when appropriate, obvi)
     /*
@@ -160,8 +160,8 @@ void App::DoSetup()
     */
 
     //SetupLevel1(m_engine.get());
-    //SetupLevel2(m_engine.get()); //Changing the level design
-    SetupTestLevel(m_engine.get());
+    SetupLevel2(m_engine.get()); //Changing the level design
+    //SetupTestLevel(m_engine.get());
 
     //Test crate that spins around to see how well normalmapping is working
     //int crateIdx = m_engine->CreateDrawable("Meshes/crate_wood.obj", { 0.0f, 12.0f, 30.0f });
