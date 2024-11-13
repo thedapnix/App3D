@@ -163,6 +163,7 @@ void App::DoSetup()
     //SetupLevel2(m_engine.get()); //Changing the level design
     //SetupTestLevel(m_engine.get());
     SetupInstancedLevel(m_engine.get());
+    //SetupNonInstancedLevel(m_engine.get());
 
     //Test crate that spins around to see how well normalmapping is working
     //int crateIdx = m_engine->CreateDrawable("Meshes/crate_wood.obj", { 0.0f, 12.0f, 30.0f });
@@ -193,15 +194,15 @@ void App::DoFrame(float dt)
     m_engine->Update(dt);
 
     /*Imgui stuff (I think it's important that the engine has done its rendering stuff first?)*/
-//#ifdef _DEBUG
-//    if (m_fpsTimer->GetMilisecondsElapsed() > 1000.0f)
-//    {
-//        m_fpsShouldUpdate = true;
-//        m_fpsTimer->Restart();
-//    }
-//    m_engine->ImGuiSceneData(m_engine.get(), m_fpsShouldUpdate, (int)m_currentState, m_mouse->GetLastRawPosX(), m_mouse->GetLastRawPosY());
-//    m_fpsShouldUpdate = false;
-//#endif
+#ifdef _DEBUG
+    if (m_fpsTimer->GetMilisecondsElapsed() > 1000.0f)
+    {
+        m_fpsShouldUpdate = true;
+        m_fpsTimer->Restart();
+    }
+    m_engine->ImGuiSceneData(m_engine.get(), m_fpsShouldUpdate, (int)m_currentState, m_mouse->GetLastRawPosX(), m_mouse->GetLastRawPosY());
+    m_fpsShouldUpdate = false;
+#endif
 
     //This can be set to true by the HandleUserInput() function, and will then be used in the InterpretKeyboardInput() function if it's appropriate
     m_keyboard->ResetReleaseInfo();

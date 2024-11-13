@@ -680,7 +680,48 @@ void SetupTestLevel(D3D11Engine* engine)
 
 void SetupInstancedLevel(D3D11Engine* engine)
 {
-    //
+    //Average FPS: 2500
+    //Process Memory: 122MB
+
+    //Increasing the crates from 125 to 512 (5*5*5 to 8*8*8) has no impact on performance (How cracked is that)
+
     engine->CreateInstancedDrawable("Meshes/Test/crate.obj");
-    engine->CreateInstancedDrawable("Meshes/Test/crate.obj");
+}
+
+void SetupNonInstancedLevel(D3D11Engine* engine)
+{
+    //Average FPS: 300
+    //Process Memory: 122MB (I thought this would be higher, since I create so many separate drawables here, but apparently not? Guess the textures only being loaded in once is good by me?)
+
+    //Increasing the crates from 125 to 512 (5*5*5 to 8*8*8) makes the fps drop from 300 average down to 80
+
+    //Grid-size
+    const int n = 8;
+
+    //Total
+    float width = 20.0f;
+    float height = 20.0f;
+    float depth = 20.0f;
+
+    //Between each instance
+    float x = -0.5f * width;
+    float y = -0.5f * height;
+    float z = -0.5f * depth;
+    float dx = width / (n - 1);
+    float dy = height / (n - 1);
+    float dz = depth / (n - 1);
+
+    //To store
+    std::vector<DirectX::XMFLOAT4X4> mats;
+
+    for (int k = 0; k < n; ++k)
+    {
+        for (int i = 0; i < n; ++i)
+        {
+            for (int j = 0; j < n; ++j)
+            {
+                engine->CreateDrawable("Meshes/Test/crate.obj", {-10.0f + j * dx, -10.0f + i * dy, -10.0f + k * dz});
+            }
+        }
+    }
 }

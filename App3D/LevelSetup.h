@@ -10,3 +10,4 @@ void SetupLevel2(D3D11Engine* engine); //Level 2 baby, repeating corridors
 void SetupTestLevel(D3D11Engine* engine); //For testing different things :)
 
 void SetupInstancedLevel(D3D11Engine* engine);
+void SetupNonInstancedLevel(D3D11Engine* engine);

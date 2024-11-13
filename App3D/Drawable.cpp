@@ -218,6 +218,12 @@ const std::vector<SubMesh>& Drawable::GetSubMeshes() const
 	return m_submeshes;
 }
 
+void Drawable::SetWorld(DirectX::XMMATRIX mat)
+{
+	DirectX::XMStoreFloat4x4(&m_cbd.world, mat);
+	m_isDirty = true; //Gotta update the constant buffer after this
+}
+
 bool Drawable::IsInteractible() const
 {
 	return (m_drawableInfo.interactID > 0);

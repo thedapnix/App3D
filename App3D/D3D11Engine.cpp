@@ -115,14 +115,12 @@ void D3D11Engine::Update(float dt)
 		}
 	}
 
-#ifdef _DEBUG
-	ImGuiSceneData(this, false, 0, 0,0);
-#endif
+//#ifdef _DEBUG
+//	ImGuiSceneData(this, false, 0, 0,0);
+//#endif
 
 	//PRESENT
 	swapChain->Present(0, 0); //vSync, 1 = enabled, 0 = disabled (or in other terms, fps limit to screen hz or uncap)
-
-	
 }
 
 void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps, int state, int rawX, int rawY)
@@ -835,7 +833,6 @@ void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIE
 			}
 			drawable->Draw(context.Get());
 			visibleDrawables++;
-			
 		}
 
 		drawablesBeingRendered = visibleDrawables;
@@ -843,7 +840,6 @@ void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIE
 	else
 	{
 		//Per drawable: bind vertex and index buffers, then draw them
-
 		//for (auto& drawable : m_drawables)
 		//{
 		//	if (!lodIsEnabled)
@@ -860,6 +856,8 @@ void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIE
 
 		//	drawable.Draw(context.Get());
 		//}
+
+		//drawablesBeingRendered = (int)m_drawables.size();
 
 		//UNGODLY LEVELS OF TEMP
 		context->VSSetConstantBuffers(0, 1, m_drawables.at(0).GetConstantBuffer().GetBufferAddress());
@@ -881,8 +879,9 @@ void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIE
 
 		context->VSSetConstantBuffers(0, 0, NULL);
 		context->PSSetConstantBuffers(0, 0, NULL);
+		
+		drawablesBeingRendered = m_instancedDrawableCount;
 
-		drawablesBeingRendered = (int)m_drawables.size();
 	}
 
 	//:)
@@ -1419,14 +1418,15 @@ void D3D11Engine::InitGraphicsBuffer(GBuffer(&gbuf)[4])
 void D3D11Engine::InitInstancedBuffer()
 {
 	//Instanced data (125 crates in one draw-call)
-	const int n = 5;
+	const int n = 8;
 	m_instancedData.resize(n * n * n);
 
-	//Distances?
+	//Total
 	float width = 20.0f;
 	float height = 20.0f;
 	float depth = 20.0f;
 
+	//Distance per crate
 	float x = -0.5f * width;
 	float y = -0.5f * height;
 	float z = -0.5f * depth;
@@ -1434,6 +1434,7 @@ void D3D11Engine::InitInstancedBuffer()
 	float dy = height / (n - 1);
 	float dz = depth / (n - 1);
 
+	//Cursed
 	for (int k = 0; k < n; ++k)
 	{
 		for (int i = 0; i < n; ++i)
@@ -1449,7 +1450,7 @@ void D3D11Engine::InitInstancedBuffer()
 		}
 	}
 
-	//Buffer
+	//And init the buffer
 	D3D11_BUFFER_DESC ibd = {};
 	ibd.Usage = D3D11_USAGE_DYNAMIC;
 	ibd.ByteWidth = sizeof(InstancedData) * m_instancedData.size();

@@ -144,6 +144,8 @@ public:
 	const ConstantBuffer& GetConstantBuffer() const; //New:
 	const std::vector<SubMesh>& GetSubMeshes() const; //New:
 
+	//New: Pass in a wholeass XMMATRIX and use it to set the world matrix
+	void SetWorld(DirectX::XMMATRIX mat);
 
 	/*Interaction stuff*/
 	bool IsInteractible() const;
