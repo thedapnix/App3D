@@ -233,7 +233,7 @@ DirectX::XMFLOAT3 Camera::Strafe(float d)
 
     m_viewDirty = true;
 
-    //new: return directional vector that represents what way the camera is moving
+    //Return directional vector that represents what way the camera is moving
     XMFLOAT3 toReturn;
     XMStoreFloat3(&toReturn, r);
     return toReturn;

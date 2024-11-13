@@ -63,7 +63,7 @@ void main(uint3 DTid : SV_DispatchThreadID) //So the DTid is the index of the sp
         }
         
         //Since shadow cameras look in a specific direction, they're not compatible with point lights. Potentially I could make point lights have 4 shadow cameras but not right now
-        bool isPointLight = false; //new: temp to disable shadows with point lights
+        bool isPointLight = false; //Temp to disable shadows with point lights
         bool isInShadow = false;
         float4 ndcPos = mul(position, spotlights[i].view);
         ndcPos = mul(ndcPos, spotlights[i].proj);

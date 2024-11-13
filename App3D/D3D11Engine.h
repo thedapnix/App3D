@@ -22,6 +22,12 @@
 
 #include "EntityFramework.h" //ECS baby
 
+//New: struct for instanced data (Debating whether or not drawables should have this, or if it should be outside of the class)
+struct InstancedData
+{
+	DirectX::XMFLOAT4X4 world;
+};
+
 class D3D11Engine
 {
 public:
@@ -32,7 +38,7 @@ public:
 
 	//Render and ImGui
 	void Update(float dt);
-	void ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps, int state, int rawX, int rawY); //new: raw x and y mouse coordinates for debug purposes
+	void ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps, int state, int rawX, int rawY);
 
 	//Movement and camera stuff
 	void MovePlayerX(float speed);
@@ -51,6 +57,8 @@ public:
 	int CreateConcaveDrawable(		std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, 
 		DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
 	int CreateOrbitDrawable(std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f },
+		DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
+	int CreateInstancedDrawable(std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f },
 		DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
 	void ApplyNormalMapToDrawable(int index, std::string ddsFileName);
 	bool MoveDrawable(int i, DirectX::XMFLOAT3 dist);
@@ -102,6 +110,9 @@ private:
 	void InitUAV();
 	void InitGraphicsBuffer(GBuffer(&gbuf)[4]);
 
+	//New: Instanced
+	void InitInstancedBuffer();
+
 	//LOD
 	void InitRasterizerStates();
 
@@ -121,6 +132,13 @@ private:
 	std::vector<Drawable> m_interactibleDrawables; //added a bit late into implementation so i'm not sure that i want to modify the m_drawables too much right now but let me cook
 	std::vector<Drawable> m_povDrawables;
 	std::vector<LightData> m_lightDataVec;
+
+	//New: Instancing stuff
+	std::unordered_map<std::string, int> m_instanceMap;
+	std::vector<InstancedData> m_instancedData;
+	Microsoft::WRL::ComPtr<ID3D11Buffer> m_instancedBuffer;
+	UINT m_instancedDrawableCount;
+
 	SpotLights m_spotlights;
 	std::unique_ptr<Camera> m_camera;
 	GBuffer m_gBuffers[4];
@@ -135,7 +153,7 @@ private:
 	int fpsCounter = 0;
 	std::string fpsString = "";
 	bool deferredIsEnabled = true;
-	bool cullingIsEnabled = true;
+	bool cullingIsEnabled = false; //Temp
 	bool billboardingIsEnabled = false;
 	bool cubemapIsEnabled = true;
 	bool lodIsEnabled = false;
@@ -152,7 +170,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> context;
 	Microsoft::WRL::ComPtr<IDXGISwapChain> swapChain;
 
-	//New: Render scene to a texture as well, so we can pass it to ImGui and do ImGui::Image() to present instead of doing windows stuff? Perchance?
+	//New: Render scene to a texture as well, so we can pass it to ImGui and do ImGui::Image() to present instead of doing windows stuff? Perchance? (Not yet done)
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> textureToGui;
 
 	//Render Target(s)
@@ -177,7 +195,7 @@ private:
 	//Deferred rendering
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> deferredPixelShader;
 	Microsoft::WRL::ComPtr<ID3D11ComputeShader> computeShader;
-	Microsoft::WRL::ComPtr<ID3D11ComputeShader> computeShaderCM; //new: cubemap gets its own compute shader
+	Microsoft::WRL::ComPtr<ID3D11ComputeShader> computeShaderCM; //Cubemap gets its own compute shader
 	Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> uav;
 
 	//Tessellation
@@ -185,7 +203,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11DomainShader> domainShader;
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> regularRS;
 	Microsoft::WRL::ComPtr<ID3D11RasterizerState> wireframeRS;
-	Microsoft::WRL::ComPtr<ID3D11RasterizerState> nonBackfaceCullRS; //new: attempt at fixing hollowed out cone object (lamp cone) not being visible from below, because i assume it gets backface culled
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState> nonBackfaceCullRS; //Concave objects shouldn't be backface culled, because then you can't see inside of them which is kinda the point
 
 	//Clearly there came a time where I started making actual classes instead of bloating this D3D11Engine class. Will I rewrite things?
 	//Guhhh...?

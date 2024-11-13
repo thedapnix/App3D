@@ -40,6 +40,9 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	//Sampler setup for texture access in shaders
 	InitSampler();
 
+	//New: Also temp: init the instanced buffer
+	InitInstancedBuffer();
+
 	//ImGui setup
 #ifdef _DEBUG
 
@@ -58,7 +61,7 @@ D3D11Engine::~D3D11Engine()
 void D3D11Engine::Update(float dt)
 {
 	//UPDATE DRAWABLES (Comment this out if we're running the test level, because the drawable indices are hard-coded when we don't have our ECS setup yet)
-	UpdateMovingDrawables(dt);
+	//UpdateMovingDrawables(dt);
 
 	//Trolling, this exists just to test normal mapping implementation
 	//m_drawables.back().Rotate(0.00075f * dt, 0.0f, 0.00075f * dt);
@@ -85,6 +88,20 @@ void D3D11Engine::Update(float dt)
 
 	m_particleVar += dt;
 	m_particles.UpdateConstantBuffer(context.Get(), m_particleVar);
+
+	//New: Update instanced stuff (Ignoring culling right now)
+	m_instancedDrawableCount = 0;
+	D3D11_MAPPED_SUBRESOURCE mappedData;
+	context->Map(m_instancedBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedData);
+
+	InstancedData* dataView = reinterpret_cast<InstancedData*>(mappedData.pData);
+
+	for (UINT i = 0; i < m_instancedData.size(); ++i)
+	{
+		dataView[m_instancedDrawableCount++] = m_instancedData[i];
+	}
+
+	context->Unmap(m_instancedBuffer.Get(), 0);
 
 	//RENDER
 	RenderDepth(dt);
@@ -283,6 +300,11 @@ int D3D11Engine::CreateOrbitDrawable(std::string objFileName, DirectX::XMFLOAT3 
 	return index;
 }
 
+int D3D11Engine::CreateInstancedDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
+{
+	return InitDrawableFromFileInstanced(objFileName, m_instanceMap, m_drawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith);
+}
+
 void D3D11Engine::ApplyNormalMapToDrawable(int index, std::string ddsFileName)
 {
 	m_drawables.at(index).SetNormalMap(device.Get(), ddsFileName);
@@ -460,7 +482,7 @@ void D3D11Engine::Render(ID3D11UnorderedAccessView* uav, ID3D11DepthStencilView*
 				}
 				else
 				{
-					drawable->Bind(context.Get());
+					drawable->Draw(context.Get());
 					visibleDrawables++;
 				}
 			}
@@ -470,7 +492,7 @@ void D3D11Engine::Render(ID3D11UnorderedAccessView* uav, ID3D11DepthStencilView*
 		{
 			for (auto& drawable : m_drawables)
 			{
-				drawable.Bind(context.Get());
+				drawable.Draw(context.Get());
 			}
 			drawablesBeingRendered = (int)m_drawables.size();
 		}
@@ -478,7 +500,7 @@ void D3D11Engine::Render(ID3D11UnorderedAccessView* uav, ID3D11DepthStencilView*
 		//Pov drawables are never culled so we do this outside the if-else check
 		for (auto& drawable : m_povDrawables)
 		{
-			drawable.Bind(context.Get());
+			drawable.Draw(context.Get());
 		}
 
 		//UNBIND THINGS FOR SANITY REASONS
@@ -611,7 +633,7 @@ void D3D11Engine::RenderReflectiveObject(Camera* cam, CubeMap* cubeMap, int inde
 			drawable.Bind(context.Get(), true);
 		}*/
 		//oowweeee
-		m_reflectiveDrawables.at(index).Bind(context.Get());
+		m_reflectiveDrawables.at(index).Draw(context.Get());
 
 		/*Unbind shaders*/
 		//Vertex shader
@@ -748,7 +770,7 @@ void D3D11Engine::RenderDepth(float dt)
 
 		for (auto& drawable : m_drawables)
 		{
-			drawable.Bind(context.Get());
+			drawable.Draw(context.Get());
 		}
 
 		context->VSSetConstantBuffers(1, 0, NULL); //unbind the camera cb
@@ -778,7 +800,7 @@ void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIE
 	context->OMSetRenderTargets(4, rtvArr, dsv); //When render targets are bound to the output merger (if I understand correctly), they are sent to the pixel shader where they get filled with data yes?
 
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);
-	context->IASetInputLayout(inputLayout.Get());
+	context->IASetInputLayout(inputLayout.Get()); //New: Now this input layout has changed to take into account instancing
 
 	///////////////////////////////////////////////////////////////////////////////
 	context->VSSetShader(vertexShader.Get(), NULL, 0);
@@ -811,7 +833,7 @@ void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIE
 					context->RSSetState(regularRS.Get());
 				}
 			}
-			drawable->Bind(context.Get());
+			drawable->Draw(context.Get());
 			visibleDrawables++;
 			
 		}
@@ -821,28 +843,52 @@ void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIE
 	else
 	{
 		//Per drawable: bind vertex and index buffers, then draw them
-		for (auto& drawable : m_drawables)
-		{
-			if (!lodIsEnabled)
-			{
-				if (drawable.IsConcave()) //L j a e m p
-				{
-					context->RSSetState(nonBackfaceCullRS.Get());
-				}
-				else
-				{
-					context->RSSetState(regularRS.Get());
-				}
-			}
-			drawable.Bind(context.Get());
-		}
+
+		//for (auto& drawable : m_drawables)
+		//{
+		//	if (!lodIsEnabled)
+		//	{
+		//		if (drawable.IsConcave()) //L j a e m p
+		//		{
+		//			context->RSSetState(nonBackfaceCullRS.Get());
+		//		}
+		//		else
+		//		{
+		//			context->RSSetState(regularRS.Get());
+		//		}
+		//	}
+
+		//	drawable.Draw(context.Get());
+		//}
+
+		//UNGODLY LEVELS OF TEMP
+		context->VSSetConstantBuffers(0, 1, m_drawables.at(0).GetConstantBuffer().GetBufferAddress());
+		context->PSSetConstantBuffers(0, 1, m_drawables.at(0).GetConstantBuffer().GetBufferAddress());
+
+		UINT stride[2] = { sizeof(Vertex), sizeof(InstancedData) };
+		UINT offset[2] = { 0, 0 };
+
+		ID3D11Buffer* vertexBuffers[2] = { m_drawables.at(0).GetVertexBuffer().GetBuffer(), m_instancedBuffer.Get() };
+		context->IASetVertexBuffers(0, 2, vertexBuffers, stride, offset);
+
+		context->IASetIndexBuffer(m_drawables.at(0).GetIndexBuffer().GetBuffer(), DXGI_FORMAT_R32_UINT, 0);
+
+		m_drawables.at(0).GetSubMeshes().at(0).Bind(context.Get(), false, false);
+
+		context->DrawIndexedInstanced(m_drawables.at(0).GetIndexBuffer().GetIndexCount(), m_instancedDrawableCount, 0, 0, 0);
+
+		m_drawables.at(0).GetSubMeshes().at(0).Unbind(context.Get(), false, false);
+
+		context->VSSetConstantBuffers(0, 0, NULL);
+		context->PSSetConstantBuffers(0, 0, NULL);
+
 		drawablesBeingRendered = (int)m_drawables.size();
 	}
 
 	//:)
 	for (auto& drawable : m_povDrawables)
 	{
-		drawable.Bind(context.Get());
+		drawable.Draw(context.Get());
 	}
 
 	//Now that we're done writing data to the render targets, unbind them (4 because gbuffers)
@@ -902,40 +948,6 @@ void D3D11Engine::DefPassTwo(Camera* cam, ID3D11UnorderedAccessView* uav, UINT c
 	//Everything is unbound when we exit DefPassTwo()
 }
 
-//void D3D11Engine::DefPassTwo(Camera* cam)
-//{
-//	///////////////////////////////////////////////////////////////////////////////
-//	//LIGHTING PASS, USE COMPUTE SHADER TO EDIT THE BACKBUFFER AND DO LIGHTING COMPUTATIONS
-//	ID3D11RenderTargetView* nullRtv = NULL;
-//	context->OMSetRenderTargets(1, &nullRtv, NULL);
-//
-//	context->CSSetShader(computeShader.Get(), NULL, 0);
-//
-//	ID3D11ShaderResourceView* srvArr[] = { m_gBuffers[0].srv.Get(), m_gBuffers[1].srv.Get(), m_gBuffers[2].srv.Get(), m_gBuffers[3].srv.Get(),
-//	 m_spotlights.GetStructuredBufferSRV() , m_spotlights.GetDepthBufferSRV() }; //shadows
-//	context->CSSetShaderResources(0, 6, srvArr);
-//
-//	context->CSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
-//	ID3D11SamplerState* shadowSampler = m_shadowMap.GetSampler();
-//	context->CSSetSamplers(0, 1, &shadowSampler);
-//
-//	//Use unordered access view to edit the backbuffer
-//	context->ClearUnorderedAccessViewFloat(uav.Get(), CLEAR_COLOR);
-//	context->CSSetUnorderedAccessViews(0, 1, uav.GetAddressOf(), NULL); //Last value matters in case of "append consume" buffers, but I've only heard of that, I've *no idea* what it means
-//	context->Dispatch(m_windowWidth / 8, m_windowHeight / 8, 1);		//In order to make our Dispatch cover the entire window, we group threads by the width and height of the 
-//	//window divided by 8 (as 8x8 is defined in compute shader)
-//
-//	//UNBIND
-//	context->CSSetShader(NULL, NULL, 0);
-//	context->CSSetConstantBuffers(0, 0, NULL);
-//	ID3D11UnorderedAccessView* nullUav = NULL;
-//	context->CSSetUnorderedAccessViews(0, 1, &nullUav, NULL);
-//	ID3D11ShaderResourceView* nullSRVs[] = { NULL, NULL, NULL, NULL, NULL, NULL };
-//	context->CSSetShaderResources(0, 6, nullSRVs);
-//	ID3D11SamplerState* nullSamplers[] = { NULL };
-//	context->PSSetSamplers(0, 1, nullSamplers);
-//}
-
 /*INITIALIZERS FOR DIRECTX STUFF*/
 void D3D11Engine::InitRasterizerStates()
 {
@@ -983,7 +995,6 @@ void D3D11Engine::InitRasterizerStates()
 	}
 
 
-	//New: 
 	D3D11_RASTERIZER_DESC nonCullDesc;
 	ZeroMemory(&nonCullDesc, sizeof(nonCullDesc));
 	nonCullDesc.AntialiasedLineEnable = false;
@@ -1140,7 +1151,6 @@ void D3D11Engine::InitShadersAndInputLayout()
 	/****************************
 	//////READ SHADER FILES//////
 	****************************/
-	//New: Read from the debug output folder if we're in debug. If we're NOT in debug, make the GROSS assumption that we're attempting to run the published exe file
 #ifdef _DEBUG
 	//Vertex shader
 	hr = D3DReadFileToBlob(L"../x64/Debug/VertexShader.cso", &vsBlob);
@@ -1303,12 +1313,25 @@ void D3D11Engine::InitShadersAndInputLayout()
 
 
 	//Create Input Layout using data from our vsBlob
-	D3D11_INPUT_ELEMENT_DESC inputElementDesc[3] =
+	/*D3D11_INPUT_ELEMENT_DESC inputElementDesc[3] =
 	{
 	  { "POS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	  { "UV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	  { "NOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	};*/
+
+	//New: Have input layout do instanced rendering
+	D3D11_INPUT_ELEMENT_DESC inputElementDesc[7] =
+	{
+	  { "POS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	  { "UV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	  { "NOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	  { "WORLD", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1}, //Passing in the world matrix split into 4 separate 4-dimensional vectors, since there's no DXGI format for matrices
+	  { "WORLD", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 16, D3D11_INPUT_PER_INSTANCE_DATA, 1},
+	  { "WORLD", 2, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 32, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+	  { "WORLD", 3, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 48, D3D11_INPUT_PER_INSTANCE_DATA, 1 }
 	};
+
 	hr = device->CreateInputLayout(inputElementDesc, ARRAYSIZE(inputElementDesc), vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &inputLayout);
 	if (FAILED(hr))
 	{
@@ -1390,6 +1413,55 @@ void D3D11Engine::InitGraphicsBuffer(GBuffer(&gbuf)[4])
 		{
 			MessageBox(NULL, L"Failed to create gbuffer srv!", L"Error", MB_OK);
 		}
+	}
+}
+
+void D3D11Engine::InitInstancedBuffer()
+{
+	//Instanced data (125 crates in one draw-call)
+	const int n = 5;
+	m_instancedData.resize(n * n * n);
+
+	//Distances?
+	float width = 20.0f;
+	float height = 20.0f;
+	float depth = 20.0f;
+
+	float x = -0.5f * width;
+	float y = -0.5f * height;
+	float z = -0.5f * depth;
+	float dx = width / (n - 1);
+	float dy = height / (n - 1);
+	float dz = depth / (n - 1);
+
+	for (int k = 0; k < n; ++k)
+	{
+		for (int i = 0; i < n; ++i)
+		{
+			for (int j = 0; j < n; ++j)
+			{
+				m_instancedData[k * n * n + i * n + j].world = XMFLOAT4X4(
+					1.0f, 0.0f, 0.0f, 0.0f,
+					0.0f, 1.0f, 0.0f, 0.0f,
+					0.0f, 0.0f, 1.0f, 0.0f,
+					x + j * dx, y + i * dy, z + k * dz, 1.0f);
+			}
+		}
+	}
+
+	//Buffer
+	D3D11_BUFFER_DESC ibd = {};
+	ibd.Usage = D3D11_USAGE_DYNAMIC;
+	ibd.ByteWidth = sizeof(InstancedData) * m_instancedData.size();
+	ibd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	ibd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	ibd.MiscFlags = 0;
+	ibd.StructureByteStride = 0;
+
+	HRESULT hr = device->CreateBuffer(&ibd, NULL, m_instancedBuffer.GetAddressOf());
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create instanced buffer you fucking bozo", L"Error", MB_OK);
 	}
 }
 

@@ -81,7 +81,7 @@ public:
 
 	//Rotate
 	void Pitch(float angle);
-	void PitchFPC(float angle); //new: first person camera version
+	void PitchFPC(float angle); //First person camera version
 	void RotateY(float angle);
 
 	//Update view matrix after modification of position/orientation

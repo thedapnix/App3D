@@ -677,3 +677,10 @@ void SetupTestLevel(D3D11Engine* engine)
     engine->CreateLightPoint({ 0.0f, 17.75f, 0.0f }, 3.0f, { 1.0f, 1.0f, 0.5f });
     engine->CreateLightSpot({ 0.0f, 16.5f, 0.0f }, 0.75f, 0.0f, 0.5f, { 1.0f, 1.0f, 1.0f });
 }
+
+void SetupInstancedLevel(D3D11Engine* engine)
+{
+    //
+    engine->CreateInstancedDrawable("Meshes/Test/crate.obj");
+    engine->CreateInstancedDrawable("Meshes/Test/crate.obj");
+}

@@ -72,7 +72,7 @@ private:
 
 	void InterpretKeyboardInput(float dt);
 	void OnMouseMove(WPARAM btnState, int x, int y); //Don't want to have it like this but I gotta, for now
-	void OnMouseRawMove(WPARAM btnState, int x, int y); //new: oof
+	void OnMouseRawMove(WPARAM btnState, int x, int y);
 
 	void HideCursor();
 	void ShowCursor();
@@ -80,7 +80,7 @@ private:
 	/*Window Stuff*/
 	bool InitWindow();
 	HINSTANCE m_instance;
-	RECT m_windowRect; //New: store this, use this when creating the window, then reuse when we want to contain the cursor
+	RECT m_windowRect; //Store this, use this when creating the window, then reuse when we want to contain the cursor
 	HWND m_hwnd;
 	int m_width;
 	int m_height;
@@ -102,10 +102,10 @@ private:
 	std::unique_ptr<Timer> m_preattentiveTimer; //Aptly named
 	std::unique_ptr<D3D11Engine> m_engine;
 
-	std::vector<char> rawBuffer; //new: raw mouse data storage
-	bool m_cursorContained = false; //new, contain the mouse within the window, for use in first person mode
+	std::vector<char> rawBuffer; //Raw mouse data storage
+	bool m_cursorContained = false; //Contain the mouse within the window, for use in first person mode
 	bool m_cursorEnabled = true;
-	//bool m_windowIsDirty = false; //new
+	//bool m_windowIsDirty = false;
 
 	float m_playerSpeed = 0.03f; //Half of previous, shorter hallways but slower speed (0.0125f)
 };

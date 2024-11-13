@@ -6,11 +6,18 @@
 
 #include "Collision.h"
 
+//Aims to help us only load meshes once when we parse obj file by checking against the meshname, then we only store 
+struct InstanceData
+{
+	std::string meshName;
+	std::vector<DirectX::XMFLOAT4X4> world;
+};
+
 using namespace DirectX;
 
 bool ParseMaterial(std::string mtlFileName, ParsedData& data, std::unordered_map<std::string, ShaderResource>& textures, ID3D11Device* device)
 {
-	std::ifstream ifs("Meshes/" + mtlFileName); //CHANGE THIS BACK LATER, ONLY TEST/ WHEN WE'RE DOING THE TEST LEVEL
+	std::ifstream ifs("Meshes/Test/" + mtlFileName); //CHANGE THIS BACK LATER, ONLY TEST/ WHEN WE'RE DOING THE TEST LEVEL
 	if (!ifs)
 	{
 		MessageBox(NULL, L"Couldn't open mtl file!", L"Error", MB_OK);
@@ -30,7 +37,7 @@ bool ParseMaterial(std::string mtlFileName, ParsedData& data, std::unordered_map
 		{
 			if (nMaterials != 0)
 			{
-				//Load textures
+				//Load textures (But only if it doesn't already exist)
 				if (textures.count(data.materials[current].ambientData) == 0)
 				{
 					std::string path = "Textures/" + data.materials[current].ambientData;
@@ -104,7 +111,7 @@ bool ParseMaterial(std::string mtlFileName, ParsedData& data, std::unordered_map
 	return true;
 }
 
-int InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate,
+int ParseObj(std::string objFileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate,
 	std::unordered_map<std::string, ShaderResource>& textures, ID3D11Device* device, int interact, std::vector<int> interactsWith)
 {
 	std::ifstream ifs(objFileName);
@@ -150,7 +157,7 @@ int InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToFi
 		{
 			std::string groupName;
 			lineSS >> groupName;
-			
+
 			if (!parsed.indices.empty()) //New submesh
 			{
 				BufferData::SubMeshData smd;
@@ -266,7 +273,7 @@ int InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToFi
 	Drawable cube(device, bufferData, scale, rotate, translate, interact, interactsWith);
 	cube.CreateBoundingBoxFromPoints(vMin, vMax);
 
-	//new: attempt at adding the self-coded Collider
+	//New: attempt at adding the self-coded Collider
 	/*Collider collider;
 	DirectX::XMFLOAT3 vecMin, vecMax;
 	DirectX::XMStoreFloat3(&vecMin, vMin);
@@ -279,5 +286,213 @@ int InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToFi
 
 	vecToFill.push_back(cube);
 
+	//New: Push back the name of the obj-file to a list, which we'll check against in the future whenever we create new drawables (Ignore drawable creation, and attempt instancing)
+	//MeshNames::vec.push_back(objFileName);
+
+	return (int)vecToFill.size() - 1;
+}
+
+int InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate,
+	std::unordered_map<std::string, ShaderResource>& textures, ID3D11Device* device, int interact, std::vector<int> interactsWith)
+{
+	bool meshAlreadyExists = false;
+
+	//for (auto name : MeshNames::vec) //O(n) but we don't have that many meshes, might wanna change this to unordered map or something later down the line but right now I'm just learning instancing
+	//{
+	//	if (name == objFileName)
+	//	{
+	//		meshAlreadyExists = true;
+	//		break;
+	//	}
+	//}
+
+	//Mesh doesn't already exist, parse the obj file
+	if (!meshAlreadyExists)
+	{
+		return ParseObj(objFileName, vecToFill, scale, rotate, translate, textures, device, interact, interactsWith);
+	}
+
+	//Mesh already existed, do instancing stuff (How will this work when we want to modify a drawable during run-time? Can't just check the index of the m_drawables vector anymore)
+
 	return (int)vecToFill.size() - 1; //Return the size - 1 (aka index last element, aka the element we just put in, aka the element we're most probably interested in modifying when we create something)
+}
+
+int InitDrawableFromFileInstanced(std::string objFileName, std::unordered_map<std::string, int>& instances, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate,
+	std::unordered_map<std::string, ShaderResource>& textures, ID3D11Device* device, int interact, std::vector<int> interactsWith)
+{
+	bool meshAlreadyExists = (instances.count(objFileName) == 0) ? false : true;
+
+	//Mesh already exists, store the transform and exit out of the function (Currently storing fuck-all lmao)
+	if (meshAlreadyExists)
+	{
+		instances[objFileName]++;
+		return 0;
+	}
+
+	//Mesh doesn't already exist, parse the obj-file (How will this work when we want to modify a drawable during run-time? Can't just check the index of the m_drawables. Make that vector hold drawables as well as an instance-count?)
+	std::ifstream ifs(objFileName);
+	if (!ifs)
+	{
+		MessageBox(NULL, L"Couldn't open obj file!", L"Error", MB_OK);
+		return false;
+	}
+
+	//Error handling for faces (preferably every .obj file has v, vt and vn, but not all .obj files were made equal)
+	bool fileHasTexcoord = false;
+	bool fileHasNormal = false;
+
+	//Wrap the mesh in a bounding box by getting the highest and lowest x-, y-, and z-values (use a library for actual infinities xd)
+	XMFLOAT3 vMinf3(1000000.0f, 1000000.0f, 1000000.0f);
+	XMFLOAT3 vMaxf3(-1000000.0f, -1000000.0f, -1000000.0f);
+
+	XMVECTOR vMin = DirectX::XMLoadFloat3(&vMinf3);
+	XMVECTOR vMax = DirectX::XMLoadFloat3(&vMaxf3);
+
+	//Member variables to store positions, texture coordinates and normals
+	ParsedData parsed; //data THAT WE'RE PARSING
+
+	//Read the text file
+	std::string lineStr;
+	while (std::getline(ifs, lineStr))
+	{
+		std::istringstream lineSS(lineStr);
+		std::string lineType;
+		lineSS >> lineType;
+
+		/*Material stuff*/
+		if (lineType == "mtllib")
+		{
+			//Get the name of the file containing the material (texture) and parse it
+			std::string mtlFileName;
+			lineSS >> mtlFileName;
+
+			ParseMaterial(mtlFileName, parsed, textures, device);
+		}
+
+		if (lineType == "usemtl") //"From this point onward, use this specified material"
+		{
+			std::string groupName;
+			lineSS >> groupName;
+
+			if (!parsed.indices.empty()) //New submesh
+			{
+				BufferData::SubMeshData smd;
+				smd.startIndex = parsed.currentSubmeshIndex;
+				smd.indexCount = parsed.indices.size() - parsed.currentSubmeshIndex;
+				smd.ambientSRV = textures[parsed.materials[parsed.currentSubmeshMaterial].ambientData].GetSRV();
+				smd.diffuseSRV = textures[parsed.materials[parsed.currentSubmeshMaterial].diffuseData].GetSRV();
+				smd.specularSRV = textures[parsed.materials[parsed.currentSubmeshMaterial].specularData].GetSRV();
+				smd.shininess = parsed.materials[parsed.currentSubmeshMaterial].shineData;
+
+				parsed.submeshes.push_back(smd);
+			}
+			parsed.currentSubmeshMaterial = groupName;
+			parsed.currentSubmeshIndex = parsed.vertices.size();
+		}
+
+		if (lineType == "v") //Vertex (Position)
+		{
+			float x, y, z;
+			lineSS >> x >> y >> z;
+			parsed.vPos.push_back({ x,y,z });
+
+			//Check vMin and vMax against the x-, y-, and z-values of the vertex, once we've looped through everything we should have the edges of our box
+			XMFLOAT3 vf3(x, y, z);
+			XMVECTOR V = DirectX::XMLoadFloat3(&vf3);
+			vMin = DirectX::XMVectorMin(vMin, V);
+			vMax = DirectX::XMVectorMax(vMax, V);
+		}
+
+		if (lineType == "vt") //Vertex Texture Coordinate
+		{
+			float u, v;
+			lineSS >> u >> v;
+			parsed.vTex.push_back({ u,v });
+			fileHasTexcoord = true;
+		}
+
+		if (lineType == "vn") //Vertex Normal
+		{
+			float nx, ny, nz;
+			lineSS >> nx >> ny >> nz;
+			parsed.vNor.push_back({ nx, ny, nz });
+			fileHasNormal = true;
+		}
+
+		if (lineType == "f") //Face
+		{
+			//Each face references three vertices, with their respective positions, texture coordinates and normals (think triangles)
+			std::string refStr;
+			while (lineSS >> refStr) //Get line up until the next space, in the case of for example "1/1/1 2/2/1 3/3/1" we get 1/1/1
+			{
+				std::istringstream ref(refStr);
+				std::string vStr, vtStr, vnStr;
+
+				//Split the line at every / (this is the point where we know what kind of obj-file we're reading, as mentioned above)
+				std::getline(ref, vStr, '/');
+				std::getline(ref, vtStr, '/');
+				std::getline(ref, vnStr, '/');
+
+				//Convert to integer (and subtract 1 since obj files start counting from 1 but we want to count from 0)
+				int v = atoi(vStr.c_str()) - 1;
+				int vt = atoi(vtStr.c_str()) - 1;
+				int vn = atoi(vnStr.c_str()) - 1;
+
+				//Error checking in case of negative references (shouldn't be necessary as long as the .obj-file isn't trash but I did have to deal with it one time)
+				if (v < 0) v = (int)parsed.vPos.size() + v;
+				if (vt < 0) vt = (int)parsed.vTex.size() + vt;
+				if (vn < 0) vn = (int)parsed.vNor.size() + vn;
+
+				//If the face is unique, add it to the list of refs so we'll create the vertices later
+				if (parsed.refs.count(refStr) == 0)
+				{
+					//Create the vertex
+					Vertex vert;
+					vert.position = parsed.vPos[v];
+					vert.texcoord = parsed.vTex[vt];
+					vert.normal = parsed.vNor[vn];
+
+					uint32_t idx = parsed.vertices.size();
+					parsed.vertices.push_back(vert);
+					parsed.refs.insert({ refStr, idx });
+				}
+
+				//Push back indices regardless of whether or not the face is unique
+				parsed.indices.push_back(parsed.refs[refStr]);
+			}
+		}
+	}
+
+	//ONCE THE FILE HAS BEEN READ, PUSH BACK SUBMESH ONE TIME
+	BufferData::SubMeshData smd;
+	smd.startIndex = parsed.currentSubmeshIndex;
+	smd.indexCount = parsed.indices.size() - parsed.currentSubmeshIndex;
+	smd.ambientSRV = textures[parsed.materials[parsed.currentSubmeshMaterial].ambientData].GetSRV();
+	smd.diffuseSRV = smd.ambientSRV;
+	smd.specularSRV = smd.ambientSRV;
+	//smd.diffuseSRV = m_textures[parsed.materials[parsed.currentSubmeshMaterial].diffuseData].GetSRV();
+	//smd.specularSRV = m_textures[parsed.materials[parsed.currentSubmeshMaterial].specularData].GetSRV();
+	smd.shininess = parsed.materials[parsed.currentSubmeshMaterial].shineData;
+	parsed.submeshes.push_back(smd);
+
+	BufferData bufferData; //NOW MAKE THE ACTUAL MESH/DRAWABLE BY TAKING DATA FROM THE PARSED DATA STRUCT
+	bufferData.vData.size = sizeof(Vertex);
+	bufferData.vData.count = (UINT)parsed.vertices.size();
+	bufferData.vData.vector = parsed.vertices;
+
+	bufferData.iData.size = sizeof(uint32_t);
+	bufferData.iData.count = (UINT)parsed.indices.size();
+	bufferData.iData.vector = parsed.indices;
+
+	bufferData.subMeshVector = parsed.submeshes;
+
+	Drawable cube(device, bufferData, scale, rotate, translate, interact, interactsWith);
+	cube.CreateBoundingBoxFromPoints(vMin, vMax);
+
+	vecToFill.push_back(cube);
+
+	instances[objFileName] = 1; //First one
+
+	//return (int)vecToFill.size() - 1; //Return the size - 1 (aka index last element, aka the element we just put in, aka the element we're most probably interested in modifying when we create something)
+	return 1;
 }

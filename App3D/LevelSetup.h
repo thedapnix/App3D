@@ -8,3 +8,5 @@ void SetupLevel1(D3D11Engine* engine); //First attempt, though I figured maybe r
 void SetupLevel2(D3D11Engine* engine); //Level 2 baby, repeating corridors
 
 void SetupTestLevel(D3D11Engine* engine); //For testing different things :)
+
+void SetupInstancedLevel(D3D11Engine* engine);

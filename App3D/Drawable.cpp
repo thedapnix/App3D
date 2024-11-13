@@ -45,8 +45,9 @@ Drawable::Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOA
 	m_isDirty = true; //This way, we can ensure that the CalculateAndTransposeWorld() function is called once, and in a proper manner
 }
 
-void Drawable::Bind(ID3D11DeviceContext* context) const
+void Drawable::Draw(ID3D11DeviceContext* context) const
 {
+	//Bind, Draw, and Unbind for all submeshes (assuming that the drawable is considered active)
 	if (m_drawableInfo.isActive)
 	{
 		//Buffers
@@ -67,7 +68,45 @@ void Drawable::Bind(ID3D11DeviceContext* context) const
 			m_submeshes.at(i).Unbind(context, m_isReflective, m_hasNormalMap);
 		}
 		context->VSSetConstantBuffers(0, 0, NULL);
-		context->PSSetConstantBuffers(0, 0, NULL); //Forgot to unbind?
+		context->PSSetConstantBuffers(0, 0, NULL);
+	}
+}
+
+void Drawable::DrawInstanced(ID3D11DeviceContext* context) const
+{
+	//Bind, Draw, and Unbind for all submeshes (assuming that the drawable is considered active)
+	if (m_drawableInfo.isActive)
+	{
+		//Buffers
+		context->VSSetConstantBuffers(0, 1, m_constantBuffer.GetBufferAddress());
+		context->PSSetConstantBuffers(0, 1, m_constantBuffer.GetBufferAddress());
+
+		//New: IASetVertexBuffers() will now be taking in two different structs of data, one for the "regular" per-vertex info (pos, uv, nor), and one for per-instance info (world)
+		/*
+		Example:
+		UINT stride[2] = { sizeof(PerVertexInfo), sizeof(PerInstanceInfo) };
+		UINT offset[2] = { 0, 0 };
+
+		ID3D11Buffer* vertexBuffers[2] = { DrawableVertexBuffer, InstancedBuffer };
+		context->IASetVertexBuffers(0, 2, vertexBuffers, stride, offset);
+		*/
+
+		//UINT stride[2] = { sizeof(Vertex), sizeof(Instance) }; //alt. m_vertexBuffer and m_instancedBuffer .GetSize()
+		//UINT offset[2] = { 0, 0 };
+
+		//ID3D11Buffer* vertexBuffers[2] = { m_vertexBuffer.GetBuffer(), m_instancedBuffer.GetBuffer()};
+		//context->IASetVertexBuffers(0, 2, vertexBuffers, stride, offset);
+
+		context->IASetIndexBuffer(m_indexBuffer.GetBuffer(), DXGI_FORMAT_R32_UINT, 0);
+
+		for (int i = 0; i < m_submeshes.size(); i++)
+		{
+			m_submeshes.at(i).Bind(context, m_isReflective, m_hasNormalMap);
+			m_submeshes.at(i).Draw(context);
+			m_submeshes.at(i).Unbind(context, m_isReflective, m_hasNormalMap);
+		}
+		context->VSSetConstantBuffers(0, 0, NULL);
+		context->PSSetConstantBuffers(0, 0, NULL);
 	}
 }
 
@@ -159,9 +198,24 @@ const VertexBuffer& Drawable::GetVertexBuffer() const
 	return m_vertexBuffer;
 }
 
+const IndexBuffer& Drawable::GetIndexBuffer() const
+{
+	return m_indexBuffer;
+}
+
 void* Drawable::GetVertexVectorData()
 {
 	return m_vertexVectorData;
+}
+
+const ConstantBuffer& Drawable::GetConstantBuffer() const
+{
+	return m_constantBuffer;
+}
+
+const std::vector<SubMesh>& Drawable::GetSubMeshes() const
+{
+	return m_submeshes;
 }
 
 bool Drawable::IsInteractible() const
@@ -297,7 +351,7 @@ void Drawable::CalculateAndTransposeWorld(const DirectX::XMFLOAT3& pos, Camera* 
 	DirectX::XMStoreFloat4x4(&m_cbd.world, world);
 	DirectX::XMStoreFloat4x4(&m_cbd.invWorld, invWorld); //Does this also need to be transposed?
 
-	//New: Update the bounding box as well so interacting with moving targets isn't terrible
+	//Update the bounding box as well so interacting with moving targets isn't terrible
 	if (m_orbits)
 	{
 		if (!isDefault) //Add in the translation of the input point

@@ -19,9 +19,8 @@
 
 #include <unordered_map>
 
-//new
 #include "ColliderAABB.h"
-#include "Camera.h" //new: orbit
+#include "Camera.h" //Orbit
 
 /*Structs that D3D11Engine needs to know about*/
 struct Vertex
@@ -123,7 +122,8 @@ public:
 	Drawable(ID3D11Device* device, const BufferData& data, DirectX::XMFLOAT3 scaling, DirectX::XMFLOAT3 rotation, DirectX::XMFLOAT3 translation, int interact, std::vector<int> interactsWith);
 	~Drawable() = default;
 
-	void Bind(ID3D11DeviceContext* context) const; //More like Bind, Draw, and Unbind, but hey
+	void Draw(ID3D11DeviceContext* context) const;
+	void DrawInstanced(ID3D11DeviceContext* context) const;
 	void UpdateConstantBuffer(ID3D11DeviceContext* context, Camera* camera = nullptr, const DirectX::XMFLOAT3& pos = {0.0f, 0.0f, 0.0f} );
 	void CreateBoundingBoxFromPoints(DirectX::XMVECTOR min, DirectX::XMVECTOR max);
 
@@ -139,7 +139,11 @@ public:
 	DirectX::XMMATRIX World() const;
 	const DirectX::BoundingBox& GetBoundingBox() const;
 	const VertexBuffer& GetVertexBuffer() const;
+	const IndexBuffer& GetIndexBuffer() const; //New:
 	void* GetVertexVectorData();
+	const ConstantBuffer& GetConstantBuffer() const; //New:
+	const std::vector<SubMesh>& GetSubMeshes() const; //New:
+
 
 	/*Interaction stuff*/
 	bool IsInteractible() const;
@@ -184,6 +188,7 @@ private:
 	/*Buffers*/
 	VertexBuffer m_vertexBuffer;
 	IndexBuffer m_indexBuffer;
+	//InstancedBuffer m_instancedBuffer; //New: Instanced data
 
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> ambientSRT;
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> diffuseSRT;
