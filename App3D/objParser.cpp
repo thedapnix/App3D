@@ -317,19 +317,35 @@ int InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToFi
 	return (int)vecToFill.size() - 1; //Return the size - 1 (aka index last element, aka the element we just put in, aka the element we're most probably interested in modifying when we create something)
 }
 
-int InitDrawableFromFileInstanced(std::string objFileName, std::unordered_map<std::string, int>& instances, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate,
-	std::unordered_map<std::string, ShaderResource>& textures, ID3D11Device* device, int interact, std::vector<int> interactsWith)
+//God this is becoming so cluttered, but it's backend so it's fine right?
+int InitDrawableFromFileInstanced(std::string objFileName, UINT& nDrawables,
+	std::unordered_map<std::string, std::vector<int>>& instances,
+	std::unordered_map<int, DirectX::XMFLOAT4X4>& transforms,
+	std::vector<Drawable>& vecToFill,
+	DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate,
+	std::unordered_map<std::string, ShaderResource>& textures, ID3D11Device* device,
+	int interact, std::vector<int> interactsWith)
 {
 	bool meshAlreadyExists = (instances.count(objFileName) == 0) ? false : true;
 
-	//Mesh already exists, store the transform and exit out of the function (Currently storing fuck-all lmao)
+	//Mesh already exists, store the transform as well as the index, then exit out of the function
 	if (meshAlreadyExists)
 	{
-		instances[objFileName]++;
-		return 0;
+		//Store the world transform
+		DirectX::XMMATRIX world = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z) *
+			DirectX::XMMatrixRotationX(rotate.x) * DirectX::XMMatrixRotationY(rotate.y) * DirectX::XMMatrixRotationZ(rotate.z) *
+			DirectX::XMMatrixTranslation(translate.x, translate.y, translate.z);
+		DirectX::XMStoreFloat4x4(&transforms[nDrawables], world);
+
+		//Total drawable count goes up even though we don't create a new mesh, and the index (count - 1) is added to the map of instances
+		nDrawables++;
+		instances[objFileName].push_back(nDrawables - 1);
+
+		//Return the index of the last element, aka the element we just put in, aka the element we're most probably interested in modifying when we create something
+		return nDrawables - 1;
 	}
 
-	//Mesh doesn't already exist, parse the obj-file (How will this work when we want to modify a drawable during run-time? Can't just check the index of the m_drawables. Make that vector hold drawables as well as an instance-count?)
+	//Mesh doesn't already exist, parse the obj-file
 	std::ifstream ifs(objFileName);
 	if (!ifs)
 	{
@@ -491,8 +507,24 @@ int InitDrawableFromFileInstanced(std::string objFileName, std::unordered_map<st
 
 	vecToFill.push_back(cube);
 
-	instances[objFileName] = 1; //First one
+	//Here's the stuff that we'd otherwise do outside
+	//Store the world transform
+	DirectX::XMMATRIX world = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z) *
+		DirectX::XMMatrixRotationX(rotate.x) * DirectX::XMMatrixRotationY(rotate.y) * DirectX::XMMatrixRotationZ(rotate.z) *
+		DirectX::XMMatrixTranslation(translate.x, translate.y, translate.z);
+	DirectX::XMStoreFloat4x4(&transforms[nDrawables], world);
 
-	//return (int)vecToFill.size() - 1; //Return the size - 1 (aka index last element, aka the element we just put in, aka the element we're most probably interested in modifying when we create something)
-	return 1;
+	//Total drawable count goes up even though we don't create a new mesh, and the index (count - 1) is added to the map of instances
+	nDrawables++;
+	instances[objFileName].push_back(nDrawables - 1);
+
+	//Return the index of the last element, aka the element we just put in, aka the element we're most probably interested in modifying when we create something
+	return nDrawables - 1;
+
+	//nDrawables++;
+
+	//instances[objFileName].push_back(nDrawables - 1); //First one
+
+	////Return the index of the last element, aka the element we just put in, aka the element we're most probably interested in modifying when we create something
+	//return nDrawables - 1;
 }

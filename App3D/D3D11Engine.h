@@ -75,6 +75,9 @@ public:
 	bool CreateLightPoint(DirectX::XMFLOAT3 position, float rad, DirectX::XMFLOAT3 color = { 1.0f, 1.0f, 1.0f });
 	bool SetupLights(); //Because of how my current Spotlights class works, going to change this in the future but I shouldn't procastinate too much by just making the engine cool
 
+	//New: Instanced (Similarly to how we call SetupQT() and SetupLights() after any SetupLevel()-call, we now also SetupInstancedBuffer())
+	void SetupInstancedBuffer();
+
 private:
 	//Deferred Renderer
 	struct GBuffer
@@ -110,9 +113,6 @@ private:
 	void InitUAV();
 	void InitGraphicsBuffer(GBuffer(&gbuf)[4]);
 
-	//New: Instanced
-	void InitInstancedBuffer();
-
 	//LOD
 	void InitRasterizerStates();
 
@@ -134,10 +134,12 @@ private:
 	std::vector<LightData> m_lightDataVec;
 
 	//New: Instancing stuff
-	std::unordered_map<std::string, int> m_instanceMap;
+	std::unordered_map<std::string, std::vector<int>> m_instanceMap; //Maps the mesh name (obj-file) to a vector of drawable indices
+	std::unordered_map<int, DirectX::XMFLOAT4X4> m_transformMap;
 	std::vector<InstancedData> m_instancedData;
 	Microsoft::WRL::ComPtr<ID3D11Buffer> m_instancedBuffer;
 	UINT m_instancedDrawableCount;
+	UINT m_totalDrawableCount = 0; //Trust
 
 	SpotLights m_spotlights;
 	std::unique_ptr<Camera> m_camera;

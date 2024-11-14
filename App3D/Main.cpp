@@ -51,7 +51,11 @@ Instancing
 //If I manage to get all of these things done, I should be able to use this engine to create 3D FPS games and 2D games
 	//Mainly saying 3D FPS games because even if the skeletal animation is scuffed as fuck, it'll work in an FPS, TPS no fucking way
 
-//Normal mapping done, but I kinda need some sort of global illumination now, since the added detail from normal mapping is lost on any texture that isn't being affected by light
+//Normal mapping now completely done
+//Started doing instancing and holy shit the performance boost is INSANE. But I need to rework the Drawable-system to be able to pool several drawables into a bigger vertex buffer
+//Ideas:
+//Wait I think I might be fucking retarded. I only need one vertex-buffer, the only thing I need is a collection of world matrices
+//That being said: Change the unordered map keeping track of instances to pair the std::string with a VECTOR of ints, thus we can store every index and access it, while also getting the count from vector.size()
 
 int WINAPI wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,

@@ -685,7 +685,50 @@ void SetupInstancedLevel(D3D11Engine* engine)
 
     //Increasing the crates from 125 to 512 (5*5*5 to 8*8*8) has no impact on performance (How cracked is that)
 
-    engine->CreateInstancedDrawable("Meshes/Test/crate.obj");
+    //engine->CreateInstancedDrawable("Meshes/Test/crate.obj");
+
+     //Grid-size
+    const int n = 8;
+
+    //Total
+    float width = 20.0f;
+    float height = 20.0f;
+    float depth = 20.0f;
+
+    //Between each instance
+    float x = -0.5f * width;
+    float y = -0.5f * height;
+    float z = -0.5f * depth;
+    float dx = width / (n - 1);
+    float dy = height / (n - 1);
+    float dz = depth / (n - 1);
+
+    /*
+    m_instancedData[k * n * n + i * n + j].world = XMFLOAT4X4(
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        x + j * dx, y + i * dy, z + k * dz, 1.0f);
+    */
+
+    for (int i = 0; i < n; i++)
+    {
+        engine->CreateInstancedDrawable("Meshes/Test/crate.obj", { -4.0f + (float)i * 2.0f, 0.0f, 0.0f });
+    }
+
+    /*for (int k = 0; k < n; ++k)
+    {
+        for (int i = 0; i < n; ++i)
+        {
+            for (int j = 0; j < n; ++j)
+            {
+                engine->CreateInstancedDrawable("Meshes/Test/crate.obj", { -10.0f + j * dx, -10.0f + i * dy, -10.0f + k * dz });
+            }
+        }
+    }*/
+
+    //Finale yo
+    engine->SetupInstancedBuffer();
 }
 
 void SetupNonInstancedLevel(D3D11Engine* engine)
@@ -711,8 +754,13 @@ void SetupNonInstancedLevel(D3D11Engine* engine)
     float dy = height / (n - 1);
     float dz = depth / (n - 1);
 
-    //To store
-    std::vector<DirectX::XMFLOAT4X4> mats;
+    /*
+    m_instancedData[k * n * n + i * n + j].world = XMFLOAT4X4(
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        x + j * dx, y + i * dy, z + k * dz, 1.0f);
+    */
 
     for (int k = 0; k < n; ++k)
     {

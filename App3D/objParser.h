@@ -5,4 +5,10 @@
 
 int InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate, std::unordered_map<std::string, ShaderResource>& textures, ID3D11Device* device, int interact, std::vector<int> interactsWith);
 
-int InitDrawableFromFileInstanced(std::string objFileName, std::unordered_map<std::string, int>& instances, std::vector<Drawable>& vecToFill, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate, std::unordered_map<std::string, ShaderResource>& textures, ID3D11Device* device, int interact, std::vector<int> interactsWith);
+int InitDrawableFromFileInstanced(std::string objFileName, UINT& nDrawables, 
+	std::unordered_map<std::string, std::vector<int>>& instances, 
+	std::unordered_map<int, DirectX::XMFLOAT4X4>& transforms,
+	std::vector<Drawable>& vecToFill, 
+	DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate,
+	std::unordered_map<std::string, ShaderResource>& textures, ID3D11Device* device, 
+	int interact, std::vector<int> interactsWith);

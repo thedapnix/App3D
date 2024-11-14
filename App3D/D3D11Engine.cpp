@@ -40,9 +40,6 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 	//Sampler setup for texture access in shaders
 	InitSampler();
 
-	//New: Also temp: init the instanced buffer
-	InitInstancedBuffer();
-
 	//ImGui setup
 #ifdef _DEBUG
 
@@ -300,7 +297,11 @@ int D3D11Engine::CreateOrbitDrawable(std::string objFileName, DirectX::XMFLOAT3 
 
 int D3D11Engine::CreateInstancedDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
 {
-	return InitDrawableFromFileInstanced(objFileName, m_instanceMap, m_drawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith);
+	return InitDrawableFromFileInstanced(objFileName, m_totalDrawableCount, 
+		m_instanceMap, m_transformMap, m_drawables, 
+		scale, rotate, translate, 
+		m_textures, device.Get(), 
+		interact, interactsWith);
 }
 
 void D3D11Engine::ApplyNormalMapToDrawable(int index, std::string ddsFileName)
@@ -426,6 +427,67 @@ bool D3D11Engine::SetupLights()
 	m_shadowMap = ShadowMap(device.Get(), &m_drawables, &m_spotlights); //"SetupLights()", shadows too while we're at it, but don't tell anyone :3
 
 	return true;
+}
+
+void D3D11Engine::SetupInstancedBuffer()
+{
+	//Instanced data (125 crates in one draw-call)
+	//const int n = 8;
+	//m_instancedData.resize(n * n * n);
+
+	////Total
+	//float width = 20.0f;
+	//float height = 20.0f;
+	//float depth = 20.0f;
+
+	////Distance per crate
+	//float x = -0.5f * width;
+	//float y = -0.5f * height;
+	//float z = -0.5f * depth;
+	//float dx = width / (n - 1);
+	//float dy = height / (n - 1);
+	//float dz = depth / (n - 1);
+
+	////Cursed
+	//for (int k = 0; k < n; ++k)
+	//{
+	//	for (int i = 0; i < n; ++i)
+	//	{
+	//		for (int j = 0; j < n; ++j)
+	//		{
+	//			m_instancedData[k * n * n + i * n + j].world = XMFLOAT4X4(
+	//				1.0f, 0.0f, 0.0f, 0.0f,
+	//				0.0f, 1.0f, 0.0f, 0.0f,
+	//				0.0f, 0.0f, 1.0f, 0.0f,
+	//				x + j * dx, y + i * dy, z + k * dz, 1.0f);
+	//		}
+	//	}
+	//}
+
+	//New: Setup instanced data by taking in all the transforms of instanced drawables
+	const int n = m_transformMap.size();
+	m_instancedData.resize(n);
+	int i = 0;
+	for (auto& element : m_transformMap)
+	{
+		m_instancedData[i].world = element.second;
+		i++;
+	}
+
+	//And init the buffer
+	D3D11_BUFFER_DESC ibd = {};
+	ibd.Usage = D3D11_USAGE_DYNAMIC;
+	ibd.ByteWidth = sizeof(InstancedData) * m_instancedData.size();
+	ibd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	ibd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	ibd.MiscFlags = 0;
+	ibd.StructureByteStride = 0;
+
+	HRESULT hr = device->CreateBuffer(&ibd, NULL, m_instancedBuffer.GetAddressOf());
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create instanced buffer you fucking bozo", L"Error", MB_OK);
+	}
 }
 
 /*RENDER FUNCTIONS*/
@@ -1412,57 +1474,6 @@ void D3D11Engine::InitGraphicsBuffer(GBuffer(&gbuf)[4])
 		{
 			MessageBox(NULL, L"Failed to create gbuffer srv!", L"Error", MB_OK);
 		}
-	}
-}
-
-void D3D11Engine::InitInstancedBuffer()
-{
-	//Instanced data (125 crates in one draw-call)
-	const int n = 8;
-	m_instancedData.resize(n * n * n);
-
-	//Total
-	float width = 20.0f;
-	float height = 20.0f;
-	float depth = 20.0f;
-
-	//Distance per crate
-	float x = -0.5f * width;
-	float y = -0.5f * height;
-	float z = -0.5f * depth;
-	float dx = width / (n - 1);
-	float dy = height / (n - 1);
-	float dz = depth / (n - 1);
-
-	//Cursed
-	for (int k = 0; k < n; ++k)
-	{
-		for (int i = 0; i < n; ++i)
-		{
-			for (int j = 0; j < n; ++j)
-			{
-				m_instancedData[k * n * n + i * n + j].world = XMFLOAT4X4(
-					1.0f, 0.0f, 0.0f, 0.0f,
-					0.0f, 1.0f, 0.0f, 0.0f,
-					0.0f, 0.0f, 1.0f, 0.0f,
-					x + j * dx, y + i * dy, z + k * dz, 1.0f);
-			}
-		}
-	}
-
-	//And init the buffer
-	D3D11_BUFFER_DESC ibd = {};
-	ibd.Usage = D3D11_USAGE_DYNAMIC;
-	ibd.ByteWidth = sizeof(InstancedData) * m_instancedData.size();
-	ibd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	ibd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	ibd.MiscFlags = 0;
-	ibd.StructureByteStride = 0;
-
-	HRESULT hr = device->CreateBuffer(&ibd, NULL, m_instancedBuffer.GetAddressOf());
-	if (FAILED(hr))
-	{
-		MessageBox(NULL, L"Failed to create instanced buffer you fucking bozo", L"Error", MB_OK);
 	}
 }
 
