@@ -13,6 +13,9 @@ struct VertexShaderOutput //Mimic the VertexShaderOutput from our vertex shader,
     float2 uv : TEXCOORD0;
     float4 nor : NORMAL;
     //float4 col : TEXCOORD1;
+    
+    //New: 
+    matrix world : WORLD;
 };
 
 //So firstly we want to make what's known as a "patch constant function", which has the purpose of determining the tessellation factors for the patch we're currently processing
@@ -38,21 +41,23 @@ HS_CONSTANT_DATA_OUTPUT CalcHSPatchConstants(InputPatch<VertexShaderOutput, NUM_
     
     //Store triangle centerpoint as well as distance from camera
     float3 center = (ip[0].worldPosition + ip[1].worldPosition + ip[2].worldPosition) / 3.0f; //Triangle centerpoint formula: (Ax + Bx + Cx)/3
+    center = mul(float4(center, 1.0f), ip[0].world); //Since we skip the transform in the vertex shader, do it here to make sure we get the center of individual triangles
     float dist = distance(center, cameraPosition);
 	
 	//Calculate tessellation
-    float tess;
+    float tess = 1.0f;
     if (dist >= maxDist) //This is the point where we're sufficiently far away for us to only need to tessellate once
     {
         tess = minTess;
     }
     else
     {
-        tess = (maxTess * (maxDist - dist) / maxDist);
+        //tess = (maxTess * (maxDist - dist) / maxDist);
+        tess = maxTess * saturate((maxDist - dist) / (maxDist - minDist));
     }
     
     output.EdgeTessFactor[0] = output.EdgeTessFactor[1] = output.EdgeTessFactor[2] = tess;
-    output.InsideTessFactor = (output.EdgeTessFactor[0] + output.EdgeTessFactor[1] + output.EdgeTessFactor[2]) / 3.0f;
+    output.InsideTessFactor = tess; //(output.EdgeTessFactor[0] + output.EdgeTessFactor[1] + output.EdgeTessFactor[2]) / 3.0f; (Wait why tf have I been doing (tess+tess+tess)/3?)
     
     return output;
 }
@@ -64,6 +69,9 @@ struct HullShaderOutput
     float4 worldPosition : WORLD_POS;
 	float2 uv : UV;
 	float4 nor : NORMAL;
+    
+    //Grrrahhhh
+    matrix world : WORLD;
 };
 
 [domain("tri")]								//Tesselate as triangles
@@ -82,5 +90,7 @@ HullShaderOutput main(
 	output.uv = ip[i].uv;
 	output.nor = ip[i].nor;
 
+    output.world = ip[i].world;
+    
 	return output;
 }

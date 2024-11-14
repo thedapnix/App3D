@@ -467,11 +467,11 @@ void D3D11Engine::SetupInstancedBuffer()
 	//New: Setup instanced data by taking in all the transforms of instanced drawables
 	const int n = m_transformMap.size();
 	m_instancedData.resize(n);
-	int i = 0;
+	//int i = 0;
 	for (auto& element : m_transformMap)
 	{
-		m_instancedData[i].world = element.second;
-		i++;
+		m_instancedData[element.first].world = element.second;
+		//i++;
 	}
 
 	//And init the buffer
@@ -933,11 +933,17 @@ void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIE
 
 		context->IASetIndexBuffer(m_drawables.at(0).GetIndexBuffer().GetBuffer(), DXGI_FORMAT_R32_UINT, 0);
 
-		m_drawables.at(0).GetSubMeshes().at(0).Bind(context.Get(), false, false);
+		for (auto& submesh : m_drawables.at(0).GetSubMeshes())
+		{
+			submesh.Bind(context.Get(), false, false);
+		}
 
 		context->DrawIndexedInstanced(m_drawables.at(0).GetIndexBuffer().GetIndexCount(), m_instancedDrawableCount, 0, 0, 0);
 
-		m_drawables.at(0).GetSubMeshes().at(0).Unbind(context.Get(), false, false);
+		for (auto& submesh : m_drawables.at(0).GetSubMeshes())
+		{
+			submesh.Unbind(context.Get(), false, false);
+		}
 
 		context->VSSetConstantBuffers(0, 0, NULL);
 		context->PSSetConstantBuffers(0, 0, NULL);

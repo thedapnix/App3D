@@ -12,6 +12,9 @@ struct HullShaderOutput
     float4 worldPosition : WORLD_POS;
 	float2 uv : UV;
 	float4 nor : NORMAL;
+	
+	//AAAAAAAAAAAA
+    matrix world : WORLD;
 };
 
 struct HS_CONSTANT_DATA_OUTPUT
@@ -48,12 +51,6 @@ DomainShaderOutput main(
 	const OutputPatch<HullShaderOutput, NUM_CONTROL_POINTS> patch)
 {
 	DomainShaderOutput output = (DomainShaderOutput)0;
-
-	//Unbelievably cursed
-	//output.worldPosition = 
-	//	patch[0].worldPosition * barycentric.x + 
-	//	patch[1].worldPosition * barycentric.y + 
-	//	patch[2].worldPosition * barycentric.z;
 	
 	//Oh god it's getting even worse
 	//http://www.klayge.org/material/4_0/PhongTess/PhongTessellation.pdf
@@ -61,7 +58,7 @@ DomainShaderOutput main(
 	//2. project the resulting point orthogonally onto the three tangent planes defined by the triangle vertices, and finally
 	//3. Compute the barycentric interpolation of these three projections
 	//So we've already computed the tessellation in our hull shader. So now we do orthogonal projection onto plane (straight-up take triangle positions x, y, and z to make a plane)
-    float3 worldPos = 
+    float3 worldPos =
 		patch[0].worldPosition * barycentric.x +
 		patch[1].worldPosition * barycentric.y +
 		patch[2].worldPosition * barycentric.z;
@@ -71,34 +68,60 @@ DomainShaderOutput main(
     float3 b1 = ProjectPointOntoPlane(worldPos, patch[1].worldPosition.xyz, patch[1].nor.xyz);
     float3 b2 = ProjectPointOntoPlane(worldPos, patch[2].worldPosition.xyz, patch[2].nor.xyz);
 	
+    //worldPos = mul(worldPos, (float3x3) patch[0].world);
+	
 	//And barycentric(again), + interpolation
     float3 baryPos =
 		b0 * barycentric.x +
-		b1 * barycentric.y + 
+		b1 * barycentric.y +
 		b2 * barycentric.z;
 	
+    float4 pos = float4(worldPos, 1.0f);
+    pos = mul(pos, patch[0].world);
     output.worldPosition = float4(lerp(worldPos, baryPos, (3.0f / 4.0f)), 1.0f); //"..a shape factor A can be used to interpolate between linear and phong tessellation" and "In our experiments, we fix A = 3/4 globally"
+	//float4 posW = float4(lerp(worldPos, baryPos, (3.0f / 4.0f)), 1.0f);
+    //output.worldPosition = mul(posW, patch[0].world); //World transform on positions delayed from vertex shader until now
 	
 	output.uv = 
 		patch[0].uv * barycentric.x + 
 		patch[1].uv * barycentric.y + 
 		patch[2].uv * barycentric.z;
 
-	output.nor = normalize(
+	//World transform on normals delayed from vertex shader until now
+ //   float4 nor =
+	//patch[0].nor * barycentric.x +
+	//patch[1].nor * barycentric.y +
+	//patch[2].nor * barycentric.z;
+	
+ //   nor = mul(nor, patch[0].world);
+ //   output.nor = normalize(nor);
+	
+    output.nor = normalize(
 		patch[0].nor * barycentric.x +
 		patch[1].nor * barycentric.y +
 		patch[2].nor * barycentric.z);
+	
 
 	output.col = float4(1.0f, 0.0f, 0.0f, 1.0f); //ahaaa praydge
 
-    float4 pos = mul(output.worldPosition, view);
+    //float4 pos = mul(output.worldPosition, view);
+    //float4 pos = mul(output.worldPosition, patch[0].world);
+    //pos = mul(pos, view);
+    //pos = mul(pos, proj);
+	
+    //output.worldPosition = pos;
+    pos = mul(pos, view);
     pos = mul(pos, proj);
-    output.clipPosition = pos;
+    output.clipPosition = pos; //
 	
 	//Is this a good place to do tangent calculations? I have access to triangles after all?
-    float3 pos1 = patch[0].worldPosition;
-    float3 pos2 = patch[1].worldPosition;
-    float3 pos3 = patch[2].worldPosition;
+    float3 pos1 = patch[0].worldPosition.xyz;
+    float3 pos2 = patch[1].worldPosition.xyz;
+    float3 pos3 = patch[2].worldPosition.xyz;
+	
+    pos1 = mul(pos1, (float3x3)patch[0].world);
+    pos2 = mul(pos2, (float3x3)patch[0].world);
+    pos3 = mul(pos3, (float3x3)patch[0].world);
 	
     float3 uv1 = float3(patch[0].uv, 0.0f);
     float3 uv2 = float3(patch[1].uv, 0.0f);
@@ -117,7 +140,12 @@ DomainShaderOutput main(
 		frac * (deltaUv2.y * edge1.z - deltaUv1.y * edge2.z)
 	);
 	
+    //tangent = mul(tangent, (float3x3)patch[0].world);
+	
     output.tangent = tangent;
+	
+    //float3 defaultTangent = (1.0f, 0.0f, 0.0f);
+    //output.tangent = defaultTangent; //mul(defaultTangent, (float3x3)patch[0].world);
 
 	return output;
 }

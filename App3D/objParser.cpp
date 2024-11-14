@@ -335,7 +335,7 @@ int InitDrawableFromFileInstanced(std::string objFileName, UINT& nDrawables,
 		DirectX::XMMATRIX world = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z) *
 			DirectX::XMMatrixRotationX(rotate.x) * DirectX::XMMatrixRotationY(rotate.y) * DirectX::XMMatrixRotationZ(rotate.z) *
 			DirectX::XMMatrixTranslation(translate.x, translate.y, translate.z);
-		DirectX::XMStoreFloat4x4(&transforms[nDrawables], world);
+		DirectX::XMStoreFloat4x4(&transforms[nDrawables], DirectX::XMMatrixTranspose(world));
 
 		//Total drawable count goes up even though we don't create a new mesh, and the index (count - 1) is added to the map of instances
 		nDrawables++;
@@ -512,7 +512,7 @@ int InitDrawableFromFileInstanced(std::string objFileName, UINT& nDrawables,
 	DirectX::XMMATRIX world = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z) *
 		DirectX::XMMatrixRotationX(rotate.x) * DirectX::XMMatrixRotationY(rotate.y) * DirectX::XMMatrixRotationZ(rotate.z) *
 		DirectX::XMMatrixTranslation(translate.x, translate.y, translate.z);
-	DirectX::XMStoreFloat4x4(&transforms[nDrawables], world);
+	DirectX::XMStoreFloat4x4(&transforms[nDrawables], DirectX::XMMatrixTranspose(world));
 
 	//Total drawable count goes up even though we don't create a new mesh, and the index (count - 1) is added to the map of instances
 	nDrawables++;
