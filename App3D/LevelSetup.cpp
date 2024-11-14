@@ -688,7 +688,7 @@ void SetupInstancedLevel(D3D11Engine* engine)
     //engine->CreateInstancedDrawable("Meshes/Test/crate.obj");
 
      //Grid-size
-    const int n = 20;
+    const int n = 8;
 
     //Total
     float width = 16.0f;
@@ -722,7 +722,7 @@ void SetupInstancedLevel(D3D11Engine* engine)
         }
     }*/
 
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < 20; i++)
     {
         engine->CreateInstancedDrawable("Meshes/Test/crate.obj", { -10.0f + (float)i * 2.0f, 0.0f, 0.0f });
     }
@@ -766,7 +766,7 @@ void SetupNonInstancedLevel(D3D11Engine* engine)
         x + j * dx, y + i * dy, z + k * dz, 1.0f);
     */
 
-    for (int k = 0; k < n; ++k)
+    /*for (int k = 0; k < n; ++k)
     {
         for (int i = 0; i < n; ++i)
         {
@@ -775,5 +775,13 @@ void SetupNonInstancedLevel(D3D11Engine* engine)
                 engine->CreateDrawable("Meshes/Test/crate.obj", {-10.0f + j * dx, -10.0f + i * dy, -10.0f + k * dz});
             }
         }
+    }*/
+
+    for (int i = 0; i < 20; i++)
+    {
+        int index = engine->CreateDrawable("Meshes/Test/crate.obj", { -10.0f + (float)i * 2.0f, 0.0f, 0.0f });
+        engine->ApplyNormalMapToDrawable(index, "NormalMaps/wood_fancy_invert.png");
     }
+
+    engine->CreateLightSpot({ 0.0f, 16.5f, -4.0f }, 0.75f, 0.0f, 0.5f, { 1.0f, 1.0f, 1.0f });
 }

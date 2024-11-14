@@ -162,6 +162,7 @@ void App::DoSetup()
     //SetupLevel1(m_engine.get());
     //SetupLevel2(m_engine.get()); //Changing the level design
     //SetupTestLevel(m_engine.get());
+
     SetupInstancedLevel(m_engine.get());
     //SetupNonInstancedLevel(m_engine.get());
 

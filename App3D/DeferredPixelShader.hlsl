@@ -61,8 +61,9 @@ PixelShaderOutput main(PixelShaderInput input)
     
     //And then pack the normal into the 4th component of the other texture containers (New: Fetch normals from the normalmapped texture instead of the regular normal, if it exists)
     float3 normal = input.nor.xyz;
-    if(hasNormalMap)
-    {   
+    
+    if (hasNormalMap)
+    {
         //Store N for the upcoming TBN matrix before we operate on the normal-variable
         float3 N = normal;
         
@@ -70,11 +71,11 @@ PixelShaderOutput main(PixelShaderInput input)
         normal = nmapTexture.Sample(samplerState, input.uv).xyz;
         normal = 2.0f * normal - 1.0f; //Uncompress components from (0, 1) to (-1, 1)
         
-        //normal *= -1.0f;
+        //float3 tangent = float3(2.0f, 0.0f, 0.0f);
+        float3 tangent = input.tangent;
         
         //Calculate TBN matrix
-        float3 T = normalize(input.tangent - dot(input.tangent, N) * N); //Re-orthogonalize the basis vectors, Gram-Schmidt process
-        //float3 B = normalize(cross(N, T)); //Get the bi-tangent as a result of cross product, don't forget to re-normalize this (Actually no need? Issue I had earlier was because wrong tangent)
+        float3 T = normalize(tangent - dot(tangent, N) * N); //Re-orthogonalize the basis vectors, Gram-Schmidt process
         float3 B = cross(N, T);
         float3x3 tbn = float3x3(T, B, N);
         

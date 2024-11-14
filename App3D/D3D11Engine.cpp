@@ -935,14 +935,14 @@ void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIE
 
 		for (auto& submesh : m_drawables.at(0).GetSubMeshes())
 		{
-			submesh.Bind(context.Get(), false, false);
+			submesh.Bind(context.Get(), false, true);
 		}
 
 		context->DrawIndexedInstanced(m_drawables.at(0).GetIndexBuffer().GetIndexCount(), m_instancedDrawableCount, 0, 0, 0);
 
 		for (auto& submesh : m_drawables.at(0).GetSubMeshes())
 		{
-			submesh.Unbind(context.Get(), false, false);
+			submesh.Unbind(context.Get(), false, true);
 		}
 
 		context->VSSetConstantBuffers(0, 0, NULL);
