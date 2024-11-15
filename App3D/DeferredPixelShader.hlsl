@@ -3,12 +3,11 @@ Texture2D ambientTexture : register(t0);
 Texture2D diffuseTexture : register(t1);
 Texture2D specularTexture : register(t2);
 
-//Todo: Add new Texture2D and sample from it, but only if a normal map is available for the mesh (So we have to pass that in through the constant buffer
 Texture2D nmapTexture : register(t3);
 
 SamplerState samplerState : register(s0);
 
-//Return of the per-object constant buffer, need to know if the object has a normalmap or nah
+//Per-object constant buffer makes a return in order to determine whether or not a drawable has a normalmap
 cbuffer OBJECT_CONSTANT_BUFFER : register(b0)
 {
     matrix world;
@@ -47,42 +46,37 @@ PixelShaderOutput main(PixelShaderInput input)
 {
     PixelShaderOutput output = (PixelShaderOutput) 0;
     
-    //Assignment states that *at least* the following data needs to be stored:
-    //Position, normal, ambient, diffuse, specular, shininess
-    //6 different containers, 16 values in total
-    //The cookbook gives us the tip that we can store values separately into 4 4-dimensional containers instead (which saves on memory and read-operations)
+    //Here we store position-, normal-, ambient-, diffuse-, specular-, and shininess-data into our 4 g-buffers for use in the compute shader
     
-    //So first I can store the shininess as the 4th component in the position container
+    //Store position into the xyz-components and shininess into the w-component into the position g-buffer
     output.position = float4(input.worldPosition.xyz, shininess);
     
+    //Store ambient-, diffuse-, and specular-data into the xyz-components of their respective g-buffers
     float3 ambient = ambientTexture.Sample(samplerState, input.uv).xyz;
     float3 diffuse = diffuseTexture.Sample(samplerState, input.uv).xyz;
     float3 specular = specularTexture.Sample(samplerState, input.uv).xyz;
     
-    //And then pack the normal into the 4th component of the other texture containers (New: Fetch normals from the normalmapped texture instead of the regular normal, if it exists)
+    //Pack the normal into the w-components of the previous three g-buffers, but not before doing potential normalmap calculations
     float3 normal = input.nor.xyz;
-    
     if (hasNormalMap)
     {
         //Store N for the upcoming TBN matrix before we operate on the normal-variable
         float3 N = normal;
         
-        //Sample new normal from normal map
+        //Sample new normal from normalmap
         normal = nmapTexture.Sample(samplerState, input.uv).xyz;
         normal = 2.0f * normal - 1.0f; //Uncompress components from (0, 1) to (-1, 1)
         
-        //float3 tangent = float3(2.0f, 0.0f, 0.0f);
-        float3 tangent = input.tangent;
-        
         //Calculate TBN matrix
-        float3 T = normalize(tangent - dot(tangent, N) * N); //Re-orthogonalize the basis vectors, Gram-Schmidt process
+        float3 T = normalize(input.tangent - dot(input.tangent, N) * N); //Re-orthogonalize the basis vectors, Gram-Schmidt process
         float3 B = cross(N, T);
         float3x3 tbn = float3x3(T, B, N);
         
-        //Apply the TBN matrix transformation to bring the normals from tangent space into the world
+        //Apply the TBN matrix transformation to bring the normals from tangent space into world space
         normal = mul(normal, tbn);
     }
     
+    //Finish packing the g-buffers before outputting all our data
     output.ambient = float4(ambient, normal.x);
     output.diffuse = float4(diffuse, normal.y);
     output.specular = float4(specular, normal.z);

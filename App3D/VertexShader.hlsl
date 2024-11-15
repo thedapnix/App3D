@@ -1,20 +1,11 @@
 
-cbuffer OBJECT_CONSTANT_BUFFER : register(b0)
-{
-    matrix world;
-    matrix invWorld;
-    
-    bool hasNormalMap;
-};
-
 struct VertexShaderInput
 {
     float3 localPosition : POS;
     float2 uv : UV;
     float3 localNormal : NOR;
     
-    //We're now going to take in every world matrix through here (Input Layout) instead of the per-object constant buffer
-    //row_major float4x4 world : WORLD;
+    //Per-instance data
     matrix world : WORLD;
     uint InstanceId : SV_InstanceID;
 };
@@ -25,7 +16,7 @@ struct VertexShaderOutput
     float2 uv : TEXCOORD0;
     float4 nor : NORMAL;
     
-    //New: Instancing stuff
+    //Pass this along, since we can't perform world transformations on positions already (Tessellation needs to happen before we transform, or things get wacky)
     matrix world : WORLD;
 };
 
@@ -37,9 +28,8 @@ VertexShaderOutput main(VertexShaderInput input)
     float4 pos = float4(input.localPosition, 1.0f);
     float4 nor = float4(input.localNormal, 0.0f);
     
-    //New: Multiply by the per-instance world matrix from input layout
-    //pos = mul(pos, input.world);
-    nor = mul(nor, input.world); //I was accidentally setting the normals to be mul(pos, input.world) :DDDDDDDDD god i hate myself sometimes
+    //Postpone position transformations, only do normals for now
+    nor = mul(nor, input.world);
 
     output.worldPosition = pos;
     output.uv = input.uv;
@@ -49,23 +39,3 @@ VertexShaderOutput main(VertexShaderInput input)
     
     return output;
 }
-
-//Non-instanced version
-//VertexShaderOutput main(VertexShaderInput input)
-//{   
-//    VertexShaderOutput output = (VertexShaderOutput)0;
-    
-//    float4 pos = float4(input.localPosition, 1.0f);
-//    float4 nor = float4(input.localNormal, 0.0f);
-    
-//    pos = mul(pos, world);
-//    nor = mul(nor, world);
-
-//    output.worldPosition = pos;
-//    output.uv = input.uv;
-//    output.nor = normalize(nor);
-    
-//    output.world = input.world;
-    
-//    return output;
-//}

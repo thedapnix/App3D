@@ -854,14 +854,14 @@ void D3D11Engine::RenderDepth(float dt)
 
 		//Some way of getting the camera cb of individual lights
 		ID3D11Buffer* cameraCB = m_spotlights.GetCameraConstantBufferAt(i).GetBuffer();
-		context->VSSetConstantBuffers(1, 1, &cameraCB);
+		context->VSSetConstantBuffers(0, 1, &cameraCB);
 
 		/*for (auto& drawable : m_drawables)
 		{
 			drawable.Draw(context.Get());
 		}*/
 
-		context->VSSetConstantBuffers(0, 1, m_drawables.at(0).GetConstantBuffer().GetBufferAddress());
+		//context->VSSetConstantBuffers(0, 1, m_drawables.at(0).GetConstantBuffer().GetBufferAddress());
 		//context->PSSetConstantBuffers(0, 1, m_drawables.at(0).GetConstantBuffer().GetBufferAddress());
 
 		UINT stride[2] = { sizeof(Vertex), sizeof(InstancedData) };
@@ -887,7 +887,7 @@ void D3D11Engine::RenderDepth(float dt)
 		//context->VSSetConstantBuffers(0, 0, NULL);
 		//context->PSSetConstantBuffers(0, 0, NULL);
 
-		context->VSSetConstantBuffers(1, 0, NULL); //unbind the camera cb
+		context->VSSetConstantBuffers(0, 0, NULL); //unbind the camera cb
 	}
 
 	/*Unbind stuff*/
@@ -976,8 +976,8 @@ void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIE
 		//drawablesBeingRendered = (int)m_drawables.size();
 
 		//UNGODLY LEVELS OF TEMP
-		context->VSSetConstantBuffers(0, 1, m_drawables.at(0).GetConstantBuffer().GetBufferAddress());
-		context->PSSetConstantBuffers(0, 1, m_drawables.at(0).GetConstantBuffer().GetBufferAddress());
+		//context->VSSetConstantBuffers(0, 1, m_drawables.at(0).GetConstantBuffer().GetBufferAddress());
+		context->PSSetConstantBuffers(0, 1, m_drawables.at(0).GetConstantBuffer().GetBufferAddress()); //Needed to access the "hasNormalMap" boolean
 
 		UINT stride[2] = { sizeof(Vertex), sizeof(InstancedData) };
 		UINT offset[2] = { 0, 0 };
@@ -999,7 +999,7 @@ void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIE
 			submesh.Unbind(context.Get(), false, true);
 		}
 
-		context->VSSetConstantBuffers(0, 0, NULL);
+		//context->VSSetConstantBuffers(0, 0, NULL);
 		context->PSSetConstantBuffers(0, 0, NULL);
 		
 		drawablesBeingRendered = m_instancedDrawableCount;
