@@ -41,7 +41,7 @@ HS_CONSTANT_DATA_OUTPUT CalcHSPatchConstants(InputPatch<VertexShaderOutput, NUM_
     
     //Store triangle centerpoint as well as distance from camera
     float3 center = (ip[0].worldPosition + ip[1].worldPosition + ip[2].worldPosition) / 3.0f; //Triangle centerpoint formula: (Ax + Bx + Cx)/3
-    center = mul(float4(center, 1.0f), ip[0].world); //Since we skip the transform in the vertex shader, do it here to make sure we get the center of individual triangles
+    center = mul(float4(center, 1.0f), ip[0].world); //(Keep if instanced, comment out if non-instanced) Since we skip the transform in the vertex shader, do it here to make sure we get the center of individual triangles
     float dist = distance(center, cameraPosition);
 	
 	//Calculate tessellation
@@ -88,7 +88,7 @@ HullShaderOutput main(
 	//Basically just copy over the values from out vertex shader to the hull shader
     output.worldPosition = ip[i].worldPosition;
 	output.uv = ip[i].uv;
-	output.nor = ip[i].nor;
+    output.nor = normalize(ip[i].nor);
 
     output.world = ip[i].world;
     

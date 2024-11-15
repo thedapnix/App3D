@@ -43,7 +43,83 @@ float3 ProjectPointOntoPlane(float3 toProject, float3 planePoint, float3 planeNo
 	return toProject - (dot(planeNor, toProject - planePoint) * planeNor);
 }
 
+[domain("tri")]
+DomainShaderOutput main(
+	HS_CONSTANT_DATA_OUTPUT input,
+	float3 barycentric : SV_DomainLocation,
+	const OutputPatch<HullShaderOutput, NUM_CONTROL_POINTS> patch)
+{
+    DomainShaderOutput output = (DomainShaderOutput) 0;
 
+    float3 pos =
+		patch[0].worldPosition * barycentric.x +
+		patch[1].worldPosition * barycentric.y +
+		patch[2].worldPosition * barycentric.z;
+	
+    output.uv =
+		patch[0].uv * barycentric.x +
+		patch[1].uv * barycentric.y +
+		patch[2].uv * barycentric.z;
+	
+    output.nor = normalize(
+		patch[0].nor * barycentric.x +
+		patch[1].nor * barycentric.y +
+		patch[2].nor * barycentric.z);
+	
+	//Transform the pos using the instance stuff
+    float4 clipPos = float4(pos, 1.0f);
+    clipPos = mul(clipPos, patch[0].world); //Keep if instanced, comment out if non-instanced
+    output.worldPosition = clipPos;
+    clipPos = mul(clipPos, view);
+    clipPos = mul(clipPos, proj);
+    output.clipPosition = clipPos;
+	
+	//Tangent calculations
+    float3 pos1 = patch[0].worldPosition.xyz;
+    float3 pos2 = patch[1].worldPosition.xyz;
+    float3 pos3 = patch[2].worldPosition.xyz;
+	
+    pos1 = mul(pos1, (float3x3) patch[0].world);
+    pos2 = mul(pos2, (float3x3) patch[1].world);
+    pos3 = mul(pos3, (float3x3) patch[2].world);
+	
+    float3 uv1 = float3(patch[0].uv, 0.0f);
+    float3 uv2 = float3(patch[1].uv, 0.0f);
+    float3 uv3 = float3(patch[2].uv, 0.0f);
+	
+    //uv1 = mul(uv1, (float3x3)patch[0].world);
+    //uv1 = mul(uv2, (float3x3)patch[1].world);
+    //uv1 = mul(uv3, (float3x3)patch[2].world);
+	
+    float3 edge1 = pos2 - pos1;
+    float3 edge2 = pos3 - pos1;
+    float3 deltaUv1 = uv2 - uv1;
+    float3 deltaUv2 = uv3 - uv1;
+	
+    //edge1 = mul(edge1, (float3x3) patch[0].world);
+	
+    float frac = 1.0f / (deltaUv1.x * deltaUv2.y - deltaUv2.x * deltaUv1.y);
+	
+	//Hermans, but this works the same way mine does
+    float2x2 inverseDUV = { deltaUv2.y, -deltaUv1.y, -deltaUv2.x, deltaUv1.x };
+    float2x3 directions = { edge1, edge2 };
+    float2x3 TB = mul(inverseDUV, directions);
+    float3 tangent = TB[0];
+	
+ //   float3 tangent = float3(
+	//	frac * (deltaUv2.y * edge1.x - deltaUv1.y * edge2.x),
+	//	frac * (deltaUv2.y * edge1.y - deltaUv1.y * edge2.y),
+	//	frac * (deltaUv2.y * edge1.z - deltaUv1.y * edge2.z)
+	//);
+	
+    //tangent = mul(tangent, (float3x3)patch[0].world);
+	
+    output.tangent = tangent;
+	
+    return output;
+}
+
+/*
 [domain("tri")]
 DomainShaderOutput main(
 	HS_CONSTANT_DATA_OUTPUT input,
@@ -150,3 +226,4 @@ DomainShaderOutput main(
 	
 	return output;
 }
+*/

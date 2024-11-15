@@ -154,7 +154,7 @@ private:
 	/*ImGui variables*/
 	int fpsCounter = 0;
 	std::string fpsString = "";
-	bool deferredIsEnabled = true;
+	bool deferredIsEnabled = true; //Temp as well, while testing instancing
 	bool cullingIsEnabled = false; //Temp
 	bool billboardingIsEnabled = false;
 	bool cubemapIsEnabled = true;

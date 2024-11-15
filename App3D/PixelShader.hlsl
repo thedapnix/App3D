@@ -1,4 +1,189 @@
 
+//From camera (duh)
+cbuffer CAMERA_CONSTANT_BUFFER : register(b0)
+{
+    matrix view;
+    matrix proj;
+    float3 cameraPosition;
+};
+
+//From drawables
+cbuffer SHININESS_CONSTANT_BUFFER : register(b1)
+{
+    float shininess;
+};
+Texture2D ambientTexture : register(t0);
+Texture2D diffuseTexture : register(t1);
+Texture2D specularTexture : register(t2);
+Texture2D nmapTexture : register(t3);
+
+//From engine
+SamplerState samplerState : register(s0);
+
+//Lights and shadowmaps
+struct SpotLight
+{
+    matrix view;
+    matrix proj;
+    
+    float3 colour;
+    float3 origin;
+    float3 direction;
+    
+    float2 rotation;
+    
+    float fov;
+    float rad;
+    
+    float3 padding; //Padding my beloved :))))))
+};
+StructuredBuffer<SpotLight> spotlights : register(t4);
+Texture2DArray<float> shadowMaps : register(t5);
+sampler shadowMapSampler : register(s1);
+
+//From domain shader
+struct PixelShaderInput
+{
+    float4 clipPosition : SV_POSITION;
+    float2 uv : TEXCOORD0;
+    float4 nor : NORMAL;
+    float4 col : TEXCOORD1;
+    
+    float4 worldPosition : TEXCOORD2;
+    
+    float3 tangent : TEXCOORD3;
+};
+
+float4 main(PixelShaderInput input) : SV_TARGET
+{
+    //float3 ambientAlbedo = ambientTexture.Sample(samplerState, input.uv).xyz;
+    float3 ambient = 0.25f;
+    float4 diffuseAlbedo = diffuseTexture.Sample(samplerState, input.uv);
+    float3 specularAlbedo = specularTexture.Sample(samplerState, input.uv).xyz;
+    float specularPower = shininess;
+    
+    float4 position = input.worldPosition;
+    float3 normal = normalize(input.nor.xyz);
+    
+    //Normalmap stuff
+    float3 N = normal;
+    normal = nmapTexture.Sample(samplerState, input.uv).xyz;
+    normal = 2.0f * normal - 1.0f;
+    float3 tangent = input.tangent;
+    float3 T = normalize(tangent - dot(tangent, N) * N);
+    float3 B = cross(N, T);
+    float3x3 tbn = float3x3(T, B, N);
+    normal = mul(normal, tbn);
+    
+    float3 finalColour = diffuseAlbedo.xyz * ambient; // * ambientAlbedo;
+    float3 lighting = 0.0f;
+    
+    //float3 finalColour = 0.0f;
+    
+    //Allow for multiple spotlights
+    //https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/sm5-object-structuredbuffer-getdimensions
+    uint count;
+    uint stride; //I don't really care about the stride but I need to pass in two values to the GetDimensions() function in order to get the element count
+    spotlights.GetDimensions(count, stride);
+    for (int i = 0; i < count; i++)
+    {
+        //Quick little light culling for a performance boost
+        //float3 lightToCam = abs(spotlights[i].origin - cameraPosition);
+        //if (lightToCam.x >= 100.0f ||
+        //    lightToCam.y >= 100.0f ||
+        //    lightToCam.z >= 100.0f)
+        //{
+        //    continue;
+        //}
+        
+        //Since shadow cameras look in a specific direction, they're not compatible with point lights. Potentially I could make point lights have 4 shadow cameras but not right now
+        bool isPointLight = false; //Temp to disable shadows with point lights
+        bool isInShadow = false;
+        float4 ndcPos = mul(position, spotlights[i].view);
+        ndcPos = mul(ndcPos, spotlights[i].proj);
+        ndcPos.xyz /= ndcPos.w;
+        
+        float3 shadowMapUV = float3(ndcPos.x * 0.5f + 0.5f, ndcPos.y * -0.5f + 0.5f, i);
+        float3 shadowMapSample = shadowMaps.SampleLevel(shadowMapSampler, shadowMapUV, 0.0f);
+        
+        if (shadowMapSample.x + 0.00001f < ndcPos.z)
+        {
+            isInShadow = true;
+        }
+        
+        float3 L = 0;
+        float attenuation = 1.0f; //Set this to 0.25f instead of setting the color weaker on the C++ side? Should have the same effect, but move work from CPU to GPU
+        
+        if (spotlights[i].fov != 0.0f) //Spotlight
+        {
+            L = spotlights[i].origin - position.xyz;
+            float dist = length(L);
+            attenuation = max(0.0f, 1.0f - (dist / 40.0f)); //40.0f represents the range of the spotlight, consider passing this in from the structured buffer, hence letting spotlights pass in their range and point lights pass in their radius?
+            L /= dist;
+            
+            float outerCone = cos(spotlights[i].fov / 2.0f);
+            float innerCone = cos(spotlights[i].fov / 4.0f);
+            float alpha = dot(-L, spotlights[i].direction);
+            attenuation *= smoothstep(outerCone, innerCone, alpha);
+        }
+        else
+        {
+            if (spotlights[i].rad == 0.0f) //Directional light
+            {
+                L = -spotlights[i].direction;
+            }
+            else //Point light
+            {
+                isPointLight = true;
+                //Same as with spotlights, get vector from light to pixel
+                L = spotlights[i].origin - position.xyz;
+                float dist = length(L); //Get distance of vector
+                
+                //Calculate attenuation using 2 * pi * rad instead of using a cone with a certain reach and fov? (nah just use radius and ignore shadow calcs)
+                attenuation = max(0.0f, 1.0f - (dist / spotlights[i].rad));
+                
+                L /= dist; //Normalize vector
+            }
+        }
+
+        float nDotL = saturate(dot(normal, L));
+        float3 diffuse = nDotL * spotlights[i].colour * diffuseAlbedo.xyz;
+        
+        //Calculate the specular term
+        float3 V = cameraPosition - position.xyz;
+        float3 H = normalize(L + V);
+        float3 specular = pow(saturate(dot(normal, H)), shininess) * spotlights[i].colour * specularAlbedo * nDotL; //removed: saturate
+        
+        if (!isInShadow || isPointLight) //|| isPointLight
+        {
+            //finalColour += (diffuse + specular) * attenuation;
+            lighting += (diffuse + specular) * attenuation;
+
+        }
+    }
+    //finalColour += base * 0.25f;
+    //finalColour += ambientAlbedo * 0.25f;
+    
+    //Apply the lighting to the base color
+    finalColour += lighting;
+    
+    return float4(finalColour, 1.0f);
+    
+    //return base;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/*
 cbuffer CAMERA_CONSTANT_BUFFER : register(b0)
 {
     matrix view;
@@ -144,3 +329,4 @@ float4 main(PixelShaderInput input) : SV_TARGET
     
     return float4(finalColour, 1.0f);
 }
+*/

@@ -722,17 +722,53 @@ void SetupInstancedLevel(D3D11Engine* engine)
         }
     }*/
 
-    for (int i = 0; i < 20; i++)
+    //Floor (100 crates)
+    for (int i = 0; i < 10; i++)
     {
-        engine->CreateInstancedDrawable("Meshes/Test/crate.obj", { -10.0f + (float)i * 2.0f, 0.0f, 0.0f });
+        for (int j = 0; j < 10; j++)
+        {
+            engine->CreateInstancedDrawable("Meshes/Test/crate.obj", { -10.0f + (float)i * 2.0f, 0.0f, 0.0f + (float)j * 2.0f});
+        }
     }
+
+    //Left wall (70 crates)
+    for (int i = 0; i < 7; i++)
+    {
+        for (int j = 0; j < 10; j++)
+        {
+            engine->CreateInstancedDrawable("Meshes/Test/crate.obj", { -10.0f, 2.0f + (float)i * 2.0f, 0.0f + (float)j * 2.0f});
+        }
+    }
+
+    //Right wall (Another 70 crates)
+    for (int i = 0; i < 7; i++)
+    {
+        for (int j = 0; j < 10; j++)
+        {
+            engine->CreateInstancedDrawable("Meshes/Test/crate.obj", { 8.0f, 2.0f + (float)i * 2.0f, 0.0f + (float)j * 2.0f });
+        }
+    }
+
+    //Back wall (56 crates)
+    for (int i = 0; i < 7; i++)
+    {
+        for (int j = 0; j < 8; j++)
+        {
+            engine->CreateInstancedDrawable("Meshes/Test/crate.obj", { -8.0f + (float)j * 2.0f, 2.0f + (float)i * 2.0f, 18.0f});
+        }
+    }
+
+    engine->CreateInstancedDrawable("Meshes/Test/crate.obj", { -1.0f, 4.0f, 8.0f });
 
     engine->ApplyNormalMapToDrawable(0, "NormalMaps/wood_fancy_invert.png");
 
-    engine->CreateLightSpot({ 0.0f, 16.5f, -4.0f }, 0.75f, 0.0f, 0.5f, { 1.0f, 1.0f, 1.0f });
+    //296 crates (with normalmaps) and a light: 2300 fps (297, put a little boy in the middle)
 
     //Finale yo
     engine->SetupInstancedBuffer();
+
+    engine->CreateLightSpot({ -1.0f, 16.0f, 8.0f }, 0.75f, 0.0f, 0.5f, { 1.0f, 1.0f, 1.0f });
+    //engine->CreateLightSpot({ 0.0f, 16.0f, -4.0f }, 0.75f, 0.0f, 0.5f, { 1.0f, 1.0f, 1.0f });
 }
 
 void SetupNonInstancedLevel(D3D11Engine* engine)
@@ -777,11 +813,45 @@ void SetupNonInstancedLevel(D3D11Engine* engine)
         }
     }*/
 
-    for (int i = 0; i < 20; i++)
+    //Floor (100 crates)
+    for (int i = 0; i < 10; i++)
     {
-        int index = engine->CreateDrawable("Meshes/Test/crate.obj", { -10.0f + (float)i * 2.0f, 0.0f, 0.0f });
-        engine->ApplyNormalMapToDrawable(index, "NormalMaps/wood_fancy_invert.png");
+        for (int j = 0; j < 10; j++)
+        {
+            int index = engine->CreateDrawable("Meshes/Test/crate.obj", { -10.0f + (float)i * 2.0f, 0.0f, 0.0f + (float)j * 2.0f });
+            engine->ApplyNormalMapToDrawable(index, "NormalMaps/wood_fancy_invert.png");
+        }
     }
 
-    engine->CreateLightSpot({ 0.0f, 16.5f, -4.0f }, 0.75f, 0.0f, 0.5f, { 1.0f, 1.0f, 1.0f });
+    //Left wall (70 crates)
+    for (int i = 0; i < 7; i++)
+    {
+        for (int j = 0; j < 10; j++)
+        {
+            int index = engine->CreateDrawable("Meshes/Test/crate.obj", { -10.0f, 2.0f + (float)i * 2.0f, 0.0f + (float)j * 2.0f });
+            engine->ApplyNormalMapToDrawable(index, "NormalMaps/wood_fancy_invert.png");
+        }
+    }
+
+    //Right wall (Another 70 crates)
+    for (int i = 0; i < 7; i++)
+    {
+        for (int j = 0; j < 10; j++)
+        {
+            int index = engine->CreateDrawable("Meshes/Test/crate.obj", { 8.0f, 2.0f + (float)i * 2.0f, 0.0f + (float)j * 2.0f });
+            engine->ApplyNormalMapToDrawable(index, "NormalMaps/wood_fancy_invert.png");
+        }
+    }
+
+    //Back wall (56 crates)
+    for (int i = 0; i < 7; i++)
+    {
+        for (int j = 0; j < 8; j++)
+        {
+            int index = engine->CreateDrawable("Meshes/Test/crate.obj", { -8.0f + (float)j * 2.0f, 2.0f + (float)i * 2.0f, 18.0f });
+            engine->ApplyNormalMapToDrawable(index, "NormalMaps/wood_fancy_invert.png");
+        }
+    }
+
+    engine->CreateLightSpot({ -1.0f, 16.5f, 9.0f }, 0.75f, 0.0f, 0.5f, { 1.0f, 1.0f, 1.0f });
 }

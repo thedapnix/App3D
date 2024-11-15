@@ -517,7 +517,7 @@ void D3D11Engine::Render(ID3D11UnorderedAccessView* uav, ID3D11DepthStencilView*
 
 		//SHADOWS AND LIGHTING STUFF
 		ID3D11ShaderResourceView* shadowViews[] = { m_spotlights.GetStructuredBufferSRV() , m_spotlights.GetDepthBufferSRV() };
-		context->PSSetShaderResources(3, 2, shadowViews);
+		context->PSSetShaderResources(4, 2, shadowViews);
 		context->PSSetConstantBuffers(0, 1, cam->GetConstantBuffer().GetBufferAddress());
 		ID3D11SamplerState* shadowSampler = m_shadowMap.GetSampler();
 		context->PSSetSamplers(1, 1, &shadowSampler);
@@ -550,11 +550,39 @@ void D3D11Engine::Render(ID3D11UnorderedAccessView* uav, ID3D11DepthStencilView*
 		}
 		else
 		{
-			for (auto& drawable : m_drawables)
+			/*for (auto& drawable : m_drawables)
 			{
 				drawable.Draw(context.Get());
 			}
-			drawablesBeingRendered = (int)m_drawables.size();
+			drawablesBeingRendered = (int)m_drawables.size();*/
+
+			context->VSSetConstantBuffers(0, 1, m_drawables.at(0).GetConstantBuffer().GetBufferAddress());
+			//context->PSSetConstantBuffers(0, 1, m_drawables.at(0).GetConstantBuffer().GetBufferAddress());
+
+			UINT stride[2] = { sizeof(Vertex), sizeof(InstancedData) };
+			UINT offset[2] = { 0, 0 };
+
+			ID3D11Buffer* vertexBuffers[2] = { m_drawables.at(0).GetVertexBuffer().GetBuffer(), m_instancedBuffer.Get() };
+			context->IASetVertexBuffers(0, 2, vertexBuffers, stride, offset);
+
+			context->IASetIndexBuffer(m_drawables.at(0).GetIndexBuffer().GetBuffer(), DXGI_FORMAT_R32_UINT, 0);
+
+			for (auto& submesh : m_drawables.at(0).GetSubMeshes())
+			{
+				submesh.Bind(context.Get(), false, true);
+			}
+
+			context->DrawIndexedInstanced(m_drawables.at(0).GetIndexBuffer().GetIndexCount(), m_instancedDrawableCount, 0, 0, 0);
+
+			for (auto& submesh : m_drawables.at(0).GetSubMeshes())
+			{
+				submesh.Unbind(context.Get(), false, true);
+			}
+
+			context->VSSetConstantBuffers(0, 0, NULL);
+			context->PSSetConstantBuffers(0, 0, NULL);
+
+			drawablesBeingRendered = m_instancedDrawableCount;
 		}
 
 		//Pov drawables are never culled so we do this outside the if-else check
@@ -575,8 +603,8 @@ void D3D11Engine::Render(ID3D11UnorderedAccessView* uav, ID3D11DepthStencilView*
 		ID3D11RenderTargetView* nullRTV = NULL;
 		context->OMSetRenderTargets(1, &nullRTV, NULL);
 
-		ID3D11ShaderResourceView* nullSRVs[] = { NULL, NULL, NULL, NULL, NULL };
-		context->PSSetShaderResources(0, 5, nullSRVs);
+		ID3D11ShaderResourceView* nullSRVs[] = { NULL, NULL, NULL, NULL, NULL, NULL };
+		context->PSSetShaderResources(0, 6, nullSRVs);
 
 		ID3D11SamplerState* nullSamplers[] = { NULL, NULL };
 		context->PSSetSamplers(0, 2, nullSamplers);
@@ -828,10 +856,36 @@ void D3D11Engine::RenderDepth(float dt)
 		ID3D11Buffer* cameraCB = m_spotlights.GetCameraConstantBufferAt(i).GetBuffer();
 		context->VSSetConstantBuffers(1, 1, &cameraCB);
 
-		for (auto& drawable : m_drawables)
+		/*for (auto& drawable : m_drawables)
 		{
 			drawable.Draw(context.Get());
+		}*/
+
+		context->VSSetConstantBuffers(0, 1, m_drawables.at(0).GetConstantBuffer().GetBufferAddress());
+		//context->PSSetConstantBuffers(0, 1, m_drawables.at(0).GetConstantBuffer().GetBufferAddress());
+
+		UINT stride[2] = { sizeof(Vertex), sizeof(InstancedData) };
+		UINT offset[2] = { 0, 0 };
+
+		ID3D11Buffer* vertexBuffers[2] = { m_drawables.at(0).GetVertexBuffer().GetBuffer(), m_instancedBuffer.Get() };
+		context->IASetVertexBuffers(0, 2, vertexBuffers, stride, offset);
+
+		context->IASetIndexBuffer(m_drawables.at(0).GetIndexBuffer().GetBuffer(), DXGI_FORMAT_R32_UINT, 0);
+
+		for (auto& submesh : m_drawables.at(0).GetSubMeshes())
+		{
+			submesh.Bind(context.Get(), false, true);
 		}
+
+		context->DrawIndexedInstanced(m_drawables.at(0).GetIndexBuffer().GetIndexCount(), m_instancedDrawableCount, 0, 0, 0);
+
+		for (auto& submesh : m_drawables.at(0).GetSubMeshes())
+		{
+			submesh.Unbind(context.Get(), false, true);
+		}
+
+		//context->VSSetConstantBuffers(0, 0, NULL);
+		//context->PSSetConstantBuffers(0, 0, NULL);
 
 		context->VSSetConstantBuffers(1, 0, NULL); //unbind the camera cb
 	}
