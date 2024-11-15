@@ -97,7 +97,7 @@ private:
 	void RenderDepth(float dt);
 	void DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, bool isReflection = false);
 	void DefPassTwo(Camera* cam, ID3D11UnorderedAccessView* uav, UINT csX, UINT csY);
-	void DrawInstanced(Drawable& baseDrawable, bool isDepth = false);
+	void DrawInstanced(const Drawable* baseDrawable, bool isDepth = false);
 
 	/*Initializers because this constructor would be HUGE otherwise*/
 	//"Regular" stuff
@@ -151,12 +151,13 @@ private:
 	bool targetGoingUp = true;
 	bool targetGoingForward = true;
 	bool targetSwingingOriginal = true;
+	DirectX::BoundingBox defaultBox; //New for instancing
 
 	/*ImGui variables*/
 	int fpsCounter = 0;
 	std::string fpsString = "";
-	bool deferredIsEnabled = true; //Temp as well, while testing instancing
-	bool cullingIsEnabled = false; //Temp
+	bool deferredIsEnabled = true;
+	bool cullingIsEnabled = true;
 	bool billboardingIsEnabled = false;
 	bool cubemapIsEnabled = true;
 	bool lodIsEnabled = false;

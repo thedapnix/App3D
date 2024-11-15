@@ -45,6 +45,11 @@ D3D11Engine::D3D11Engine(const HWND& hWnd, const UINT& width, const UINT& height
 
 #endif
 	SetupImGui(hWnd, device.Get(), context.Get());
+
+	//New: Also temp
+	XMVECTOR vMin = { -1.0f, -1.0f, -1.0f, 0.0f };
+	XMVECTOR vMax = { 1.0f, 1.0f, 1.0f, 0.0f };
+	BoundingBox::CreateFromPoints(defaultBox, vMin, vMax);
 }
 
 D3D11Engine::~D3D11Engine()
@@ -86,19 +91,50 @@ void D3D11Engine::Update(float dt)
 	m_particleVar += dt;
 	m_particles.UpdateConstantBuffer(context.Get(), m_particleVar);
 
-	//New: Update instanced stuff (Ignoring culling right now)
+	//Time to stop ignoring culling, but I wonder how that'll go considering the quadtree takes in drawables, not instances. Will it be as simple as swapping?
 	m_instancedDrawableCount = 0;
-	D3D11_MAPPED_SUBRESOURCE mappedData;
-	context->Map(m_instancedBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedData);
-
-	InstancedData* dataView = reinterpret_cast<InstancedData*>(mappedData.pData);
-
-	for (UINT i = 0; i < m_instancedData.size(); ++i)
+	if (cullingIsEnabled)
 	{
-		dataView[m_instancedDrawableCount++] = m_instancedData[i];
-	}
+		//Ignore the quadtree for now and do some good old fashioned culling
+		D3D11_MAPPED_SUBRESOURCE mappedData;
+		context->Map(m_instancedBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedData);
 
-	context->Unmap(m_instancedBuffer.Get(), 0);
+		InstancedData* dataView = reinterpret_cast<InstancedData*>(mappedData.pData);
+
+		for (UINT i = 0; i < m_instancedData.size(); ++i)
+		{
+			//Get the world transform of the instanced object
+			XMMATRIX world = XMLoadFloat4x4(&m_instancedData[i].world);
+
+			//Since my camera frustum is in world space, we need to transform the bounding box into its world position
+			//Temp: Craft a -1 to +1 aabb since our drawables already have their bounding boxes transformed (oops)
+			BoundingBox box = defaultBox;
+			box.Transform(box, XMMatrixTranspose(world));
+
+			//Add to the list of visible instanced objects if the camera frustum intersects with it :)
+			if (m_camera.get()->GetFrustum().Intersects(box))
+			{
+				dataView[m_instancedDrawableCount++] = m_instancedData[i];
+			}
+		}
+
+		context->Unmap(m_instancedBuffer.Get(), 0);
+	}
+	else
+	{
+		//Simply taking all of our instanced data and counting it as being in view
+		D3D11_MAPPED_SUBRESOURCE mappedData;
+		context->Map(m_instancedBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedData);
+
+		InstancedData* dataView = reinterpret_cast<InstancedData*>(mappedData.pData);
+
+		for (UINT i = 0; i < m_instancedData.size(); ++i)
+		{
+			dataView[m_instancedDrawableCount++] = m_instancedData[i];
+		}
+
+		context->Unmap(m_instancedBuffer.Get(), 0);
+	}
 
 	//RENDER
 	RenderDepth(dt);
@@ -534,7 +570,7 @@ void D3D11Engine::Render(ID3D11UnorderedAccessView* uav, ID3D11DepthStencilView*
 		if (cullingIsEnabled && !isReflection)
 		{
 			int visibleDrawables = 0;
-			for (const auto& drawable : m_quadTree.CheckTree(cam->GetFrustum())) //Oh wait I get it. I render the shit cube here before I even do RenderReflectiveObject. I need to skip rendering that here, and then render it there, WHILE making sure it's in the quadtree so I can do culling checks against the box itself
+			for (const auto drawable : m_quadTree.CheckTree(cam->GetFrustum())) //Oh wait I get it. I render the shit cube here before I even do RenderReflectiveObject. I need to skip rendering that here, and then render it there, WHILE making sure it's in the quadtree so I can do culling checks against the box itself
 			{
 				if (drawable->IsReflective())
 				{
@@ -542,17 +578,19 @@ void D3D11Engine::Render(ID3D11UnorderedAccessView* uav, ID3D11DepthStencilView*
 				}
 				else
 				{
-					drawable->Draw(context.Get());
+					//drawable->Draw(context.Get());
+					DrawInstanced(drawable);
 					visibleDrawables++;
 				}
 			}
-			drawablesBeingRendered = visibleDrawables;
+			//drawablesBeingRendered = visibleDrawables;
+			drawablesBeingRendered = m_instancedDrawableCount;
 		}
 		else
 		{
 			for (auto& drawable : m_drawables)
 			{
-				DrawInstanced(drawable);
+				DrawInstanced(&drawable);
 			}
 		}
 
@@ -829,7 +867,7 @@ void D3D11Engine::RenderDepth(float dt)
 
 		for (auto& drawable : m_drawables)
 		{
-			DrawInstanced(drawable, true);
+			DrawInstanced(&drawable, true);
 		}
 
 		context->VSSetConstantBuffers(0, 0, NULL); //unbind the camera cb
@@ -879,11 +917,29 @@ void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIE
 	if (cullingIsEnabled && !isReflection) //Skip culling the reflected views
 	{
 		int visibleDrawables = 0;
-		for (auto& drawable : m_quadTree.CheckTree(cam->GetFrustum()))
+		//for (auto& drawable : m_quadTree.CheckTree(cam->GetFrustum()))
+		//{
+		//	if (!lodIsEnabled)
+		//	{
+		//		if (drawable->IsConcave()) //L j a e m p
+		//		{
+		//			context->RSSetState(nonBackfaceCullRS.Get());
+		//		}
+		//		else
+		//		{
+		//			context->RSSetState(regularRS.Get());
+		//		}
+		//	}
+		//	//drawable->Draw(context.Get());
+		//	DrawInstanced(drawable);
+		//	visibleDrawables++;
+		//}
+
+		for (auto& drawable : m_drawables)
 		{
 			if (!lodIsEnabled)
 			{
-				if (drawable->IsConcave()) //L j a e m p
+				if (drawable.IsConcave()) //L j a e m p
 				{
 					context->RSSetState(nonBackfaceCullRS.Get());
 				}
@@ -892,11 +948,13 @@ void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIE
 					context->RSSetState(regularRS.Get());
 				}
 			}
-			drawable->Draw(context.Get());
+			//drawable->Draw(context.Get());
+			DrawInstanced(&drawable);
 			visibleDrawables++;
 		}
 
-		drawablesBeingRendered = visibleDrawables;
+		//drawablesBeingRendered = visibleDrawables;
+		drawablesBeingRendered = m_instancedDrawableCount;
 	}
 	else
 	{
@@ -915,7 +973,7 @@ void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIE
 				}
 			}
 
-			DrawInstanced(drawable);
+			DrawInstanced(&drawable);
 		}
 	}
 
@@ -982,46 +1040,44 @@ void D3D11Engine::DefPassTwo(Camera* cam, ID3D11UnorderedAccessView* uav, UINT c
 	//Everything is unbound when we exit DefPassTwo()
 }
 
-void D3D11Engine::DrawInstanced(Drawable& baseDrawable, bool isDepth)
+void D3D11Engine::DrawInstanced(const Drawable* baseDrawable, bool isDepth)
 {
 	//Bind the constant buffer of the original drawable, since it's needed to access the "hasNormalMap" boolean (Only for our "regular" vertex shader)
-	if (isDepth)
+	if (!isDepth)
 	{
-		context->PSSetConstantBuffers(0, 1, baseDrawable.GetConstantBuffer().GetBufferAddress());
+		context->PSSetConstantBuffers(0, 1, baseDrawable->GetConstantBuffer().GetBufferAddress());
 	}
 
 	//Calculate and set vertex buffers (Using original drawable vertex buffer and the instanced buffer)
 	UINT stride[2] = { sizeof(Vertex), sizeof(InstancedData) };
 	UINT offset[2] = { 0, 0 };
-	ID3D11Buffer* vertexBuffers[2] = { baseDrawable.GetVertexBuffer().GetBuffer(), m_instancedBuffer.Get() };
+	ID3D11Buffer* vertexBuffers[2] = { baseDrawable->GetVertexBuffer().GetBuffer(), m_instancedBuffer.Get() };
 	context->IASetVertexBuffers(0, 2, vertexBuffers, stride, offset);
 
 	//Set index buffer
-	context->IASetIndexBuffer(baseDrawable.GetIndexBuffer().GetBuffer(), DXGI_FORMAT_R32_UINT, 0);
+	context->IASetIndexBuffer(baseDrawable->GetIndexBuffer().GetBuffer(), DXGI_FORMAT_R32_UINT, 0);
 
 	//Bind all of the original drawables' submeshes
-	for (auto& submesh : baseDrawable.GetSubMeshes())
+	for (auto& submesh : baseDrawable->GetSubMeshes())
 	{
 		submesh.Bind(context.Get(), false, true);
 	}
 
 	//Perform draw call
-	context->DrawIndexedInstanced(baseDrawable.GetIndexBuffer().GetIndexCount(), m_instancedDrawableCount, 0, 0, 0);
+	UINT count = isDepth ? m_totalDrawableCount : m_instancedDrawableCount;
+	context->DrawIndexedInstanced(baseDrawable->GetIndexBuffer().GetIndexCount(), count, 0, 0, 0);
 
 	//Unbind all of the original drawables' submeshes
-	for (auto& submesh : baseDrawable.GetSubMeshes())
+	for (auto& submesh : baseDrawable->GetSubMeshes())
 	{
 		submesh.Unbind(context.Get(), false, true);
 	}
 
 	//Unbind the constant buffer if we had to bind it earlier
-	if (isDepth)
+	if (!isDepth)
 	{
 		context->PSSetConstantBuffers(0, 0, NULL);
 	}
-
-	//Update count (For display in ImGui)
-	drawablesBeingRendered = m_instancedDrawableCount;
 }
 
 /*INITIALIZERS FOR DIRECTX STUFF*/
