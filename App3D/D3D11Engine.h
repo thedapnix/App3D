@@ -97,6 +97,7 @@ private:
 	void RenderDepth(float dt);
 	void DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, bool isReflection = false);
 	void DefPassTwo(Camera* cam, ID3D11UnorderedAccessView* uav, UINT csX, UINT csY);
+	void DrawInstanced(Drawable& baseDrawable, bool isDepth = false);
 
 	/*Initializers because this constructor would be HUGE otherwise*/
 	//"Regular" stuff

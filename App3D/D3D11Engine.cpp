@@ -550,39 +550,10 @@ void D3D11Engine::Render(ID3D11UnorderedAccessView* uav, ID3D11DepthStencilView*
 		}
 		else
 		{
-			/*for (auto& drawable : m_drawables)
+			for (auto& drawable : m_drawables)
 			{
-				drawable.Draw(context.Get());
+				DrawInstanced(drawable);
 			}
-			drawablesBeingRendered = (int)m_drawables.size();*/
-
-			context->VSSetConstantBuffers(0, 1, m_drawables.at(0).GetConstantBuffer().GetBufferAddress());
-			//context->PSSetConstantBuffers(0, 1, m_drawables.at(0).GetConstantBuffer().GetBufferAddress());
-
-			UINT stride[2] = { sizeof(Vertex), sizeof(InstancedData) };
-			UINT offset[2] = { 0, 0 };
-
-			ID3D11Buffer* vertexBuffers[2] = { m_drawables.at(0).GetVertexBuffer().GetBuffer(), m_instancedBuffer.Get() };
-			context->IASetVertexBuffers(0, 2, vertexBuffers, stride, offset);
-
-			context->IASetIndexBuffer(m_drawables.at(0).GetIndexBuffer().GetBuffer(), DXGI_FORMAT_R32_UINT, 0);
-
-			for (auto& submesh : m_drawables.at(0).GetSubMeshes())
-			{
-				submesh.Bind(context.Get(), false, true);
-			}
-
-			context->DrawIndexedInstanced(m_drawables.at(0).GetIndexBuffer().GetIndexCount(), m_instancedDrawableCount, 0, 0, 0);
-
-			for (auto& submesh : m_drawables.at(0).GetSubMeshes())
-			{
-				submesh.Unbind(context.Get(), false, true);
-			}
-
-			context->VSSetConstantBuffers(0, 0, NULL);
-			context->PSSetConstantBuffers(0, 0, NULL);
-
-			drawablesBeingRendered = m_instancedDrawableCount;
 		}
 
 		//Pov drawables are never culled so we do this outside the if-else check
@@ -856,36 +827,10 @@ void D3D11Engine::RenderDepth(float dt)
 		ID3D11Buffer* cameraCB = m_spotlights.GetCameraConstantBufferAt(i).GetBuffer();
 		context->VSSetConstantBuffers(0, 1, &cameraCB);
 
-		/*for (auto& drawable : m_drawables)
+		for (auto& drawable : m_drawables)
 		{
-			drawable.Draw(context.Get());
-		}*/
-
-		//context->VSSetConstantBuffers(0, 1, m_drawables.at(0).GetConstantBuffer().GetBufferAddress());
-		//context->PSSetConstantBuffers(0, 1, m_drawables.at(0).GetConstantBuffer().GetBufferAddress());
-
-		UINT stride[2] = { sizeof(Vertex), sizeof(InstancedData) };
-		UINT offset[2] = { 0, 0 };
-
-		ID3D11Buffer* vertexBuffers[2] = { m_drawables.at(0).GetVertexBuffer().GetBuffer(), m_instancedBuffer.Get() };
-		context->IASetVertexBuffers(0, 2, vertexBuffers, stride, offset);
-
-		context->IASetIndexBuffer(m_drawables.at(0).GetIndexBuffer().GetBuffer(), DXGI_FORMAT_R32_UINT, 0);
-
-		for (auto& submesh : m_drawables.at(0).GetSubMeshes())
-		{
-			submesh.Bind(context.Get(), false, true);
+			DrawInstanced(drawable, true);
 		}
-
-		context->DrawIndexedInstanced(m_drawables.at(0).GetIndexBuffer().GetIndexCount(), m_instancedDrawableCount, 0, 0, 0);
-
-		for (auto& submesh : m_drawables.at(0).GetSubMeshes())
-		{
-			submesh.Unbind(context.Get(), false, true);
-		}
-
-		//context->VSSetConstantBuffers(0, 0, NULL);
-		//context->PSSetConstantBuffers(0, 0, NULL);
 
 		context->VSSetConstantBuffers(0, 0, NULL); //unbind the camera cb
 	}
@@ -956,54 +901,22 @@ void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIE
 	else
 	{
 		//Per drawable: bind vertex and index buffers, then draw them
-		//for (auto& drawable : m_drawables)
-		//{
-		//	if (!lodIsEnabled)
-		//	{
-		//		if (drawable.IsConcave()) //L j a e m p
-		//		{
-		//			context->RSSetState(nonBackfaceCullRS.Get());
-		//		}
-		//		else
-		//		{
-		//			context->RSSetState(regularRS.Get());
-		//		}
-		//	}
-
-		//	drawable.Draw(context.Get());
-		//}
-
-		//drawablesBeingRendered = (int)m_drawables.size();
-
-		//UNGODLY LEVELS OF TEMP
-		//context->VSSetConstantBuffers(0, 1, m_drawables.at(0).GetConstantBuffer().GetBufferAddress());
-		context->PSSetConstantBuffers(0, 1, m_drawables.at(0).GetConstantBuffer().GetBufferAddress()); //Needed to access the "hasNormalMap" boolean
-
-		UINT stride[2] = { sizeof(Vertex), sizeof(InstancedData) };
-		UINT offset[2] = { 0, 0 };
-
-		ID3D11Buffer* vertexBuffers[2] = { m_drawables.at(0).GetVertexBuffer().GetBuffer(), m_instancedBuffer.Get() };
-		context->IASetVertexBuffers(0, 2, vertexBuffers, stride, offset);
-
-		context->IASetIndexBuffer(m_drawables.at(0).GetIndexBuffer().GetBuffer(), DXGI_FORMAT_R32_UINT, 0);
-
-		for (auto& submesh : m_drawables.at(0).GetSubMeshes())
+		for (auto& drawable : m_drawables)
 		{
-			submesh.Bind(context.Get(), false, true);
+			if (!lodIsEnabled)
+			{
+				if (drawable.IsConcave()) //L j a e m p
+				{
+					context->RSSetState(nonBackfaceCullRS.Get());
+				}
+				else
+				{
+					context->RSSetState(regularRS.Get());
+				}
+			}
+
+			DrawInstanced(drawable);
 		}
-
-		context->DrawIndexedInstanced(m_drawables.at(0).GetIndexBuffer().GetIndexCount(), m_instancedDrawableCount, 0, 0, 0);
-
-		for (auto& submesh : m_drawables.at(0).GetSubMeshes())
-		{
-			submesh.Unbind(context.Get(), false, true);
-		}
-
-		//context->VSSetConstantBuffers(0, 0, NULL);
-		context->PSSetConstantBuffers(0, 0, NULL);
-		
-		drawablesBeingRendered = m_instancedDrawableCount;
-
 	}
 
 	//:)
@@ -1067,6 +980,48 @@ void D3D11Engine::DefPassTwo(Camera* cam, ID3D11UnorderedAccessView* uav, UINT c
 	context->CSSetSamplers(0, 1, nullSamplers);
 
 	//Everything is unbound when we exit DefPassTwo()
+}
+
+void D3D11Engine::DrawInstanced(Drawable& baseDrawable, bool isDepth)
+{
+	//Bind the constant buffer of the original drawable, since it's needed to access the "hasNormalMap" boolean (Only for our "regular" vertex shader)
+	if (isDepth)
+	{
+		context->PSSetConstantBuffers(0, 1, baseDrawable.GetConstantBuffer().GetBufferAddress());
+	}
+
+	//Calculate and set vertex buffers (Using original drawable vertex buffer and the instanced buffer)
+	UINT stride[2] = { sizeof(Vertex), sizeof(InstancedData) };
+	UINT offset[2] = { 0, 0 };
+	ID3D11Buffer* vertexBuffers[2] = { baseDrawable.GetVertexBuffer().GetBuffer(), m_instancedBuffer.Get() };
+	context->IASetVertexBuffers(0, 2, vertexBuffers, stride, offset);
+
+	//Set index buffer
+	context->IASetIndexBuffer(baseDrawable.GetIndexBuffer().GetBuffer(), DXGI_FORMAT_R32_UINT, 0);
+
+	//Bind all of the original drawables' submeshes
+	for (auto& submesh : baseDrawable.GetSubMeshes())
+	{
+		submesh.Bind(context.Get(), false, true);
+	}
+
+	//Perform draw call
+	context->DrawIndexedInstanced(baseDrawable.GetIndexBuffer().GetIndexCount(), m_instancedDrawableCount, 0, 0, 0);
+
+	//Unbind all of the original drawables' submeshes
+	for (auto& submesh : baseDrawable.GetSubMeshes())
+	{
+		submesh.Unbind(context.Get(), false, true);
+	}
+
+	//Unbind the constant buffer if we had to bind it earlier
+	if (isDepth)
+	{
+		context->PSSetConstantBuffers(0, 0, NULL);
+	}
+
+	//Update count (For display in ImGui)
+	drawablesBeingRendered = m_instancedDrawableCount;
 }
 
 /*INITIALIZERS FOR DIRECTX STUFF*/
