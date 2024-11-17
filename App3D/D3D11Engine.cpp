@@ -92,48 +92,98 @@ void D3D11Engine::Update(float dt)
 	m_particles.UpdateConstantBuffer(context.Get(), m_particleVar);
 
 	//Time to stop ignoring culling, but I wonder how that'll go considering the quadtree takes in drawables, not instances. Will it be as simple as swapping?
+	//When we only have one type of object, it's faster to *not* cull, because rendering instanced drawables is so fast. I'm guessing different meshes will change this fact
 	m_instancedDrawableCount = 0;
 	if (cullingIsEnabled)
 	{
 		//Ignore the quadtree for now and do some good old fashioned culling
-		D3D11_MAPPED_SUBRESOURCE mappedData;
-		context->Map(m_instancedBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedData);
+		//D3D11_MAPPED_SUBRESOURCE mappedData;
+		//context->Map(m_instancedBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedData);
 
-		InstancedData* dataView = reinterpret_cast<InstancedData*>(mappedData.pData);
+		//InstancedData* dataView = reinterpret_cast<InstancedData*>(mappedData.pData);
 
-		for (UINT i = 0; i < m_instancedData.size(); ++i)
-		{
-			//Get the world transform of the instanced object
-			XMMATRIX world = XMLoadFloat4x4(&m_instancedData[i].world);
+		//for (UINT i = 0; i < m_instancedData.size(); ++i)
+		//{
+		//	//Get the world transform of the instanced object
+		//	XMMATRIX world = XMLoadFloat4x4(&m_instancedData[i].world);
 
-			//Since my camera frustum is in world space, we need to transform the bounding box into its world position
-			//Temp: Craft a -1 to +1 aabb since our drawables already have their bounding boxes transformed (oops)
-			BoundingBox box = defaultBox;
-			box.Transform(box, XMMatrixTranspose(world));
+		//	//Since my camera frustum is in world space, we need to transform the bounding box into its world position
+		//	//Temp: Craft a -1 to +1 aabb since our drawables already have their bounding boxes transformed (oops)
+		//	BoundingBox box = defaultBox;
+		//	box.Transform(box, XMMatrixTranspose(world));
 
-			//Add to the list of visible instanced objects if the camera frustum intersects with it :)
-			if (m_camera.get()->GetFrustum().Intersects(box))
-			{
-				dataView[m_instancedDrawableCount++] = m_instancedData[i];
-			}
-		}
+		//	//Add to the list of visible instanced objects if the camera frustum intersects with it :)
+		//	if (m_camera.get()->GetFrustum().Intersects(box))
+		//	{
+		//		dataView[m_instancedDrawableCount++] = m_instancedData[i];
+		//	}
+		//}
 
-		context->Unmap(m_instancedBuffer.Get(), 0);
+		//context->Unmap(m_instancedBuffer.Get(), 0);
 	}
 	else
 	{
-		//Simply taking all of our instanced data and counting it as being in view
-		D3D11_MAPPED_SUBRESOURCE mappedData;
+		/*D3D11_MAPPED_SUBRESOURCE mappedData;
 		context->Map(m_instancedBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedData);
 
 		InstancedData* dataView = reinterpret_cast<InstancedData*>(mappedData.pData);
 
-		for (UINT i = 0; i < m_instancedData.size(); ++i)
+		for (UINT j = 0; j < m_instancedData.size(); ++j)
 		{
-			dataView[m_instancedDrawableCount++] = m_instancedData[i];
+			dataView[m_instancedDrawableCount++] = m_instancedData[j];
 		}
 
-		context->Unmap(m_instancedBuffer.Get(), 0);
+		context->Unmap(m_instancedBuffer.Get(), 0);*/
+
+
+		//Instanced buffer setup in LevelSetup.cpp
+		//First one: Begin = 0, End = 10000         (    0 + 0), (    0 + 10000)
+		//Second one: Begin = 10001, End = 10700    (10000 + 1), (10000 +   700)
+
+		int x = 0;								//First buffer handles from 0 to 10000, second handles 10001 to 10700 (becase m_instancedData holds all the data combined)
+		int y = 0;								//This means x will start as (0 + 0) and then (10000 + 1), and any iteration after the first will have to do y -= 1
+		int n = 0; // = m_instancedDataSizes[i];//n will be 10000 followed by 700
+
+		size_t nBuffers = m_instancedBuffers.size();
+
+		//for (UINT i = 0; i < nBuffers; i++)
+		//{
+		//	D3D11_MAPPED_SUBRESOURCE mappedData;
+		//	context->Map(m_instancedBuffers.at(i).Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedData);
+
+		//	InstancedData* dataView = reinterpret_cast<InstancedData*>(mappedData.pData);
+		//	
+		//	n = x + m_instancedDataSizes[i]; //First iteration 0 + 10000, second iteration 10000 + 700
+
+		//	//First iteration j = 0 + 0, and is checked against being lesser than 10000), second iteration j = 10000 + 1, and is checked against being lesser than 10700
+		//	for (UINT j = x + i; j < n; ++j)
+		//	{
+		//		dataView[m_instancedDrawableCount++] = m_instancedData[j];
+		//	}
+
+		//	x = m_instancedDataSizes[i]; //Set to 10000 so next iteration will go hard (This assignment operator should be less expensive than branching to see if we should ignore it)
+
+		//	context->Unmap(m_instancedBuffers.at(i).Get(), 0);
+		//}
+
+
+		//Call me Gordon Ramsay
+		for (UINT i = 0; i < nBuffers; i++)
+		{
+			D3D11_MAPPED_SUBRESOURCE mappedData;
+			context->Map(m_instancedBuffers.at(i).Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedData);
+
+			InstancedData* dataView = reinterpret_cast<InstancedData*>(mappedData.pData);
+
+			n = m_instancedDataSizes[i];
+
+			for (UINT j = 0; j < n; j++)
+			{
+				dataView[j] = m_instancedData[m_instancedDrawableCount++];
+			}
+
+			context->Unmap(m_instancedBuffers.at(i).Get(), 0);
+		}
 	}
 
 	//RENDER
@@ -148,12 +198,17 @@ void D3D11Engine::Update(float dt)
 		}
 	}
 
+	//For ImGui display (Got rid of it being inside the render functions because honestly that's silly
+	drawablesBeingRendered = m_instancedDrawableCount;
+
 //#ifdef _DEBUG
 //	ImGuiSceneData(this, false, 0, 0,0);
 //#endif
 
 	//PRESENT
 	swapChain->Present(0, 0); //vSync, 1 = enabled, 0 = disabled (or in other terms, fps limit to screen hz or uncap)
+
+
 }
 
 void D3D11Engine::ImGuiSceneData(D3D11Engine* d3d11engine, bool shouldUpdateFps, int state, int rawX, int rawY)
@@ -333,7 +388,7 @@ int D3D11Engine::CreateOrbitDrawable(std::string objFileName, DirectX::XMFLOAT3 
 
 int D3D11Engine::CreateInstancedDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
 {
-	return InitDrawableFromFileInstanced(objFileName, m_totalDrawableCount, 
+	return InitDrawableFromFileInstanced(objFileName, m_totalDrawableCount, m_instancedDrawableCounts,
 		m_instanceMap, m_transformMap, m_drawables, 
 		scale, rotate, translate, 
 		m_textures, device.Get(), 
@@ -465,50 +520,56 @@ bool D3D11Engine::SetupLights()
 	return true;
 }
 
-void D3D11Engine::SetupInstancedBuffer()
+void D3D11Engine::ResizeInstanceBuffer(int size)
 {
-	//Instanced data (125 crates in one draw-call)
-	//const int n = 8;
-	//m_instancedData.resize(n * n * n);
+	m_instancedData.resize(size);
+}
 
-	////Total
-	//float width = 20.0f;
-	//float height = 20.0f;
-	//float depth = 20.0f;
-
-	////Distance per crate
-	//float x = -0.5f * width;
-	//float y = -0.5f * height;
-	//float z = -0.5f * depth;
-	//float dx = width / (n - 1);
-	//float dy = height / (n - 1);
-	//float dz = depth / (n - 1);
-
-	////Cursed
-	//for (int k = 0; k < n; ++k)
-	//{
-	//	for (int i = 0; i < n; ++i)
-	//	{
-	//		for (int j = 0; j < n; ++j)
-	//		{
-	//			m_instancedData[k * n * n + i * n + j].world = XMFLOAT4X4(
-	//				1.0f, 0.0f, 0.0f, 0.0f,
-	//				0.0f, 1.0f, 0.0f, 0.0f,
-	//				0.0f, 0.0f, 1.0f, 0.0f,
-	//				x + j * dx, y + i * dy, z + k * dz, 1.0f);
-	//		}
-	//	}
-	//}
-
-	//New: Setup instanced data by taking in all the transforms of instanced drawables
-	const int n = m_transformMap.size();
-	m_instancedData.resize(n);
-	//int i = 0;
-	for (auto& element : m_transformMap)
+void D3D11Engine::SetupInstancedBuffer(int begin, int end)
+{	
+	//Calculate instanced data
+	for (int i = begin; i < end; i++)
 	{
-		m_instancedData[element.first].world = element.second;
-		//i++;
+		m_instancedData[i].world = m_transformMap[i];
 	}
+
+	//if (begin != 0) begin--; //Because of how the begin will always be the end of the previous +1 after the first m_instancedData vector, we manually -1 any vecSize that isn't the first
+	int vecSize = end - begin;
+	m_instancedDataSizes.push_back(vecSize);
+
+	//Initialize the buffer description
+	D3D11_BUFFER_DESC ibd = {};
+	ibd.Usage = D3D11_USAGE_DYNAMIC;
+	ibd.ByteWidth = sizeof(InstancedData) * vecSize;
+	ibd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	ibd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	ibd.MiscFlags = 0;
+	ibd.StructureByteStride = 0;
+
+	//Create the buffer
+	ID3D11Buffer* instancedBuffer = {};
+	m_instancedBuffers.push_back(instancedBuffer);
+	size_t bufferIndex = m_instancedBuffers.size() - 1;
+	HRESULT hr = device->CreateBuffer(&ibd, NULL, m_instancedBuffers[bufferIndex].GetAddressOf());
+	if (FAILED(hr))
+	{
+		MessageBox(NULL, L"Failed to create instanced buffer you fucking bozo", L"Error", MB_OK);
+	}
+}
+
+/*void D3D11Engine::SetupInstancedBuffer(const InstanceInfo info)
+{
+	//New: Setup instanced data by taking in all the transforms of instanced drawables
+	//int og = info.originalIndex;
+	//const int n = m_drawables.at(og).GetInstanceInfo().instances.size();
+	////m_instancedDatas[og].resize(n);
+	//m_instancedData.resize(n);
+
+	//for (auto& element : m_drawables.at(og).GetInstanceInfo().instances)
+	//{
+	//	m_instancedData[element.index].world = element.world;
+	//	//m_instancedData[element.first].world = element.second;
+	//}
 
 	//And init the buffer
 	D3D11_BUFFER_DESC ibd = {};
@@ -519,12 +580,12 @@ void D3D11Engine::SetupInstancedBuffer()
 	ibd.MiscFlags = 0;
 	ibd.StructureByteStride = 0;
 
-	HRESULT hr = device->CreateBuffer(&ibd, NULL, m_instancedBuffer.GetAddressOf());
+	HRESULT hr = device->CreateBuffer(&ibd, NULL, m_instancedBuffers[0].GetAddressOf());
 	if (FAILED(hr))
 	{
 		MessageBox(NULL, L"Failed to create instanced buffer you fucking bozo", L"Error", MB_OK);
 	}
-}
+}*/
 
 /*RENDER FUNCTIONS*/
 void D3D11Engine::Render(ID3D11UnorderedAccessView* uav, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, Camera* cam, const float clear[4], UINT csX, UINT csY, bool isReflection)
@@ -584,7 +645,6 @@ void D3D11Engine::Render(ID3D11UnorderedAccessView* uav, ID3D11DepthStencilView*
 				}
 			}
 			//drawablesBeingRendered = visibleDrawables;
-			drawablesBeingRendered = m_instancedDrawableCount;
 		}
 		else
 		{
@@ -954,7 +1014,6 @@ void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIE
 		}
 
 		//drawablesBeingRendered = visibleDrawables;
-		drawablesBeingRendered = m_instancedDrawableCount;
 	}
 	else
 	{
@@ -972,7 +1031,6 @@ void D3D11Engine::DefPassOne(Camera* cam, ID3D11DepthStencilView* dsv, D3D11_VIE
 					context->RSSetState(regularRS.Get());
 				}
 			}
-
 			DrawInstanced(&drawable);
 		}
 	}
@@ -1051,7 +1109,9 @@ void D3D11Engine::DrawInstanced(const Drawable* baseDrawable, bool isDepth)
 	//Calculate and set vertex buffers (Using original drawable vertex buffer and the instanced buffer)
 	UINT stride[2] = { sizeof(Vertex), sizeof(InstancedData) };
 	UINT offset[2] = { 0, 0 };
-	ID3D11Buffer* vertexBuffers[2] = { baseDrawable->GetVertexBuffer().GetBuffer(), m_instancedBuffer.Get() };
+
+	//Works by aligning the indices of every drawable with its own instanced buffer (Could also just put instanced buffers into the drawable class)
+	ID3D11Buffer* vertexBuffers[2] = { baseDrawable->GetVertexBuffer().GetBuffer(), m_instancedBuffers[baseDrawable->GetIndex()].Get()};
 	context->IASetVertexBuffers(0, 2, vertexBuffers, stride, offset);
 
 	//Set index buffer
@@ -1064,7 +1124,8 @@ void D3D11Engine::DrawInstanced(const Drawable* baseDrawable, bool isDepth)
 	}
 
 	//Perform draw call
-	UINT count = isDepth ? m_totalDrawableCount : m_instancedDrawableCount;
+	//UINT count = isDepth ? m_totalDrawableCount : m_instancedDrawableCount;
+	UINT count = baseDrawable->GetInstanceCount();
 	context->DrawIndexedInstanced(baseDrawable->GetIndexBuffer().GetIndexCount(), count, 0, 0, 0);
 
 	//Unbind all of the original drawables' submeshes

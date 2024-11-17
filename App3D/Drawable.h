@@ -170,6 +170,12 @@ public:
 		funcPtr(m_drawableInfo, drawables);
 	}
 
+	//New: For instancing
+	void SetIndex(int idx);
+	const int& GetIndex() const;
+	void SetInstanceCount(int n);
+	const int& GetInstanceCount() const;
+
 private:
 	__declspec(align(16)) struct ConstantBufferData
 	{
@@ -184,6 +190,10 @@ private:
 	ConstantBufferData m_cbd;
 	ConstantBuffer m_constantBuffer;
 	void CalculateAndTransposeWorld(const DirectX::XMFLOAT3& pos = { 0.0f, 0.0f, 0.0f }, Camera* camera = nullptr);
+
+	//New: For instancing
+	int m_index = -1;
+	int m_instanceCount = 0;
 
 	std::vector<SubMesh> m_submeshes;
 

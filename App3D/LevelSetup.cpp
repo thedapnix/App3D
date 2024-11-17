@@ -680,95 +680,122 @@ void SetupTestLevel(D3D11Engine* engine)
 
 void SetupInstancedLevel(D3D11Engine* engine)
 {
-    //Average FPS: 2500
-    //Process Memory: 122MB
-
-    //Increasing the crates from 125 to 512 (5*5*5 to 8*8*8) has no impact on performance (How cracked is that)
-
-    //engine->CreateInstancedDrawable("Meshes/Test/crate.obj");
-
-     //Grid-size
-    const int n = 8;
-
-    //Total
-    float width = 16.0f;
-    float height = 16.0f;
-    float depth = 16.0f;
-
-    //Between each instance
-    float x = -0.5f * width;
-    float y = -0.5f * height;
-    float z = -0.5f * depth;
-    float dx = width / (n - 1);
-    float dy = height / (n - 1);
-    float dz = depth / (n - 1);
-
     /*
-    m_instancedData[k * n * n + i * n + j].world = XMFLOAT4X4(
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        x + j * dx, y + i * dy, z + k * dz, 1.0f);
+    10000 crates
+    700 brick tiles
+    100 spotlights
+
+    Average FPS: 52 (in debug mode)
+    Process Memory: 122MB
     */
 
-    /*for (int k = 0; k < n; ++k)
+    //Floor (10000 crates)
+    /*for (int i = 0; i < 100; i++)
     {
-        for (int i = 0; i < n; ++i)
+        for (int j = 0; j < 100; j++)
         {
-            for (int j = 0; j < n; ++j)
-            {
-                engine->CreateInstancedDrawable("Meshes/Test/crate.obj", { -10.0f + j * dx, -10.0f + i * dy, 10.0f + k * dz });
-            }
+            engine->CreateInstancedDrawable("Meshes/Test/crate.obj", { -10.0f + (float)i * 2.0f, 0.0f, 0.0f + (float)j * 2.0f});
         }
     }*/
 
-    //Floor (100 crates)
+    //Left wall (700 brick tiles)
+    //for (int i = 0; i < 7; i++)
+    //{
+    //    for (int j = 0; j < 100; j++)
+    //    {
+    //        engine->CreateInstancedDrawable("Meshes/Test/wall.obj", { -10.0f, 2.0f + (float)i * 2.0f, 0.0f + (float)j * 2.0f}); //So this should be a new instanced object, ooooooo
+    //    }
+    //}
+
+    //Right wall (Another 70 crates) (700)
+    /*for (int i = 0; i < 7; i++)
+    {
+        for (int j = 0; j < 100; j++)
+        {
+            engine->CreateInstancedDrawable("Meshes/Test/crate.obj", { 188.0f, 2.0f + (float)i * 2.0f, 0.0f + (float)j * 2.0f });
+        }
+    }*/
+
+    //Back wall (56 crates) (686)
+    /*for (int i = 0; i < 7; i++)
+    {
+        for (int j = 0; j < 98; j++)
+        {
+            engine->CreateInstancedDrawable("Meshes/Test/crate.obj", { -8.0f + (float)j * 2.0f, 2.0f + (float)i * 2.0f, 198.0f});
+        }
+    }*/
+
+    //More serious level layout
+    //400 5x1x5 stone floor tiles (The deferred lighting gets fucked if the drawables don't line up with the walls, what's up with that?????)
+    for (int i = 0; i < 20; i++)
+    {
+        for (int j = 0; j < 20; j++)
+        {
+            engine->CreateInstancedDrawable("Meshes/Test/stone.obj", { -6.0f + (float)i * 10.0f, 0.0f, 4.0f + (float)j * 10.0f }, { 5.0f, 1.0f, 5.0f });
+        }
+    }
+    //10 1x8x10 brick wall tiles on each side the platform
+    for (int i = 0; i < 2; i++)
+    {
+        for (int j = 0; j < 10; j++)
+        {
+            engine->CreateInstancedDrawable("Meshes/Test/wall.obj", { -10.0f + (float)i * 198.0f, 9.0f, 9.0f + (float)j * 20.0f}, {1.0f, 8.0f, 10.0f});
+        }
+    }
+    //10 10x8x1 brick wall tiles at the back the platform
+    for (int i = 0; i < 10; i++)
+    {
+        engine->CreateInstancedDrawable("Meshes/Test/wall.obj", { -1.0f + (float)i * 20.0f, 9.0f, 198.0f }, { 10.0f, 8.0f, 1.0f });
+    }
+    //4225 wooden crates across the floor
+    for (int i = 0; i < 65; i++)
+    {
+        for (int j = 0; j < 65; j++)
+        {
+            engine->CreateInstancedDrawable("Meshes/Test/crate.obj", { -6.5f + (float)i * 3.0f, 2.0f, 2.0f + (float)j * 3.0f});
+        }
+    }
+
+    //Apply normalmaps (Only needed on the og drawables, how cracked is that
+    engine->ApplyNormalMapToDrawable(0, "NormalMaps/stone_fancy.jpg");
+    engine->ApplyNormalMapToDrawable(1, "NormalMaps/brick_fancy.jpg");
+    engine->ApplyNormalMapToDrawable(2, "NormalMaps/wood_fancy_invert.png");
+
+    //First one: Begin = 0, End = 10000        (    0), (    0 + 10000)
+    //Second one: Begin = 1000, End = 10700    (10000), (10000 +   700)
+    int previousBegin = 0; 
+    int previousEnd = 0;
+    std::vector<int> vecX;
+    std::vector<int> vecY;
+    int vecFinal = 0;
+
+    //Calculate buffer stuff
+    size_t nDrawables = engine->GetDrawables().size();
+    for (int i = 0; i < nDrawables; i++) //In this case there are 2 original drawables
+    {
+        vecX.push_back(previousEnd);
+        vecY.push_back(previousEnd + engine->GetDrawables().at(i).GetInstanceCount());
+
+        previousEnd = vecY[i];
+    }
+
+    //Resize the total instance buffer to be all the drawables (including instances)
+    engine->ResizeInstanceBuffer(previousEnd);
+
+    //Setup instance buffers per drawable using previous calculations
+    for (int i = 0; i < nDrawables; i++)
+    {
+        engine->SetupInstancedBuffer(vecX[i], vecY[i]);
+    }
+
+    //Lights
     for (int i = 0; i < 10; i++)
     {
         for (int j = 0; j < 10; j++)
         {
-            engine->CreateInstancedDrawable("Meshes/Test/crate.obj", { -10.0f + (float)i * 2.0f, 0.0f, 0.0f + (float)j * 2.0f});
+            engine->CreateLightSpot({ -1.0f + (float)i * 20.0f, 16.0f, 8.0f + (float)j * 20.0f }, 0.75f, 0.0f, 0.5f, { 1.0f, 1.0f, 1.0f });
         }
     }
-
-    //Left wall (70 crates)
-    for (int i = 0; i < 7; i++)
-    {
-        for (int j = 0; j < 10; j++)
-        {
-            engine->CreateInstancedDrawable("Meshes/Test/crate.obj", { -10.0f, 2.0f + (float)i * 2.0f, 0.0f + (float)j * 2.0f});
-        }
-    }
-
-    //Right wall (Another 70 crates)
-    for (int i = 0; i < 7; i++)
-    {
-        for (int j = 0; j < 10; j++)
-        {
-            engine->CreateInstancedDrawable("Meshes/Test/crate.obj", { 8.0f, 2.0f + (float)i * 2.0f, 0.0f + (float)j * 2.0f });
-        }
-    }
-
-    //Back wall (56 crates)
-    for (int i = 0; i < 7; i++)
-    {
-        for (int j = 0; j < 8; j++)
-        {
-            engine->CreateInstancedDrawable("Meshes/Test/crate.obj", { -8.0f + (float)j * 2.0f, 2.0f + (float)i * 2.0f, 18.0f});
-        }
-    }
-
-    engine->CreateInstancedDrawable("Meshes/Test/crate.obj", { -1.0f, 4.0f, 8.0f });
-
-    engine->ApplyNormalMapToDrawable(0, "NormalMaps/wood_fancy_invert.png");
-
-    //296 crates (with normalmaps) and a light: 2300 fps (297, put a little boy in the middle)
-
-    //Finale yo
-    engine->SetupInstancedBuffer();
-
-    engine->CreateLightSpot({ -1.0f, 16.0f, 8.0f }, 0.75f, 0.0f, 0.5f, { 1.0f, 1.0f, 1.0f });
-    //engine->CreateLightSpot({ 0.0f, 16.0f, -4.0f }, 0.75f, 0.0f, 0.5f, { 1.0f, 1.0f, 1.0f });
 }
 
 void SetupNonInstancedLevel(D3D11Engine* engine)

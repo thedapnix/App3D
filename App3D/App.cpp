@@ -145,7 +145,7 @@ void App::DoSetup()
     //m_engine->GetCamera().RotateY(DirectX::XM_PIDIV2);
 
     //For the test level
-    m_engine->GetCamera().SetPosition({ 0.0f, 12.0f, -20.0f });
+    m_engine->GetCamera().SetPosition({ 90.0f, 12.0f, -160.0f });
     //m_engine->GetCamera().Pitch(0.1f);
 
     //Gun (Remove when appropriate, obvi)

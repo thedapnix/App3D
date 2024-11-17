@@ -54,13 +54,13 @@ void main(uint3 DTid : SV_DispatchThreadID) //So the DTid is the index of the sp
     for (int i = 0; i < count; i++)
     {
         //Quick little light culling for a performance boost
-        float3 lightToCam = abs(spotlights[i].origin - cameraPosition);
-        if(lightToCam.x >= 100.0f || 
-            lightToCam.y >= 100.0f ||
-            lightToCam.z >= 100.0f)
-        {
-            continue;
-        }
+        //float3 lightToCam = abs(spotlights[i].origin - cameraPosition);
+        //if (lightToCam.x >= 100.0f ||
+        //    lightToCam.y >= 100.0f ||
+        //    lightToCam.z >= 100.0f)
+        //{
+        //    continue;
+        //}
         
         //Since shadow cameras look in a specific direction, they're not compatible with point lights. Potentially I could make point lights have 4 shadow cameras but not right now
         bool isPointLight = false; //Temp to disable shadows with point lights

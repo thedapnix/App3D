@@ -318,10 +318,11 @@ int InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToFi
 }
 
 //God this is becoming so cluttered, but it's backend so it's fine right?
-int InitDrawableFromFileInstanced(std::string objFileName, UINT& nDrawables,
-	std::unordered_map<std::string, std::vector<int>>& instances,
-	std::unordered_map<int, DirectX::XMFLOAT4X4>& transforms,
-	std::vector<Drawable>& vecToFill,
+int InitDrawableFromFileInstanced(std::string objFileName, UINT& nDrawables,	//Path + name of obj, as well as TOTAL drawable count (og + instanced)
+	std::vector<UINT>& instancedDrawableCounts,									//Vector of instanced drawable counts, meant to split
+	std::unordered_map<std::string, std::vector<int>>& instances,				//Map linking objFileNames to the indices of the instanced drawables
+	std::unordered_map<int, DirectX::XMFLOAT4X4>& transforms,					//Map linking instanced drawable indices to a world transform
+	std::vector<Drawable>& vecToFill,											//Vector containing the og drawables
 	DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate,
 	std::unordered_map<std::string, ShaderResource>& textures, ID3D11Device* device,
 	int interact, std::vector<int> interactsWith)
@@ -337,9 +338,16 @@ int InitDrawableFromFileInstanced(std::string objFileName, UINT& nDrawables,
 			DirectX::XMMatrixTranslation(translate.x, translate.y, translate.z);
 		DirectX::XMStoreFloat4x4(&transforms[nDrawables], DirectX::XMMatrixTranspose(world));
 
-		//Total drawable count goes up even though we don't create a new mesh, and the index (count - 1) is added to the map of instances
-		nDrawables++;
-		instances[objFileName].push_back(nDrawables - 1);
+		//Align the index of the original drawable with the index of the instancedDrawableCounts vector so we know how many instanced drawables there are for that specific drawable
+		//E.g., you'll get the instanced drawables associated with their original counterpart by indexing into the instancedDrawableCounts vector using the index of the original
+		int ogIndex = instances[objFileName].at(0) - 1 + (instances.size() - 1);//Get the index of the "real" drawable (For crate, this should be 0, and brick should be 1)
+		//int ogIndex = vecToFill[]
+		instancedDrawableCounts.at(ogIndex)++;									//Increment the instanced drawable count associated with the corresponding original drawable
+		instances[objFileName].push_back(instancedDrawableCounts.at(ogIndex));	//Push back the instance to the map linking it to the objFileName
+		nDrawables++;															//Increment the total drawable count
+
+		//Update the instance count every time
+		vecToFill.at(ogIndex).SetInstanceCount(instancedDrawableCounts.at(ogIndex));
 
 		//Return the index of the last element, aka the element we just put in, aka the element we're most probably interested in modifying when we create something
 		return nDrawables - 1;
@@ -502,10 +510,11 @@ int InitDrawableFromFileInstanced(std::string objFileName, UINT& nDrawables,
 
 	bufferData.subMeshVector = parsed.submeshes;
 
-	Drawable cube(device, bufferData, scale, rotate, translate, interact, interactsWith);
-	cube.CreateBoundingBoxFromPoints(vMin, vMax);
+	Drawable object(device, bufferData, scale, rotate, translate, interact, interactsWith);
+	object.CreateBoundingBoxFromPoints(vMin, vMax);
 
-	vecToFill.push_back(cube);
+	object.SetIndex(vecToFill.size()); //It's the return of storing, because we can align drawable indices with instanced buffer indices
+	vecToFill.push_back(object);
 
 	//Here's the stuff that we'd otherwise do outside
 	//Store the world transform
@@ -514,17 +523,16 @@ int InitDrawableFromFileInstanced(std::string objFileName, UINT& nDrawables,
 		DirectX::XMMatrixTranslation(translate.x, translate.y, translate.z);
 	DirectX::XMStoreFloat4x4(&transforms[nDrawables], DirectX::XMMatrixTranspose(world));
 
-	//Total drawable count goes up even though we don't create a new mesh, and the index (count - 1) is added to the map of instances
-	nDrawables++;
-	instances[objFileName].push_back(nDrawables - 1);
+	//Align the index of the original drawable with the index of the instancedDrawableCounts vector so we know how many instanced drawables there are for that specific drawable
+	//E.g., you'll get the instanced drawables associated with their original counterpart by indexing into the instancedDrawableCounts vector using the index of the original
+	int ogIndex = vecToFill.size() - 1;										//Get the index of the "real" drawable (For crate, this should be 0, and brick should be 1)
+	instancedDrawableCounts.push_back(1);									//Add a new element vector of instanced drawable counts
+	instances[objFileName].push_back(instancedDrawableCounts.at(ogIndex));	//Push back the instance to the map linking it to the objFileName
+	nDrawables++;															//Increment the total drawable count
+
+	//Set the instance count of the previous drawable, as we've now reached a new original
+	//if(ogIndex != 0) vecToFill.at(ogIndex - 1).SetInstanceCount(instancedDrawableCounts.at(ogIndex - 1));
 
 	//Return the index of the last element, aka the element we just put in, aka the element we're most probably interested in modifying when we create something
 	return nDrawables - 1;
-
-	//nDrawables++;
-
-	//instances[objFileName].push_back(nDrawables - 1); //First one
-
-	////Return the index of the last element, aka the element we just put in, aka the element we're most probably interested in modifying when we create something
-	//return nDrawables - 1;
 }

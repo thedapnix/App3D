@@ -294,6 +294,26 @@ void Drawable::SetNormalMap(ID3D11Device* device, std::string ddsFileName)
 	m_isDirty = true; //Constant buffer will need to be updated
 }
 
+void Drawable::SetIndex(int idx)
+{
+	m_index = idx;
+}
+
+const int& Drawable::GetIndex() const
+{
+	return m_index;
+}
+
+void Drawable::SetInstanceCount(int n)
+{
+	m_instanceCount = n;
+}
+
+const int& Drawable::GetInstanceCount() const
+{
+	return m_instanceCount;
+}
+
 void Drawable::Destroy()
 {
 	m_drawableInfo.isActive = false;

@@ -23,6 +23,13 @@
 #include "EntityFramework.h" //ECS baby
 
 //New: struct for instanced data (Debating whether or not drawables should have this, or if it should be outside of the class)
+//struct InstancedData
+//{
+//	int originalIndex;
+//	std::vector<int> instancedIndices;
+//	std::vector <DirectX::XMFLOAT4X4> instancedTransforms;
+//};
+
 struct InstancedData
 {
 	DirectX::XMFLOAT4X4 world;
@@ -76,7 +83,9 @@ public:
 	bool SetupLights(); //Because of how my current Spotlights class works, going to change this in the future but I shouldn't procastinate too much by just making the engine cool
 
 	//New: Instanced (Similarly to how we call SetupQT() and SetupLights() after any SetupLevel()-call, we now also SetupInstancedBuffer())
-	void SetupInstancedBuffer();
+	//void SetupInstancedBuffer();
+	void ResizeInstanceBuffer(int size);
+	void SetupInstancedBuffer(int begin, int end);
 
 private:
 	//Deferred Renderer
@@ -138,9 +147,12 @@ private:
 	std::unordered_map<std::string, std::vector<int>> m_instanceMap; //Maps the mesh name (obj-file) to a vector of drawable indices
 	std::unordered_map<int, DirectX::XMFLOAT4X4> m_transformMap;
 	std::vector<InstancedData> m_instancedData;
-	Microsoft::WRL::ComPtr<ID3D11Buffer> m_instancedBuffer;
+	//Microsoft::WRL::ComPtr<ID3D11Buffer> m_instancedBuffer;
+	std::vector<Microsoft::WRL::ComPtr<ID3D11Buffer>> m_instancedBuffers; //Maybe I should only have one instanced buffer, and write to parts at a time? (Better yet, maybe I let every drawable have its own instanced buffer)
 	UINT m_instancedDrawableCount;
 	UINT m_totalDrawableCount = 0; //Trust
+	std::vector<UINT> m_instancedDrawableCounts;
+	std::vector<int> m_instancedDataSizes;
 
 	SpotLights m_spotlights;
 	std::unique_ptr<Camera> m_camera;
@@ -157,7 +169,7 @@ private:
 	int fpsCounter = 0;
 	std::string fpsString = "";
 	bool deferredIsEnabled = true;
-	bool cullingIsEnabled = true;
+	bool cullingIsEnabled = false; //Uhhhhhh i literally have better performance without culling
 	bool billboardingIsEnabled = false;
 	bool cubemapIsEnabled = true;
 	bool lodIsEnabled = false;
