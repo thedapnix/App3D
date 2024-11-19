@@ -55,19 +55,24 @@ public:
 	void UpdateMovingDrawables(float dt);
 
 	//Drawable and culling stuff
-	int CreateDrawable(			std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, 
-		DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
-	int CreateReflectiveDrawable(	std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, 
-		DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
-	int CreatePovDrawable(			std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, 
-		DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
-	int CreateConcaveDrawable(		std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, 
-		DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
-	int CreateOrbitDrawable(std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f },
-		DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
-	int CreateInstancedDrawable(std::string objFileName, DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f },
-		DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, int interact = 0, std::vector<int> interactsWith = {});
-	void ApplyNormalMapToDrawable(int index, std::string ddsFileName);
+	int CreateDrawable(			std::string objFileName, std::string normalmapFileName = "",
+		DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, 
+		int interact = 0, std::vector<int> interactsWith = {});
+	int CreateReflectiveDrawable(	std::string objFileName, std::string normalmapFileName = "", 
+		DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, 
+		int interact = 0, std::vector<int> interactsWith = {});
+	int CreatePovDrawable(			std::string objFileName, std::string normalmapFileName = "", 
+		DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, 
+		int interact = 0, std::vector<int> interactsWith = {});
+	int CreateConcaveDrawable(std::string objFileName, std::string normalmapFileName = "",
+		DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, 
+		int interact = 0, std::vector<int> interactsWith = {});
+	int CreateOrbitDrawable(std::string objFileName, std::string normalmapFileName = "", 
+		DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, 
+		int interact = 0, std::vector<int> interactsWith = {});
+	int CreateInstancedDrawable(std::string objFileName, std::string normalmapFileName = "", 
+		DirectX::XMFLOAT3 translate = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f }, DirectX::XMFLOAT3 rotate = { 0.0f, 0.0f, 0.0f }, 
+		int interact = 0, std::vector<int> interactsWith = {});
 	bool MoveDrawable(int i, DirectX::XMFLOAT3 dist);
 	bool SetupQT();
 	void RemoveDrawableInteraction(int id);
@@ -85,7 +90,8 @@ public:
 	//New: Instanced (Similarly to how we call SetupQT() and SetupLights() after any SetupLevel()-call, we now also SetupInstancedBuffer())
 	//void SetupInstancedBuffer();
 	void ResizeInstanceBuffer(int size);
-	void SetupInstancedBuffer(int begin, int end);
+	/*void SetupInstancedBuffer(int begin, int end);*/
+	void SetupInstancedBuffer(int begin, int end, int index);
 
 private:
 	//Deferred Renderer
@@ -144,8 +150,10 @@ private:
 	std::vector<LightData> m_lightDataVec;
 
 	//New: Instancing stuff
-	std::unordered_map<std::string, std::vector<int>> m_instanceMap; //Maps the mesh name (obj-file) to a vector of drawable indices
-	std::unordered_map<int, DirectX::XMFLOAT4X4> m_transformMap;
+	//std::unordered_map<std::string, std::vector<int>> m_instanceMap; //Maps the mesh name (obj-file) to a vector of drawable indices (as well as keeps track of the original)
+	std::unordered_map<std::string, InstanceInfo> m_instanceMap;
+	//std::unordered_map<int, DirectX::XMFLOAT4X4> m_transformMap;
+	std::unordered_map<int, std::vector<DirectX::XMFLOAT4X4>> m_transformMap;
 	std::vector<InstancedData> m_instancedData;
 	//Microsoft::WRL::ComPtr<ID3D11Buffer> m_instancedBuffer;
 	std::vector<Microsoft::WRL::ComPtr<ID3D11Buffer>> m_instancedBuffers; //Maybe I should only have one instanced buffer, and write to parts at a time? (Better yet, maybe I let every drawable have its own instanced buffer)

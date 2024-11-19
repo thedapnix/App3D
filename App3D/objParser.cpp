@@ -6,18 +6,11 @@
 
 #include "Collision.h"
 
-//Aims to help us only load meshes once when we parse obj file by checking against the meshname, then we only store 
-struct InstanceData
-{
-	std::string meshName;
-	std::vector<DirectX::XMFLOAT4X4> world;
-};
-
 using namespace DirectX;
 
 bool ParseMaterial(std::string mtlFileName, ParsedData& data, std::unordered_map<std::string, ShaderResource>& textures, ID3D11Device* device)
 {
-	std::ifstream ifs("Meshes/Test/" + mtlFileName); //CHANGE THIS BACK LATER, ONLY TEST/ WHEN WE'RE DOING THE TEST LEVEL
+	std::ifstream ifs("Meshes/" + mtlFileName); //CHANGE THIS BACK LATER, ONLY TEST/ WHEN WE'RE DOING THE TEST LEVEL
 	if (!ifs)
 	{
 		MessageBox(NULL, L"Couldn't open mtl file!", L"Error", MB_OK);
@@ -317,12 +310,13 @@ int InitDrawableFromFile(std::string objFileName, std::vector<Drawable>& vecToFi
 	return (int)vecToFill.size() - 1; //Return the size - 1 (aka index last element, aka the element we just put in, aka the element we're most probably interested in modifying when we create something)
 }
 
-//God this is becoming so cluttered, but it's backend so it's fine right?
-int InitDrawableFromFileInstanced(std::string objFileName, UINT& nDrawables,	//Path + name of obj, as well as TOTAL drawable count (og + instanced)
-	std::vector<UINT>& instancedDrawableCounts,									//Vector of instanced drawable counts, meant to split
-	std::unordered_map<std::string, std::vector<int>>& instances,				//Map linking objFileNames to the indices of the instanced drawables
-	std::unordered_map<int, DirectX::XMFLOAT4X4>& transforms,					//Map linking instanced drawable indices to a world transform
-	std::vector<Drawable>& vecToFill,											//Vector containing the og drawables
+
+int InitDrawableFromFileInstanced(std::string objFileName, std::string normalMapFileName,	//Path + name of the obj and any potential normalmap
+	UINT& nDrawables,																		//Total drawable count (og + instanced)
+	std::vector<UINT>& instancedDrawableCounts,												//Vector of instanced drawable counts, meant to split
+	std::unordered_map<std::string, InstanceInfo>& instances,								//Map linking objFileNames to the indices of the instanced drawables (And the og)
+	std::unordered_map<int, std::vector<DirectX::XMFLOAT4X4>>& transforms,					//Map linking instanced drawable indices to a world transform
+	std::vector<Drawable>& vecToFill,														//Vector containing the og drawables
 	DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, DirectX::XMFLOAT3 translate,
 	std::unordered_map<std::string, ShaderResource>& textures, ID3D11Device* device,
 	int interact, std::vector<int> interactsWith)
@@ -332,18 +326,25 @@ int InitDrawableFromFileInstanced(std::string objFileName, UINT& nDrawables,	//P
 	//Mesh already exists, store the transform as well as the index, then exit out of the function
 	if (meshAlreadyExists)
 	{
+		//Align the index of the original drawable with the index of the instancedDrawableCounts vector so we know how many instanced drawables there are for that specific drawable
+		//E.g., you'll get the instanced drawables associated with their original counterpart by indexing into the instancedDrawableCounts vector using the index of the original
+		//int ogIndex = instances[objFileName].at(0) - 1 + (instances.size() - 1);//Get the index of the "real" drawable (For crate, this should be 0, and brick should be 1)
+
+		//The ogIndex "calculation" above assumes that elements have been inserted in order, so bad
+		int ogIndex = instances[objFileName].original;
+
 		//Store the world transform
+		DirectX::XMFLOAT4X4 transform;
 		DirectX::XMMATRIX world = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z) *
 			DirectX::XMMatrixRotationX(rotate.x) * DirectX::XMMatrixRotationY(rotate.y) * DirectX::XMMatrixRotationZ(rotate.z) *
 			DirectX::XMMatrixTranslation(translate.x, translate.y, translate.z);
-		DirectX::XMStoreFloat4x4(&transforms[nDrawables], DirectX::XMMatrixTranspose(world));
+		DirectX::XMStoreFloat4x4(&transform, DirectX::XMMatrixTranspose(world));
 
-		//Align the index of the original drawable with the index of the instancedDrawableCounts vector so we know how many instanced drawables there are for that specific drawable
-		//E.g., you'll get the instanced drawables associated with their original counterpart by indexing into the instancedDrawableCounts vector using the index of the original
-		int ogIndex = instances[objFileName].at(0) - 1 + (instances.size() - 1);//Get the index of the "real" drawable (For crate, this should be 0, and brick should be 1)
-		//int ogIndex = vecToFill[]
+		transforms[ogIndex].push_back(transform);
+
 		instancedDrawableCounts.at(ogIndex)++;									//Increment the instanced drawable count associated with the corresponding original drawable
-		instances[objFileName].push_back(instancedDrawableCounts.at(ogIndex));	//Push back the instance to the map linking it to the objFileName
+		/*instances[objFileName].push_back(instancedDrawableCounts.at(ogIndex));*/	//Push back the instance to the map linking it to the objFileName
+		instances[objFileName].instanced.push_back(instancedDrawableCounts.at(ogIndex)); //Checking
 		nDrawables++;															//Increment the total drawable count
 
 		//Update the instance count every time
@@ -511,25 +512,42 @@ int InitDrawableFromFileInstanced(std::string objFileName, UINT& nDrawables,	//P
 	bufferData.subMeshVector = parsed.submeshes;
 
 	Drawable object(device, bufferData, scale, rotate, translate, interact, interactsWith);
+	
+	//Anything you want to do to this object needs to be done before it is added to the vecToFill
 	object.CreateBoundingBoxFromPoints(vMin, vMax);
-
 	object.SetIndex(vecToFill.size()); //It's the return of storing, because we can align drawable indices with instanced buffer indices
+	if (!normalMapFileName.empty())
+		object.SetNormalMap(device, normalMapFileName);
+
 	vecToFill.push_back(object);
 
 	//Here's the stuff that we'd otherwise do outside
 	//Store the world transform
-	DirectX::XMMATRIX world = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z) *
+	/*DirectX::XMMATRIX world = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z) *
 		DirectX::XMMatrixRotationX(rotate.x) * DirectX::XMMatrixRotationY(rotate.y) * DirectX::XMMatrixRotationZ(rotate.z) *
 		DirectX::XMMatrixTranslation(translate.x, translate.y, translate.z);
-	DirectX::XMStoreFloat4x4(&transforms[nDrawables], DirectX::XMMatrixTranspose(world));
+	DirectX::XMStoreFloat4x4(&transforms[nDrawables], DirectX::XMMatrixTranspose(world));*/
 
 	//Align the index of the original drawable with the index of the instancedDrawableCounts vector so we know how many instanced drawables there are for that specific drawable
 	//E.g., you'll get the instanced drawables associated with their original counterpart by indexing into the instancedDrawableCounts vector using the index of the original
 	int ogIndex = vecToFill.size() - 1;										//Get the index of the "real" drawable (For crate, this should be 0, and brick should be 1)
+
+	//Store the world transform
+	DirectX::XMFLOAT4X4 transform;
+	DirectX::XMMATRIX world = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z) *
+		DirectX::XMMatrixRotationX(rotate.x) * DirectX::XMMatrixRotationY(rotate.y) * DirectX::XMMatrixRotationZ(rotate.z) *
+		DirectX::XMMatrixTranslation(translate.x, translate.y, translate.z);
+	DirectX::XMStoreFloat4x4(&transform, DirectX::XMMatrixTranspose(world));
+
+	transforms[ogIndex].push_back(transform);
+
 	instancedDrawableCounts.push_back(1);									//Add a new element vector of instanced drawable counts
-	instances[objFileName].push_back(instancedDrawableCounts.at(ogIndex));	//Push back the instance to the map linking it to the objFileName
+	/*instances[objFileName].push_back(instancedDrawableCounts.at(ogIndex));*/	//Push back the instance to the map linking it to the objFileName
+	instances[objFileName].original = ogIndex;
+	instances[objFileName].instanced.push_back(instancedDrawableCounts.at(ogIndex));
 	nDrawables++;															//Increment the total drawable count
 
+	vecToFill.at(ogIndex).SetInstanceCount(instancedDrawableCounts.at(ogIndex));
 	//Set the instance count of the previous drawable, as we've now reached a new original
 	//if(ogIndex != 0) vecToFill.at(ogIndex - 1).SetInstanceCount(instancedDrawableCounts.at(ogIndex - 1));
 

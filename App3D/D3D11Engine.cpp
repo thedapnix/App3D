@@ -341,12 +341,17 @@ void D3D11Engine::UpdateMovingDrawables(float dt)
 	m_drawables.at(108).SetPosition(0.0f, -6.0f, 0.0f);
 }
 
-int D3D11Engine::CreateDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
+int D3D11Engine::CreateDrawable(std::string objFileName, std::string normalmapFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
 {
-	return InitDrawableFromFile(objFileName, m_drawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith);
+	return InitDrawableFromFileInstanced(objFileName, normalmapFileName, 
+		m_totalDrawableCount, m_instancedDrawableCounts,
+		m_instanceMap, m_transformMap, m_drawables,
+		scale, rotate, translate,
+		m_textures, device.Get(),
+		interact, interactsWith);
 }
 
-int D3D11Engine::CreateReflectiveDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
+int D3D11Engine::CreateReflectiveDrawable(std::string objFileName, std::string normalmapFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
 {
 	int index = InitDrawableFromFile(objFileName, m_reflectiveDrawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith); //temp: just put false as interactible here bleh
 
@@ -359,7 +364,7 @@ int D3D11Engine::CreateReflectiveDrawable(std::string objFileName, DirectX::XMFL
 	return index;
 }
 
-int D3D11Engine::CreatePovDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
+int D3D11Engine::CreatePovDrawable(std::string objFileName, std::string normalmapFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
 {
 	int index = InitDrawableFromFile(objFileName, m_povDrawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith);
 
@@ -368,36 +373,48 @@ int D3D11Engine::CreatePovDrawable(std::string objFileName, DirectX::XMFLOAT3 tr
 	return index;
 }
 
-int D3D11Engine::CreateConcaveDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
+int D3D11Engine::CreateConcaveDrawable(std::string objFileName, std::string normalmapFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
 {
-	int index = InitDrawableFromFile(objFileName, m_drawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith);
+	//int index = InitDrawableFromFile(objFileName, m_drawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith);
 
-	m_drawables.at(index).SetConcave(); //A concave drawable shouldn't be backface culled like regular ones, since we're supposed to be able to see "inside" of them
+	//m_drawables.at(index).SetConcave(); //A concave drawable shouldn't be backface culled like regular ones, since we're supposed to be able to see "inside" of them
 
-	return index;
+	//return index;
+	
+	//Cheeky?
+	return InitDrawableFromFileInstanced(objFileName, normalmapFileName,
+		m_totalDrawableCount, m_instancedDrawableCounts,
+		m_instanceMap, m_transformMap, m_drawables,
+		scale, rotate, translate,
+		m_textures, device.Get(),
+		interact, interactsWith);
+
 }
 
-int D3D11Engine::CreateOrbitDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
+int D3D11Engine::CreateOrbitDrawable(std::string objFileName, std::string normalmapFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
 {
-	int index = InitDrawableFromFile(objFileName, m_drawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith);
+	//int index = InitDrawableFromFile(objFileName, m_drawables, scale, rotate, translate, m_textures, device.Get(), interact, interactsWith);
 
-	m_drawables.at(index).SetOrbit(); //Yes, this will orbit around a point
+	//m_drawables.at(index).SetOrbit(); //Yes, this will orbit around a point
 
-	return index;
-}
+	//return index;
 
-int D3D11Engine::CreateInstancedDrawable(std::string objFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
-{
-	return InitDrawableFromFileInstanced(objFileName, m_totalDrawableCount, m_instancedDrawableCounts,
-		m_instanceMap, m_transformMap, m_drawables, 
-		scale, rotate, translate, 
-		m_textures, device.Get(), 
+	return InitDrawableFromFileInstanced(objFileName, normalmapFileName,
+		m_totalDrawableCount, m_instancedDrawableCounts,
+		m_instanceMap, m_transformMap, m_drawables,
+		scale, rotate, translate,
+		m_textures, device.Get(),
 		interact, interactsWith);
 }
 
-void D3D11Engine::ApplyNormalMapToDrawable(int index, std::string ddsFileName)
+int D3D11Engine::CreateInstancedDrawable(std::string objFileName, std::string normalmapFileName, DirectX::XMFLOAT3 translate, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 rotate, int interact, std::vector<int> interactsWith)
 {
-	m_drawables.at(index).SetNormalMap(device.Get(), ddsFileName);
+	return InitDrawableFromFileInstanced(objFileName, normalmapFileName,
+		m_totalDrawableCount, m_instancedDrawableCounts,
+		m_instanceMap, m_transformMap, m_drawables,
+		scale, rotate, translate,
+		m_textures, device.Get(),
+		interact, interactsWith);
 }
 
 bool D3D11Engine::MoveDrawable(int i, DirectX::XMFLOAT3 dist)
@@ -525,12 +542,15 @@ void D3D11Engine::ResizeInstanceBuffer(int size)
 	m_instancedData.resize(size);
 }
 
-void D3D11Engine::SetupInstancedBuffer(int begin, int end)
+//void D3D11Engine::SetupInstancedBuffer(int begin, int end)
+void D3D11Engine::SetupInstancedBuffer(int begin, int end, int index)
 {	
 	//Calculate instanced data
+	int it = 0;
 	for (int i = begin; i < end; i++)
 	{
-		m_instancedData[i].world = m_transformMap[i];
+		m_instancedData[i].world = m_transformMap[index][it]; //The second i is the one we're interested in, the first [] should be the index of the og drawable, so it lines up
+		it++;
 	}
 
 	//if (begin != 0) begin--; //Because of how the begin will always be the end of the previous +1 after the first m_instancedData vector, we manually -1 any vecSize that isn't the first
