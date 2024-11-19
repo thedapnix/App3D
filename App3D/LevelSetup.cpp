@@ -5,8 +5,6 @@ using namespace DirectX;
 //Hidden helper function
 void FinishInstancedLevel(D3D11Engine* engine)
 {
-    //First one: Begin = 0, End = 10000        (    0), (    0 + 10000)
-    //Second one: Begin = 1000, End = 10700    (10000), (10000 +   700)
     int previousBegin = 0;
     int previousEnd = 0;
     std::vector<int> vecX;
@@ -15,7 +13,7 @@ void FinishInstancedLevel(D3D11Engine* engine)
 
     //Calculate buffer stuff
     size_t nDrawables = engine->GetDrawables().size();
-    for (int i = 0; i < nDrawables; i++) //In this case there are 2 original drawables
+    for (int i = 0; i < nDrawables; i++)
     {
         vecX.push_back(previousEnd);
         vecY.push_back(previousEnd + engine->GetDrawables().at(i).GetInstanceCount());

@@ -549,11 +549,10 @@ void D3D11Engine::SetupInstancedBuffer(int begin, int end, int index)
 	int it = 0;
 	for (int i = begin; i < end; i++)
 	{
-		m_instancedData[i].world = m_transformMap[index][it]; //The second i is the one we're interested in, the first [] should be the index of the og drawable, so it lines up
+		m_instancedData[i].world = m_transformMap[index][it];
 		it++;
 	}
 
-	//if (begin != 0) begin--; //Because of how the begin will always be the end of the previous +1 after the first m_instancedData vector, we manually -1 any vecSize that isn't the first
 	int vecSize = end - begin;
 	m_instancedDataSizes.push_back(vecSize);
 
@@ -576,36 +575,6 @@ void D3D11Engine::SetupInstancedBuffer(int begin, int end, int index)
 		MessageBox(NULL, L"Failed to create instanced buffer you fucking bozo", L"Error", MB_OK);
 	}
 }
-
-/*void D3D11Engine::SetupInstancedBuffer(const InstanceInfo info)
-{
-	//New: Setup instanced data by taking in all the transforms of instanced drawables
-	//int og = info.originalIndex;
-	//const int n = m_drawables.at(og).GetInstanceInfo().instances.size();
-	////m_instancedDatas[og].resize(n);
-	//m_instancedData.resize(n);
-
-	//for (auto& element : m_drawables.at(og).GetInstanceInfo().instances)
-	//{
-	//	m_instancedData[element.index].world = element.world;
-	//	//m_instancedData[element.first].world = element.second;
-	//}
-
-	//And init the buffer
-	D3D11_BUFFER_DESC ibd = {};
-	ibd.Usage = D3D11_USAGE_DYNAMIC;
-	ibd.ByteWidth = sizeof(InstancedData) * m_instancedData.size();
-	ibd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	ibd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	ibd.MiscFlags = 0;
-	ibd.StructureByteStride = 0;
-
-	HRESULT hr = device->CreateBuffer(&ibd, NULL, m_instancedBuffers[0].GetAddressOf());
-	if (FAILED(hr))
-	{
-		MessageBox(NULL, L"Failed to create instanced buffer you fucking bozo", L"Error", MB_OK);
-	}
-}*/
 
 /*RENDER FUNCTIONS*/
 void D3D11Engine::Render(ID3D11UnorderedAccessView* uav, ID3D11DepthStencilView* dsv, D3D11_VIEWPORT* viewport, Camera* cam, const float clear[4], UINT csX, UINT csY, bool isReflection)

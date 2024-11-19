@@ -88,9 +88,7 @@ public:
 	bool SetupLights(); //Because of how my current Spotlights class works, going to change this in the future but I shouldn't procastinate too much by just making the engine cool
 
 	//New: Instanced (Similarly to how we call SetupQT() and SetupLights() after any SetupLevel()-call, we now also SetupInstancedBuffer())
-	//void SetupInstancedBuffer();
 	void ResizeInstanceBuffer(int size);
-	/*void SetupInstancedBuffer(int begin, int end);*/
 	void SetupInstancedBuffer(int begin, int end, int index);
 
 private:

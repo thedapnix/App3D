@@ -323,34 +323,25 @@ int InitDrawableFromFileInstanced(std::string objFileName, std::string normalMap
 {
 	bool meshAlreadyExists = (instances.count(objFileName) == 0) ? false : true;
 
-	//Mesh already exists, store the transform as well as the index, then exit out of the function
 	if (meshAlreadyExists)
 	{
-		//Align the index of the original drawable with the index of the instancedDrawableCounts vector so we know how many instanced drawables there are for that specific drawable
-		//E.g., you'll get the instanced drawables associated with their original counterpart by indexing into the instancedDrawableCounts vector using the index of the original
-		//int ogIndex = instances[objFileName].at(0) - 1 + (instances.size() - 1);//Get the index of the "real" drawable (For crate, this should be 0, and brick should be 1)
-
-		//The ogIndex "calculation" above assumes that elements have been inserted in order, so bad
+		//Get the index of the "real" drawable
 		int ogIndex = instances[objFileName].original;
 
-		//Store the world transform
+		//Store the world transform and push it back into the map linking it to this drawable
 		DirectX::XMFLOAT4X4 transform;
 		DirectX::XMMATRIX world = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z) *
 			DirectX::XMMatrixRotationX(rotate.x) * DirectX::XMMatrixRotationY(rotate.y) * DirectX::XMMatrixRotationZ(rotate.z) *
 			DirectX::XMMatrixTranslation(translate.x, translate.y, translate.z);
 		DirectX::XMStoreFloat4x4(&transform, DirectX::XMMatrixTranspose(world));
-
 		transforms[ogIndex].push_back(transform);
 
-		instancedDrawableCounts.at(ogIndex)++;									//Increment the instanced drawable count associated with the corresponding original drawable
-		/*instances[objFileName].push_back(instancedDrawableCounts.at(ogIndex));*/	//Push back the instance to the map linking it to the objFileName
-		instances[objFileName].instanced.push_back(instancedDrawableCounts.at(ogIndex)); //Checking
-		nDrawables++;															//Increment the total drawable count
+		//Update instanced variables
+		instancedDrawableCounts.at(ogIndex)++;											//Increment the instanced drawable count associated with the corresponding original drawable
+		instances[objFileName].instanced.push_back(instancedDrawableCounts.at(ogIndex));//Push back the instance to the map linking it to the objFileName
+		nDrawables++;																	//Increment the total drawable count
+		vecToFill.at(ogIndex).SetInstanceCount(instancedDrawableCounts.at(ogIndex));	//Update the instance count of the og drawable
 
-		//Update the instance count every time
-		vecToFill.at(ogIndex).SetInstanceCount(instancedDrawableCounts.at(ogIndex));
-
-		//Return the index of the last element, aka the element we just put in, aka the element we're most probably interested in modifying when we create something
 		return nDrawables - 1;
 	}
 
@@ -521,16 +512,9 @@ int InitDrawableFromFileInstanced(std::string objFileName, std::string normalMap
 
 	vecToFill.push_back(object);
 
-	//Here's the stuff that we'd otherwise do outside
-	//Store the world transform
-	/*DirectX::XMMATRIX world = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z) *
-		DirectX::XMMatrixRotationX(rotate.x) * DirectX::XMMatrixRotationY(rotate.y) * DirectX::XMMatrixRotationZ(rotate.z) *
-		DirectX::XMMatrixTranslation(translate.x, translate.y, translate.z);
-	DirectX::XMStoreFloat4x4(&transforms[nDrawables], DirectX::XMMatrixTranspose(world));*/
-
-	//Align the index of the original drawable with the index of the instancedDrawableCounts vector so we know how many instanced drawables there are for that specific drawable
-	//E.g., you'll get the instanced drawables associated with their original counterpart by indexing into the instancedDrawableCounts vector using the index of the original
-	int ogIndex = vecToFill.size() - 1;										//Get the index of the "real" drawable (For crate, this should be 0, and brick should be 1)
+	//Instanced stuff begins here
+	//Get the index of the "real" drawable
+	int ogIndex = vecToFill.size() - 1;	
 
 	//Store the world transform
 	DirectX::XMFLOAT4X4 transform;
@@ -538,19 +522,15 @@ int InitDrawableFromFileInstanced(std::string objFileName, std::string normalMap
 		DirectX::XMMatrixRotationX(rotate.x) * DirectX::XMMatrixRotationY(rotate.y) * DirectX::XMMatrixRotationZ(rotate.z) *
 		DirectX::XMMatrixTranslation(translate.x, translate.y, translate.z);
 	DirectX::XMStoreFloat4x4(&transform, DirectX::XMMatrixTranspose(world));
-
 	transforms[ogIndex].push_back(transform);
 
-	instancedDrawableCounts.push_back(1);									//Add a new element vector of instanced drawable counts
-	/*instances[objFileName].push_back(instancedDrawableCounts.at(ogIndex));*/	//Push back the instance to the map linking it to the objFileName
-	instances[objFileName].original = ogIndex;
-	instances[objFileName].instanced.push_back(instancedDrawableCounts.at(ogIndex));
-	nDrawables++;															//Increment the total drawable count
+	//Update instance variables
+	instancedDrawableCounts.push_back(1);											//Add a new element vector of instanced drawable counts
+	instances[objFileName].original = ogIndex;										//Set this drawable as the original, helps us get the ogIndex in future instances
+	instances[objFileName].instanced.push_back(instancedDrawableCounts.at(ogIndex));//Push back the instance to the map linking it to the objFileName
+	nDrawables++;																	//Increment the total drawable count
+	vecToFill.at(ogIndex).SetInstanceCount(instancedDrawableCounts.at(ogIndex));	//Set the instance count
 
-	vecToFill.at(ogIndex).SetInstanceCount(instancedDrawableCounts.at(ogIndex));
-	//Set the instance count of the previous drawable, as we've now reached a new original
-	//if(ogIndex != 0) vecToFill.at(ogIndex - 1).SetInstanceCount(instancedDrawableCounts.at(ogIndex - 1));
-
-	//Return the index of the last element, aka the element we just put in, aka the element we're most probably interested in modifying when we create something
+	//Return the index of the last element, aka the element we just put in, aka the element we're most probably interested in modifying when we create something (Useless right now)
 	return nDrawables - 1;
 }
